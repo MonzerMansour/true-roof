@@ -1,0 +1,18 @@
+---
+description: Accessibility and cheap-phone constraints for UI work
+globs: "**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# Accessibility
+
+This product will be used on cracked low-end Androids, with large text, VoiceOver/TalkBack, and sometimes voice input.
+
+- Visible focus (`focus-visible:ring-3 focus-visible:ring-ring/50` is already on primitives — keep it).
+- Icon-only controls need an `sr-only` label. Theme toggle and menu buttons included.
+- Contrast: rely on theme tokens. Do not put muted gray text on photos without a scrim.
+- Primary actions sit toward the bottom on small screens when that is the main task.
+- Skip link to `#main` on every marketing page.
+- Dialogs and sheets must have a title and description.
+- Do not ship information only as color. Freshness and warnings need text.
+- Plain language over tooltips. If a tooltip exists, the same fact must be on the page.

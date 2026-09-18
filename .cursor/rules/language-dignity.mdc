@@ -1,0 +1,23 @@
+---
+description: Plain language and dignity rules for all user-facing copy
+alwaysApply: true
+---
+
+# Language
+
+Write like a calm caseworker, not a startup or a charity appeal.
+
+- Say **people looking for a place**, **when you are unhoused**, **after you get housed**. Never “the homeless” as a noun.
+- Short sentences. Concrete verbs. No jargon unless the user already uses it (CalFresh, Medi-Cal, 211).
+- Never use an em dash (—) or an en dash (–). Not in UI copy, metadata, comments, or chat. Use a period, a comma, a colon, or parentheses.
+
+  Bad: This is financial stability — not another search.
+  Good: This is financial stability. Not another search.
+- No pity, no savior tone, no stock slogans (“empower”, “journey”, “leverage”).
+- Provider copy is operational: beds, intake, interest in the listing. Not “help the less fortunate”.
+- Estimates must say they are estimates. Never “don’t take the job”. Never claim a handoff was “approved”.
+- Crisis/DV is a separate human path (911 / DV / 988). It skips the data bundle.
+
+# Photos
+
+Use real photographs in `public/images`. Do not generate AI people. Do not use street photos of people who appear unhoused. Housing, keys, phones, parking, mail, and staff desks are the visual language.

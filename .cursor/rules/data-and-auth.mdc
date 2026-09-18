@@ -1,0 +1,49 @@
+---
+description: True Roof database, listings, and auth layout for later agents
+alwaysApply: true
+---
+
+# Data and auth
+
+Marketing phase only. Do not add matcher, calendar, document parser, or provider dashboard tables until asked.
+
+## Layout
+
+- `supabase/migrations/20260918000000_listings.sql` — canonical schema + sample sites. Same contents as `supabase/seed.sql`.
+- `lib/listings/types.ts` — enums. Never free-text categories.
+- `lib/listings/queries.ts` — server fetch of featured listings. Falls back to `lib/listings/seed.ts` if the table is missing. Keep seed IDs in lockstep with the SQL.
+- `lib/supabase/client.ts` — browser client. Returns `null` when env is missing.
+- `lib/supabase/server.ts` — cookie session for Route Handlers.
+- `proxy.ts` — Next.js 16 session refresh (this is middleware).
+- `app/auth/callback/route.ts` — PKCE code exchange for Google and magic links.
+- `components/auth/sign-in-dialog.tsx` — password, magic link, Google.
+- `scripts/run-sql.mjs` — `npm run db:setup`. Prefers `npx supabase db query --linked --project-ref` after `npx supabase login`.
+
+## Tables
+
+## Tables
+
+One listing row per **physical site**, linked to an organization.
+
+- `organizations` — `id`, `name`
+- `listings` — `kind` `shelter` | `parking`; `freshness` `live` | `recent` | `call_first`; `pets` / `couples` enums or null; parking uses `parking_status` `open` | `full` | `waitlist` plus `vehicle_note`. `featured` + `sort_order` drive the homepage hero (first three).
+- `profiles` — `id` = `auth.users.id`, `role` `seeker` | `provider`. Created by `handle_new_user` on signup.
+
+RLS: anon and authenticated **select** listings and organizations. Profiles are own-row only.
+
+## Apply SQL
+
+Anon key cannot create tables. After `npx supabase login`, run `npm run db:setup`. That uses `supabase db query --linked --project-ref`. Fallback: paste `supabase/seed.sql` into the SQL editor, or add `SUPABASE_ACCESS_TOKEN`.
+
+Project in `.env.local`: `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` only in client code. Never commit real keys.
+
+## Auth
+
+- Email/password and magic link write `role` into user metadata on create.
+- Google: `signInWithOAuth({ provider: "google" })` → `/auth/callback`. Role is taken from the landing page (`/` seeker, `/for-providers` provider), not a dialog question. New accounts get that role; existing ones do not change.
+- Dashboard: Site URL `http://localhost:3000`. Redirect URLs live in `supabase/config.toml` (`additional_redirect_urls`) and were pushed for local callbacks. Google provider still needs a Cloud client ID/secret in Auth > Providers. Google Cloud authorized redirect: `https://<project-ref>.supabase.co/auth/v1/callback`.
+- If Google is not enabled, the button still shows; Supabase returns an error toast. Do not fake a session.
+
+## Homepage listings
+
+Hero reads `getFeaturedListings()` and slices the first three. Do not add a second “more sites” strip that repeats those cards.

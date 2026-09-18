@@ -1,0 +1,15 @@
+---
+description: Marketing IA — seeker-first pages, feature tabs, real photos
+globs: "{app,components/marketing}/**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# Marketing pages
+
+- `/` is for seekers. `/for-providers` is secondary. Do not make them equal in the hero.
+- Feature routes live under `/features/[slug]`. Keep the nav Features menu in `lib/site.ts` as the source of truth.
+- Every feature named in the PRD gets a page: matcher, parking, deadlines, letters, savings, help, income, privacy, quiet.
+- Lead with a real photo from `lib/photos.ts`, not an icon grid. Icons (Tabler) support photos; they do not replace them.
+- Sign-in is a **dialog**, opened from the header and CTAs. Do not add a standalone marketing login page unless auth needs a redirect URL.
+- Theme toggle is present and quiet — never a hero control. Default is system.
+- Light and dark must both work. Test overlays so type stays readable on photos.

@@ -1,0 +1,15 @@
+---
+description: Never use em dashes or en dashes in copy or replies
+alwaysApply: true
+---
+
+# No em dashes
+
+Do not use `—` (em dash) or `–` (en dash). Anywhere: UI, titles, toasts, comments, rules, or replies to the user.
+
+Use a period, a comma, a colon, or parentheses.
+
+```
+Bad: Quiet mode after about six months — not forever nagging
+Good: Quiet mode after about six months. Not forever nagging.
+```

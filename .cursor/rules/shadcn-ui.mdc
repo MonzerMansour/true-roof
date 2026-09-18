@@ -1,0 +1,29 @@
+---
+description: Always use shadcn Nova components; extend the kit instead of one-off UI
+globs: "**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# shadcn / Nova UI
+
+This app is the shadcn **Nova** style, **mauve** base, **violet** theme, **Tabler** icons, **Noto Sans** + **Nunito Sans** headings. Preset code: `b13sSJqA6M`.
+
+## Do
+
+- Import from `@/components/ui/*`. Add missing primitives with `npx shadcn@latest add <name>`.
+- If nothing in the kit matches, create a primitive in `components/ui/` using Base UI, `cva`, `cn`, and Tabler — same patterns as `button.tsx`.
+- Style with theme tokens (`bg-background`, `text-muted-foreground`, `ring-foreground/10`). Photo overlays may use black/white at low opacity.
+- Use `font-heading` on titles. Use `Button` `render={<Link href="..." />}` (or `buttonVariants()` on a `Link`) for nav CTAs.
+- Base UI uses `render={...}`, not Radix `asChild`.
+
+## Don't
+
+- Do not use Lucide, MUI, raw unstyled `<button>`/`<input>` for product UI, or hardcoded brand hex.
+- Do not restyle shadcn primitives with one-off colors. Variants belong in the primitive.
+- Do not add a second component library.
+
+## File homes
+
+- Primitives: `components/ui/`
+- Marketing composition: `components/marketing/`
+- Auth: `components/auth/`

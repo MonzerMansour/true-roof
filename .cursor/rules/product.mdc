@@ -1,0 +1,32 @@
+---
+description: Product facts, audiences, and what to build right now
+alwaysApply: true
+---
+
+# True Roof
+
+True Roof helps people **get a home and stay housed**. Marketing and product always lead with the person looking for a place. Shelter and parking staff are the secondary audience.
+
+## Audiences
+
+- **Primary (seeker):** someone unhoused tonight, sleeping in a car/RV, or newly housed and trying to keep it.
+- **Secondary (provider):** shelter managers, parking-lot operators, and the site's own staff. They get a real dashboard, not a form.
+
+Never invert this. Seeker copy, IA, and CTAs come first.
+
+## Scope right now
+
+Marketing pages + sign-in dialog only. Do not build the matcher, calendar, document parser, or provider dashboard until asked.
+
+## Product facts (do not invent others)
+
+- One listing row per **physical site**, linked to a shared org. Enums only — never free-text categories.
+- Hard constraints (pets, cars, intake closed) **remove** a listing. Zero fits → Here4You. Household split can surface **two** listings.
+- Freshness is one badge for the whole listing: Live / Recent / Call first. Confidence decays on a curve; conflicting reports lower confidence, they do not overwrite.
+- Vehicle intake is first-class: car/RV questions, then shelters **and** safe parking side by side.
+- After housing: deadlines, letter-to-task, rent cushion, Get Help, income cliffs, quiet mode.
+- Privacy default: local-first, photo parse-then-discard, export & delete, crisis path that skips the data bundle.
+
+## Stack
+
+Next.js App Router, shadcn Nova (preset `b13sSJqA6M`), Tabler icons, Supabase auth. Theme follows **system**, with a quiet toggle.

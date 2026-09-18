@@ -1,0 +1,16 @@
+---
+description: Supabase auth conventions for the sign-in dialog
+globs: "{components/auth,lib/supabase,app/auth,proxy.ts}/**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# Auth
+
+- Browser client: `lib/supabase/client.ts`. Return `null` when env vars are missing — never crash the marketing site.
+- Server session: `lib/supabase/server.ts`. Refresh cookies in `proxy.ts` (Next.js 16 middleware).
+- Env: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`. Document in `.env.example` only. Never commit real keys.
+- Sign-in dialog: password, magic link, and **Continue with Google**. Do not ask seeker vs provider. Role comes from the page: `/for-providers` → `provider`, everywhere else → `seeker` (`audienceFromPath` in `lib/site.ts`). Signup and Google pass that role into metadata / `/auth/callback?role=`. Existing accounts keep their role.
+- Google needs the provider enabled in Supabase (Auth > Providers) plus `http://localhost:3000/auth/callback` on the redirect allow list. The app callback exchanges the PKCE `code`.
+- If Supabase is not configured, submit still explains that clearly with a toast. Do not fake a session.
+- No sensitive detail in toasts or lock-screen copy. Magic-link email should stay generic.
+- Later: PIN/biometric, quick-hide, and export/delete belong in the app shell, not this dialog.
