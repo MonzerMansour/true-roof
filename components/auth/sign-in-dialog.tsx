@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { GUEST_COOKIE, GUEST_MAX_AGE } from "@/lib/guest"
 import { audienceFromPath } from "@/lib/site"
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/client"
 import { IconBrandGoogle } from "@tabler/icons-react"
@@ -146,6 +147,20 @@ export function SignInDialog() {
     }
   }
 
+  function onGuest() {
+    document.cookie = `${GUEST_COOKIE}=1; path=/; max-age=${GUEST_MAX_AGE}; samesite=lax`
+
+    toast.success("You are in as a guest.")
+    setOpen(false)
+    reset()
+
+    if (role === "seeker" && pathname === "/") {
+      router.push("/get-started")
+    } else {
+      router.refresh()
+    }
+  }
+
   async function onMagicLink() {
     if (!email) {
       toast.error("Enter your email first.")
@@ -218,6 +233,7 @@ export function SignInDialog() {
               onSubmit={onPasswordSubmit}
               onMagicLink={onMagicLink}
               onGoogle={onGoogle}
+              onGuest={onGuest}
             />
           </TabsContent>
 
@@ -233,6 +249,7 @@ export function SignInDialog() {
               onSubmit={onPasswordSubmit}
               onMagicLink={onMagicLink}
               onGoogle={onGoogle}
+              onGuest={onGuest}
             />
           </TabsContent>
         </Tabs>
@@ -259,6 +276,7 @@ function AuthForm({
   onSubmit,
   onMagicLink,
   onGoogle,
+  onGuest,
 }: {
   email: string
   password: string
@@ -270,6 +288,7 @@ function AuthForm({
   onSubmit: (event: React.FormEvent<HTMLFormElement>) => void
   onMagicLink: () => void
   onGoogle: () => void
+  onGuest: () => void
 }) {
   return (
     <form onSubmit={onSubmit}>
@@ -328,6 +347,19 @@ function AuthForm({
           >
             Email me a sign-in link
           </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            disabled={pending}
+            className="w-full"
+            onClick={onGuest}
+          >
+            Continue as a guest
+          </Button>
+          <p className="text-center text-xs text-muted-foreground">
+            Guest access lasts 30 days on this phone. Clear this browser or switch
+            phones and it is gone.
+          </p>
         </div>
       </FieldGroup>
     </form>

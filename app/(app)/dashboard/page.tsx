@@ -3,7 +3,7 @@ import type { Metadata } from "next"
 import { Container } from "@/components/marketing/container"
 import { DashboardClient } from "@/components/dashboard/dashboard-client"
 import { NeedsSignIn } from "@/components/dashboard/needs-sign-in"
-import { createServerSupabaseClient } from "@/lib/supabase/server"
+import { hasSeekerAccess } from "@/lib/guest-server"
 
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -11,8 +11,7 @@ export const metadata: Metadata = {
 }
 
 export default async function DashboardPage() {
-  const client = await createServerSupabaseClient()
-  const user = client ? (await client.auth.getUser()).data.user : null
+  const user = await hasSeekerAccess()
 
   return (
     <Container className="py-16">

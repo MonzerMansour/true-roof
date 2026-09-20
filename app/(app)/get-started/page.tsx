@@ -9,7 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { createServerSupabaseClient } from "@/lib/supabase/server"
+import { hasSeekerAccess } from "@/lib/guest-server"
 
 export const metadata: Metadata = {
   title: "What do you need",
@@ -17,8 +17,7 @@ export const metadata: Metadata = {
 }
 
 export default async function GetStartedPage() {
-  const client = await createServerSupabaseClient()
-  const user = client ? (await client.auth.getUser()).data.user : null
+  const user = await hasSeekerAccess()
 
   return (
     <Container className="py-16">
@@ -33,14 +32,13 @@ export default async function GetStartedPage() {
       <div className="mt-10">
         {user ? (
           <div className="grid gap-4 sm:grid-cols-2">
-            <Link href="/features/matcher">
+            <Link href="/get-started/find-a-place">
               <Card className="h-full transition-colors hover:bg-muted/40">
                 <CardHeader>
                   <CardTitle>Looking for shelter tonight</CardTitle>
                   <CardDescription className="text-base">
-                    Find a shelter bed or a safe place to park. This part of
-                    True Roof is still being built — this link goes to the
-                    feature overview for now.
+                    Find a shelter bed or a safe place to park. Answer a few
+                    short questions so we only show places that fit.
                   </CardDescription>
                 </CardHeader>
               </Card>

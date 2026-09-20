@@ -10,7 +10,8 @@
     "lint": "eslint",
     "format": "prettier --write \"**/*.{ts,tsx}\"",
     "typecheck": "tsc --noEmit",
-    "db:setup": "node scripts/run-sql.mjs"
+    "db:setup": "node scripts/run-sql.mjs",
+    "embeddings:listings": "node scripts/embed-listings.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
