@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { toast } from "sonner"
 
 import { useSignIn } from "@/components/auth/sign-in-provider"
@@ -30,6 +30,7 @@ type Mode = "signin" | "create"
 
 export function SignInDialog() {
   const pathname = usePathname()
+  const router = useRouter()
   const role = audienceFromPath(pathname)
   const { open, setOpen } = useSignIn()
   const [mode, setMode] = React.useState<Mode>("signin")
@@ -99,6 +100,12 @@ export function SignInDialog() {
       toast.success("You are signed in.")
       setOpen(false)
       reset()
+
+      if (role === "seeker" && pathname === "/") {
+        router.push("/get-started")
+      } else {
+        router.refresh()
+      }
     } finally {
       setPending(false)
     }
@@ -115,6 +122,10 @@ export function SignInDialog() {
 
       const redirect = new URL("/auth/callback", window.location.origin)
       redirect.searchParams.set("role", role)
+      redirect.searchParams.set(
+        "next",
+        role === "seeker" && pathname === "/" ? "/get-started" : pathname
+      )
 
       const { error } = await client.auth.signInWithOAuth({
         provider: "google",
