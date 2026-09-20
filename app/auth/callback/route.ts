@@ -5,9 +5,10 @@ import { createServerSupabaseClient } from "@/lib/supabase/server"
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get("code")
-  const nextParam = searchParams.get("next") ?? "/"
-  const next =
-    nextParam.startsWith("/") && !nextParam.startsWith("//") ? nextParam : "/"
+  const nextParam = searchParams.get("next")
+  const hasExplicitNext =
+    !!nextParam && nextParam.startsWith("/") && !nextParam.startsWith("//")
+  let next = hasExplicitNext ? (nextParam as string) : "/"
 
   if (code) {
     const supabase = await createServerSupabaseClient()
@@ -25,17 +26,17 @@ export async function GET(request: Request) {
             ? roleParam
             : cookieRole
 
-        if (pendingRole) {
-          const {
-            data: { user },
-          } = await supabase.auth.getUser()
+        const {
+          data: { user },
+        } = await supabase.auth.getUser()
 
-          const createdAt = user?.created_at
+        if (pendingRole && user) {
+          const createdAt = user.created_at
             ? new Date(user.created_at).getTime()
             : 0
           const isNewAccount = Date.now() - createdAt < 5 * 60 * 1000
 
-          if (user && isNewAccount) {
+          if (isNewAccount) {
             await supabase.auth.updateUser({
               data: { role: pendingRole },
             })
@@ -43,6 +44,20 @@ export async function GET(request: Request) {
               { id: user.id, role: pendingRole },
               { onConflict: "id" }
             )
+          }
+        }
+
+        // Send providers straight to their portal unless a specific
+        // destination was requested.
+        if (!hasExplicitNext && user) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("role")
+            .eq("id", user.id)
+            .maybeSingle()
+
+          if (profile?.role === "provider") {
+            next = "/portal"
           }
         }
       }

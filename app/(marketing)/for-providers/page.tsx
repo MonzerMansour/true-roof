@@ -18,6 +18,25 @@ import {
 } from "@/components/ui/card"
 import { cn } from "cn"
 import { photos } from "@/lib/photos"
+import { createServerSupabaseClient } from "@/lib/supabase/server"
+
+async function isSignedInProvider() {
+  const supabase = await createServerSupabaseClient()
+  if (!supabase) return false
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return false
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .maybeSingle()
+
+  return profile?.role === "provider"
+}
 
 export const metadata: Metadata = {
   title: "For shelters and parking lots",
@@ -50,7 +69,9 @@ const parkingPoints = [
   "Application, waitlist, or walk-up. Availability reads as open, full, or a count",
 ]
 
-export default function ProvidersPage() {
+export default async function ProvidersPage() {
+  const signedInProvider = await isSignedInProvider()
+
   return (
     <>
       <section className="relative isolate min-h-[24rem] overflow-hidden sm:min-h-[32rem]">
@@ -74,7 +95,16 @@ export default function ProvidersPage() {
             phone tag about whether a bed is open.
           </p>
           <div className="mt-6 flex flex-wrap gap-2">
-            <SignInButton>Sign in as staff</SignInButton>
+            {signedInProvider ? (
+              <Link
+                href="/portal"
+                className={cn(buttonVariants({ size: "lg" }))}
+              >
+                Open the portal
+              </Link>
+            ) : (
+              <SignInButton>Sign in as staff</SignInButton>
+            )}
             <Link
               href="/"
               className={cn(
@@ -192,7 +222,13 @@ export default function ProvidersPage() {
               create the account.
             </p>
           </div>
-          <SignInButton>Open the portal</SignInButton>
+          {signedInProvider ? (
+            <Link href="/portal" className={cn(buttonVariants({ size: "lg" }))}>
+              Open the portal
+            </Link>
+          ) : (
+            <SignInButton>Open the portal</SignInButton>
+          )}
         </Container>
       </section>
     </>

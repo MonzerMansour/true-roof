@@ -101,7 +101,9 @@ export function SignInDialog() {
       setOpen(false)
       reset()
 
-      if (role === "seeker" && pathname === "/") {
+      if (role === "provider") {
+        router.push("/portal")
+      } else if (role === "seeker" && pathname === "/") {
         router.push("/get-started")
       } else {
         router.refresh()
