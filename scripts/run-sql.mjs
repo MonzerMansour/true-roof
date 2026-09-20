@@ -43,8 +43,13 @@ const serviceRole = process.env.SUPABASE_SERVICE_ROLE_KEY
 const googleClientId = process.env.GOOGLE_CLIENT_ID
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET
 const ref = url?.match(/https:\/\/([a-z0-9]+)\.supabase\.co/i)?.[1]
-const sqlPath = "supabase/migrations/20260918000000_listings.sql"
-const query = readFileSync(resolve(sqlPath), "utf8")
+const sqlPaths = [
+  "supabase/migrations/20260918000000_listings.sql",
+  "supabase/migrations/20260920000000_provider_portal.sql",
+]
+const query = sqlPaths
+  .map((path) => readFileSync(resolve(path), "utf8"))
+  .join("\n\n")
 
 if (!url || !anon) {
   console.error("Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY")
@@ -118,8 +123,7 @@ function applyViaCli() {
       "--linked",
       "--project-ref",
       ref,
-      "-f",
-      sqlPath,
+      ...sqlPaths.flatMap((path) => ["-f", path]),
     ],
     { stdio: "inherit", shell: true }
   )
