@@ -3,8 +3,6 @@ import type { ReactNode } from "react"
 import { Noto_Sans, Nunito_Sans } from "next/font/google"
 
 import { AppProviders } from "@/components/app-providers"
-import { SiteFooter } from "@/components/marketing/site-footer"
-import { SiteHeader } from "@/components/marketing/site-header"
 import { cn } from "@/lib/utils"
 import { site } from "@/lib/site"
 
@@ -51,9 +49,7 @@ export default function RootLayout({
           >
             Skip to content
           </a>
-          <SiteHeader />
-          <main id="main">{children}</main>
-          <SiteFooter />
+          {children}
         </AppProviders>
       </body>
     </html>

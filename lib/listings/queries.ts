@@ -71,6 +71,7 @@ export async function getFeaturedListings(): Promise<{
       "id, name, kind, freshness, last_confirmed_at, pets, couples, parking_status, vehicle_note, city, organizations(name)"
     )
     .eq("featured", true)
+    .eq("published", true)
     .order("sort_order", { ascending: true })
 
   if (error || !data) {
