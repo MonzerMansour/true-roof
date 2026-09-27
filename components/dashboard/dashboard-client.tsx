@@ -8,6 +8,10 @@ import {
   IconCalendar,
   IconCamera,
   IconCheck,
+  IconChevronLeft,
+  IconChevronRight,
+  IconLayoutGrid,
+  IconLayoutList,
   IconPhoneCall,
 } from "@tabler/icons-react"
 import { toast } from "sonner"
@@ -204,6 +208,226 @@ export function DashboardClient() {
   )
 }
 
+function OccurrenceRow({
+  occurrence,
+  isDone,
+  onToggle,
+  showDate = true,
+}: {
+  occurrence: Occurrence
+  isDone: boolean
+  onToggle: (id: string) => void
+  showDate?: boolean
+}) {
+  return (
+    <Card
+      className={cn(
+        "flex-row items-center justify-between gap-3 px-4",
+        isDone && "opacity-50"
+      )}
+    >
+      <div>
+        {showDate ? (
+          <p className="text-xs font-medium text-primary">{occurrence.date}</p>
+        ) : null}
+        <p className={cn("font-medium", isDone && "line-through")}>
+          {occurrence.title}
+        </p>
+        <p className="text-sm text-muted-foreground">{occurrence.detail}</p>
+      </div>
+      <Button
+        type="button"
+        variant={isDone ? "secondary" : "outline"}
+        size="sm"
+        onClick={() => onToggle(occurrence.id)}
+      >
+        <IconCheck />
+        {isDone ? "Done" : "Mark done"}
+      </Button>
+    </Card>
+  )
+}
+
+function isoDate(date: Date) {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, "0")
+  const d = String(date.getDate()).padStart(2, "0")
+  return `${y}-${m}-${d}`
+}
+
+// "YYYY-MM-DD" strings must be parsed as local dates, not UTC — `new
+// Date("2026-10-01")` parses as UTC midnight, which renders as Sep 30 in any
+// timezone behind UTC.
+function parseLocalDate(iso: string) {
+  const [year, month, day] = iso.split("-").map(Number)
+  return new Date(year, (month ?? 1) - 1, day ?? 1)
+}
+
+const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+
+function MonthCalendar({
+  occurrences,
+  completedIds,
+  onToggle,
+}: {
+  occurrences: Occurrence[]
+  completedIds: string[]
+  onToggle: (id: string) => void
+}) {
+  const today = new Date()
+  const [cursor, setCursor] = React.useState(
+    () => new Date(today.getFullYear(), today.getMonth(), 1)
+  )
+  const [selected, setSelected] = React.useState(() => isoDate(today))
+
+  const byDate = React.useMemo(() => {
+    const map = new Map<string, Occurrence[]>()
+    for (const occurrence of occurrences) {
+      const list = map.get(occurrence.date) ?? []
+      list.push(occurrence)
+      map.set(occurrence.date, list)
+    }
+    return map
+  }, [occurrences])
+
+  const cells = React.useMemo(() => {
+    const firstOfMonth = new Date(cursor.getFullYear(), cursor.getMonth(), 1)
+    const start = new Date(firstOfMonth)
+    start.setDate(start.getDate() - firstOfMonth.getDay())
+
+    return Array.from({ length: 42 }, (_, i) => {
+      const date = new Date(start)
+      date.setDate(start.getDate() + i)
+      return {
+        date,
+        iso: isoDate(date),
+        inMonth: date.getMonth() === cursor.getMonth(),
+      }
+    })
+  }, [cursor])
+
+  const todayIso = isoDate(today)
+  const completed = new Set(completedIds)
+  const selectedItems = byDate.get(selected) ?? []
+
+  return (
+    <div className="grid gap-4">
+      <div className="flex items-center justify-between">
+        <p className="font-heading text-lg font-medium">
+          {cursor.toLocaleDateString(undefined, {
+            month: "long",
+            year: "numeric",
+          })}
+        </p>
+        <div className="flex gap-1">
+          <Button
+            type="button"
+            variant="outline"
+            size="icon-sm"
+            aria-label="Previous month"
+            onClick={() =>
+              setCursor((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))
+            }
+          >
+            <IconChevronLeft />
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setCursor(new Date(today.getFullYear(), today.getMonth(), 1))
+              setSelected(todayIso)
+            }}
+          >
+            Today
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon-sm"
+            aria-label="Next month"
+            onClick={() =>
+              setCursor((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))
+            }
+          >
+            <IconChevronRight />
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-7 gap-1 text-center text-xs font-medium text-muted-foreground">
+        {WEEKDAY_LABELS.map((label) => (
+          <div key={label}>{label}</div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-7 gap-1">
+        {cells.map(({ date, iso, inMonth }) => {
+          const items = byDate.get(iso) ?? []
+          const hasUndone = items.some((item) => !completed.has(item.id))
+          const isSelected = iso === selected
+
+          return (
+            <button
+              key={iso}
+              type="button"
+              onClick={() => setSelected(iso)}
+              aria-label={
+                date.toLocaleDateString(undefined, {
+                  weekday: "long",
+                  month: "long",
+                  day: "numeric",
+                }) + (items.length > 0 ? `, ${items.length} due` : "")
+              }
+              aria-pressed={isSelected}
+              className={cn(
+                "flex aspect-square flex-col items-center justify-start gap-1 rounded-lg border p-1 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50 sm:p-2",
+                inMonth ? "bg-card" : "bg-muted/30 text-muted-foreground",
+                isSelected && "border-primary ring-2 ring-primary/40",
+                iso === todayIso && "font-semibold text-primary"
+              )}
+            >
+              <span>{date.getDate()}</span>
+              {items.length > 0 ? (
+                <span
+                  className={cn(
+                    "size-1.5 rounded-full",
+                    hasUndone ? "bg-primary" : "bg-muted-foreground/40"
+                  )}
+                />
+              ) : null}
+            </button>
+          )
+        })}
+      </div>
+
+      <div className="grid gap-2">
+        <p className="text-sm font-medium text-muted-foreground">
+          {parseLocalDate(selected).toLocaleDateString(undefined, {
+            weekday: "long",
+            month: "long",
+            day: "numeric",
+          })}
+        </p>
+        {selectedItems.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Nothing due this day.</p>
+        ) : (
+          selectedItems.map((occurrence) => (
+            <OccurrenceRow
+              key={occurrence.id}
+              occurrence={occurrence}
+              isDone={completed.has(occurrence.id)}
+              onToggle={onToggle}
+              showDate={false}
+            />
+          ))
+        )}
+      </div>
+    </div>
+  )
+}
+
 function CalendarTab({
   occurrences,
   completedIds,
@@ -213,6 +437,8 @@ function CalendarTab({
   completedIds: string[]
   onToggle: (id: string) => void
 }) {
+  const [view, setView] = React.useState<"list" | "month">("list")
+
   if (occurrences.length === 0) {
     return (
       <p className="text-sm text-muted-foreground">
@@ -228,42 +454,48 @@ function CalendarTab({
   const completed = new Set(completedIds)
 
   return (
-    <ol className="grid gap-2">
-      {occurrences.map((occurrence) => {
-        const isDone = completed.has(occurrence.id)
-        return (
-          <li key={occurrence.id}>
-            <Card
-              className={cn(
-                "flex-row items-center justify-between gap-3 px-4",
-                isDone && "opacity-50"
-              )}
-            >
-              <div>
-                <p className="text-xs font-medium text-primary">
-                  {occurrence.date}
-                </p>
-                <p className={cn("font-medium", isDone && "line-through")}>
-                  {occurrence.title}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {occurrence.detail}
-                </p>
-              </div>
-              <Button
-                type="button"
-                variant={isDone ? "secondary" : "outline"}
-                size="sm"
-                onClick={() => onToggle(occurrence.id)}
-              >
-                <IconCheck />
-                {isDone ? "Done" : "Mark done"}
-              </Button>
-            </Card>
-          </li>
-        )
-      })}
-    </ol>
+    <div className="grid gap-4">
+      <div className="flex w-fit gap-1 rounded-lg bg-muted p-[3px]">
+        <Button
+          type="button"
+          variant={view === "list" ? "default" : "ghost"}
+          size="sm"
+          onClick={() => setView("list")}
+        >
+          <IconLayoutList />
+          List
+        </Button>
+        <Button
+          type="button"
+          variant={view === "month" ? "default" : "ghost"}
+          size="sm"
+          onClick={() => setView("month")}
+        >
+          <IconLayoutGrid />
+          Month
+        </Button>
+      </div>
+
+      {view === "list" ? (
+        <ol className="grid gap-2">
+          {occurrences.map((occurrence) => (
+            <li key={occurrence.id}>
+              <OccurrenceRow
+                occurrence={occurrence}
+                isDone={completed.has(occurrence.id)}
+                onToggle={onToggle}
+              />
+            </li>
+          ))}
+        </ol>
+      ) : (
+        <MonthCalendar
+          occurrences={occurrences}
+          completedIds={completedIds}
+          onToggle={onToggle}
+        />
+      )}
+    </div>
   )
 }
 
