@@ -121,7 +121,7 @@ export function SeekerDashboard({ listings }: { listings: Listing[] }) {
     .filter((item): item is Listing => Boolean(item))
 
   const risk = profile
-    ? assessRisk(buildOccurrences(profile), completedIds)
+    ? assessRisk(buildOccurrences(profile), completedIds, profile)
     : null
   const riskUi = risk ? riskCopy[risk.level] : null
   const nextDue = upcoming[0] ?? null
