@@ -1,16 +1,18 @@
 import type { Metadata } from "next"
-import Link from "next/link"
 
 import { Container } from "@/components/marketing/container"
-import { buttonVariants } from "@/components/ui/button"
-import { cn } from "cn"
+import { IncomeCheckForm } from "@/components/dashboard/income-check-form"
+import { NeedsSignIn } from "@/components/dashboard/needs-sign-in"
+import { hasSeekerAccess } from "@/lib/guest-server"
 
 export const metadata: Metadata = {
   title: "Will this job hurt me?",
   description: "Estimate how a wage change affects rent and benefits.",
 }
 
-export default function IncomeStubPage() {
+export default async function IncomePage() {
+  const user = await hasSeekerAccess()
+
   return (
     <Container className="py-8 sm:py-10">
       <p className="text-sm font-medium text-primary">Financials</p>
@@ -18,14 +20,19 @@ export default function IncomeStubPage() {
         Will this job hurt me?
       </h1>
       <p className="mt-3 max-w-2xl text-muted-foreground">
-        Not built yet. When it is live, you will enter a possible wage and see
-        estimated changes to rent share, CalFresh, and Medi-Cal. Always labeled
-        as estimates. Never tells you to take or refuse a job.
+        A raise can cost you Medi-Cal. A gig week can look like too much
+        income. See the before and after before you say yes.
       </p>
-      <div className="mt-8 flex flex-wrap gap-2">
-        <Link href="/financials" className={cn(buttonVariants({ variant: "outline" }))}>
-          Back to Financials
-        </Link>
+
+      <div className="mt-8">
+        {user ? (
+          <IncomeCheckForm />
+        ) : (
+          <NeedsSignIn
+            title="Sign in to check your numbers"
+            description="Your programs and income are tied to your account."
+          />
+        )}
       </div>
     </Container>
   )
