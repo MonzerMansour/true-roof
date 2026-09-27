@@ -18,7 +18,11 @@ Project rules live in `.cursor/rules/`. They always apply for product, language,
 
 ## Data
 
-Canonical SQL is `supabase/migrations/20260918000000_listings.sql` (mirrored in `supabase/seed.sql`). Apply with `npm run db:setup` or the Supabase SQL editor. Homepage cards come from `public.listings` via `lib/listings/queries.ts`, with `lib/listings/seed.ts` as fallback. One row per physical site; enums only.
+Canonical SQL is `supabase/migrations/`. Apply with `npm run db:setup` or `npx supabase db query --linked --project-ref`. Homepage cards and `/places` come from `public.listings` via `lib/listings/queries.ts`, with `lib/listings/seed.ts` as fallback. One row per physical site; enums only.
+
+## Places feed
+
+`/places` is the seeker list (shelters and safe parking together). `/places/[id]` is the site page. Staff publish rows from `/portal`. Ranking uses `match_listings` when embeddings exist; otherwise `sort_order`. Hard filters are in `lib/matching/hard-filters.ts`. Do not build a second matcher.
 
 ## Auth
 
@@ -30,4 +34,4 @@ Use shadcn components in `components/ui`. Add with `npx shadcn@latest add`. If a
 
 ## Now vs later
 
-This phase is marketing pages and the sign-in dialog (Supabase). Do not implement matcher logic, document parsing, or the provider dashboard until asked.
+This phase includes marketing, sign-in, the seeker app (Dashboard, Places, Financials sidebar), and the staff portal. Do not invent extra matcher scoring. Letter parse, income cliffs, quiet mode, and Get Help are stub pages under `/financials/*`.

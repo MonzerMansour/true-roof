@@ -23,6 +23,10 @@ export type PortalListing = {
   vehicleNote: string | null
   city: string
   published: boolean
+  lat: number | null
+  lng: number | null
+  phone: string | null
+  intakeMethod: string | null
 }
 
 export type PortalOrganization = {

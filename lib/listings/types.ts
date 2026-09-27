@@ -3,6 +3,8 @@ export type Freshness = "live" | "recent" | "call_first"
 export type PetsPolicy = "not_allowed" | "service_only" | "small_pets" | "any"
 export type CouplesPolicy = "not_allowed" | "same_room" | "separate_rooms"
 export type ParkingStatus = "open" | "full" | "waitlist"
+export type IntakeMethod = "call" | "waitlist" | "register" | "walk_up"
+export type InterestKind = "waitlist" | "register" | "on_the_way"
 
 export type Listing = {
   id: string
@@ -16,6 +18,11 @@ export type Listing = {
   vehicleNote: string | null
   city: string
   orgName: string
+  orgDescription?: string | null
+  lat: number | null
+  lng: number | null
+  phone: string | null
+  intakeMethod: IntakeMethod
 }
 
 export const petsLabel: Record<PetsPolicy, string> = {
@@ -41,6 +48,53 @@ export const parkingStatusLabel: Record<ParkingStatus, string> = {
   open: "Open",
   full: "Full",
   waitlist: "Waitlist",
+}
+
+export const intakeLabel: Record<IntakeMethod, string> = {
+  call: "Call first",
+  waitlist: "Join waitlist",
+  register: "Ask for a bed",
+  walk_up: "Walk up",
+}
+
+export const interestLabel: Record<InterestKind, string> = {
+  waitlist: "Waitlist",
+  register: "Asked for a bed",
+  on_the_way: "On the way",
+}
+
+export function intakeActionLabel(listing: Listing) {
+  if (listing.intakeMethod === "call") return "Call"
+  if (listing.intakeMethod === "waitlist") return "Join waitlist"
+  if (listing.intakeMethod === "walk_up") return "Walk up"
+  return listing.kind === "parking" ? "Ask for a spot" : "Ask for a bed"
+}
+
+export function defaultIntakeMethod(listing: {
+  freshness: Freshness
+  kind: SiteKind
+  parkingStatus: ParkingStatus | null
+}): IntakeMethod {
+  if (listing.freshness === "call_first") return "call"
+  if (listing.kind === "parking" && listing.parkingStatus === "waitlist") {
+    return "waitlist"
+  }
+  if (listing.kind === "parking" && listing.parkingStatus === "open") {
+    return "register"
+  }
+  if (listing.freshness === "live") return "register"
+  return "call"
+}
+
+export function formatPhone(tel: string) {
+  const digits = tel.replace(/\D/g, "")
+  if (digits.length === 11 && digits.startsWith("1")) {
+    return `(${digits.slice(1, 4)}) ${digits.slice(4, 7)}-${digits.slice(7)}`
+  }
+  if (digits.length === 10) {
+    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`
+  }
+  return tel
 }
 
 export function formatConfirmedAt(iso: string, now = Date.now()) {

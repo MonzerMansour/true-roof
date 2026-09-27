@@ -15,7 +15,7 @@ export default async function FinancialHelpPage() {
   const user = await hasSeekerAccess()
 
   return (
-    <Container className="py-12 sm:py-16">
+    <Container className="py-8 sm:py-10">
       <p className="text-sm font-medium text-primary">After you get housed</p>
       <h1 className="font-heading mt-2 max-w-2xl text-3xl font-semibold tracking-tight sm:text-4xl">
         A few questions, and True Roof writes the year

@@ -9,7 +9,6 @@ import {
   IconCamera,
   IconCheck,
   IconPhoneCall,
-  IconSettings,
 } from "@tabler/icons-react"
 import { toast } from "sonner"
 
@@ -30,7 +29,6 @@ import { cn } from "cn"
 import { assessRisk, buildOccurrences, type RiskLevel } from "@/lib/obligations/schedule"
 import {
   addPayment,
-  clearAllData,
   loadCompletedOccurrenceIds,
   loadPayments,
   loadProfile,
@@ -96,14 +94,6 @@ export function DashboardClient() {
       savingsSaved: (profile?.savingsSaved ?? 0) + amount,
     })
     if (next) setProfile(next)
-  }
-
-  function handleClearData() {
-    clearAllData()
-    setProfile(null)
-    setCompletedIds([])
-    setPayments([])
-    toast.success("Your data was deleted from this device.")
   }
 
   if (!loaded) return null
@@ -192,10 +182,6 @@ export function DashboardClient() {
             <IconCamera />
             Scanner
           </TabsTrigger>
-          <TabsTrigger value="settings">
-            <IconSettings />
-            Settings
-          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="calendar" className="pt-4">
@@ -212,10 +198,6 @@ export function DashboardClient() {
 
         <TabsContent value="scanner" className="pt-4">
           <ScannerTab payments={payments} onLog={handleLogPayment} />
-        </TabsContent>
-
-        <TabsContent value="settings" className="pt-4">
-          <SettingsTab profile={profile} onClearData={handleClearData} />
         </TabsContent>
       </Tabs>
     </div>
@@ -234,7 +216,11 @@ function CalendarTab({
   if (occurrences.length === 0) {
     return (
       <p className="text-sm text-muted-foreground">
-        Nothing scheduled yet. Add rent and bills in Settings.
+        Nothing scheduled yet. Set up your plan in{" "}
+        <Link href="/get-started/financial-help" className="font-medium underline">
+          Financials setup
+        </Link>
+        .
       </p>
     )
   }
@@ -468,65 +454,6 @@ function ScannerTab({
           </ul>
         </div>
       ) : null}
-    </div>
-  )
-}
-
-function SettingsTab({
-  profile,
-  onClearData,
-}: {
-  profile: ObligationsProfile
-  onClearData: () => void
-}) {
-  return (
-    <div className="grid gap-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>Your plan</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-1 text-sm">
-          <p>Move-in date: {profile.moveInDate || "Not set"}</p>
-          <p>
-            Rent: ${profile.rentAmount.toLocaleString()} due on day{" "}
-            {profile.rentDueDay}
-          </p>
-          <p>
-            Programs:{" "}
-            {profile.programs.length > 0
-              ? profile.programs.map((p) => p.label).join(", ")
-              : "None yet"}
-          </p>
-          <p>
-            Case manager:{" "}
-            {profile.caseManagerName || profile.caseManagerContact
-              ? `${profile.caseManagerName} ${profile.caseManagerContact}`.trim()
-              : "Not set"}
-          </p>
-        </CardContent>
-        <CardContent>
-          <Link
-            href="/get-started/financial-help"
-            className={cn(buttonVariants({ variant: "outline" }))}
-          >
-            Edit my plan
-          </Link>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Privacy</CardTitle>
-          <CardDescription className="text-base">
-            Your plan and payment log live only on this device.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button type="button" variant="destructive" onClick={onClearData}>
-            Delete my data
-          </Button>
-        </CardContent>
-      </Card>
     </div>
   )
 }

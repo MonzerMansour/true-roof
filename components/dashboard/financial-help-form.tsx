@@ -301,7 +301,7 @@ export function FinancialHelpForm() {
 
     saveProfile(profile)
     toast.success("Your plan is set up.")
-    router.push("/dashboard")
+    router.push("/financials")
   }
 
   function onNext() {

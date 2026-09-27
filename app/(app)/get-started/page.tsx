@@ -1,67 +1,24 @@
 import type { Metadata } from "next"
-import Link from "next/link"
 
+import { NeedChoices } from "@/components/app/need-choices"
 import { Container } from "@/components/marketing/container"
-import { NeedsSignIn } from "@/components/dashboard/needs-sign-in"
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import { hasSeekerAccess } from "@/lib/guest-server"
 
 export const metadata: Metadata = {
   title: "What do you need",
   description: "Looking for shelter tonight, or help staying housed?",
 }
 
-export default async function GetStartedPage() {
-  const user = await hasSeekerAccess()
-
+export default function GetStartedPage() {
   return (
-    <Container className="py-16">
+    <Container className="py-8 sm:py-10">
       <p className="text-sm font-medium text-primary">Welcome</p>
-      <h1 className="font-heading mt-2 max-w-2xl text-4xl font-semibold tracking-tight sm:text-5xl">
+      <h1 className="font-heading mt-2 max-w-2xl text-3xl font-semibold tracking-tight sm:text-4xl">
         What do you need right now?
       </h1>
-      <p className="mt-3 max-w-xl text-muted-foreground">
-        Pick one. You can always find the other from the menu later.
-      </p>
+      <p className="mt-2 max-w-xl text-muted-foreground">Pick one.</p>
 
-      <div className="mt-10">
-        {user ? (
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Link href="/get-started/find-a-place">
-              <Card className="h-full transition-colors hover:bg-muted/40">
-                <CardHeader>
-                  <CardTitle>Looking for shelter tonight</CardTitle>
-                  <CardDescription className="text-base">
-                    Find a shelter bed or a safe place to park. Answer a few
-                    short questions so we only show places that fit.
-                  </CardDescription>
-                </CardHeader>
-              </Card>
-            </Link>
-
-            <Link href="/get-started/financial-help">
-              <Card className="h-full transition-colors hover:bg-muted/40">
-                <CardHeader>
-                  <CardTitle>Looking for financial help</CardTitle>
-                  <CardDescription className="text-base">
-                    You already have a place. Set up your rent, bills, and
-                    program deadlines so nothing slips.
-                  </CardDescription>
-                </CardHeader>
-              </Card>
-            </Link>
-          </div>
-        ) : (
-          <NeedsSignIn
-            title="Sign in to continue"
-            description="Tell True Roof what you need once you are signed in."
-          />
-        )}
+      <div className="mt-8">
+        <NeedChoices />
       </div>
     </Container>
   )

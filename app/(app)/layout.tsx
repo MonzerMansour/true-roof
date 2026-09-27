@@ -1,14 +1,7 @@
 import type { ReactNode } from "react"
 
-import { SiteFooter } from "@/components/marketing/site-footer"
-import { SiteHeader } from "@/components/marketing/site-header"
+import { AppChrome } from "@/components/app/app-chrome"
 
 export default function AppLayout({ children }: { children: ReactNode }) {
-  return (
-    <>
-      <SiteHeader />
-      <main id="main">{children}</main>
-      <SiteFooter />
-    </>
-  )
+  return <AppChrome>{children}</AppChrome>
 }

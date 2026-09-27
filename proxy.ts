@@ -1,6 +1,14 @@
 import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
 
+function isMarketingPath(pathname: string) {
+  return (
+    pathname === "/" ||
+    pathname === "/for-providers" ||
+    pathname.startsWith("/features")
+  )
+}
+
 export async function proxy(request: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -34,6 +42,28 @@ export async function proxy(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname
 
+  let role: "seeker" | "provider" | null = null
+
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .maybeSingle()
+
+    role =
+      profile?.role === "provider" || user.user_metadata?.role === "provider"
+        ? "provider"
+        : "seeker"
+  }
+
+  if (user && isMarketingPath(pathname)) {
+    const redirectUrl = request.nextUrl.clone()
+    redirectUrl.pathname = role === "provider" ? "/portal" : "/home"
+    redirectUrl.search = ""
+    return NextResponse.redirect(redirectUrl)
+  }
+
   if (pathname.startsWith("/portal")) {
     if (!user) {
       const redirectUrl = request.nextUrl.clone()
@@ -42,16 +72,10 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(redirectUrl)
     }
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .maybeSingle()
-
-    if (profile?.role !== "provider") {
+    if (role !== "provider") {
       const redirectUrl = request.nextUrl.clone()
-      redirectUrl.pathname = "/"
-      redirectUrl.searchParams.set("portal", "providers-only")
+      redirectUrl.pathname = "/home"
+      redirectUrl.search = ""
       return NextResponse.redirect(redirectUrl)
     }
   }

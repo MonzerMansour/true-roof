@@ -46,6 +46,8 @@ const ref = url?.match(/https:\/\/([a-z0-9]+)\.supabase\.co/i)?.[1]
 const sqlPaths = [
   "supabase/migrations/20260918000000_listings.sql",
   "supabase/migrations/20260920000000_provider_portal.sql",
+  "supabase/migrations/20260921000000_vector_search.sql",
+  "supabase/migrations/20260927000000_listing_intake.sql",
 ]
 const query = sqlPaths
   .map((path) => readFileSync(resolve(path), "utf8"))

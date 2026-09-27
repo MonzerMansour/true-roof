@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import { Suspense } from "react"
 
 import { NeedsSignIn } from "@/components/dashboard/needs-sign-in"
 import { Container } from "@/components/marketing/container"
@@ -15,7 +16,7 @@ export default async function FindAPlacePage() {
   const user = await hasSeekerAccess()
 
   return (
-    <Container className="py-12 sm:py-16">
+    <Container className="py-8 sm:py-10">
       <p className="text-sm font-medium text-primary">Looking for shelter tonight</p>
       <h1 className="font-heading mt-2 max-w-2xl text-3xl font-semibold tracking-tight sm:text-4xl">
         A few questions, so we only show places that fit
@@ -39,7 +40,9 @@ export default async function FindAPlacePage() {
 
       <div className="mt-8">
         {user ? (
-          <FindAPlaceForm />
+          <Suspense fallback={null}>
+            <FindAPlaceForm />
+          </Suspense>
         ) : (
           <NeedsSignIn
             title="Create an account or sign in"

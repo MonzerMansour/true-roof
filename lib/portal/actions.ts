@@ -110,6 +110,15 @@ export async function updateListingSettings(
   const couplesRaw = String(formData.get("couples") ?? "")
   const parkingRaw = String(formData.get("parkingStatus") ?? "")
   const vehicleNote = String(formData.get("vehicleNote") ?? "")
+  const phone = String(formData.get("phone") ?? "")
+  const intakeRaw = String(formData.get("intakeMethod") ?? "")
+  const intakeMethod = ["call", "waitlist", "register", "walk_up"].includes(
+    intakeRaw
+  )
+    ? intakeRaw
+    : null
+  const latRaw = String(formData.get("lat") ?? "")
+  const lngRaw = String(formData.get("lng") ?? "")
   const publishRequested = formData.get("published") === "on"
 
   let published = listing.published
@@ -141,6 +150,9 @@ export async function updateListingSettings(
   const couples = couplesRaw ? (couplesRaw as CouplesPolicy) : null
   const parkingStatus = parkingRaw ? (parkingRaw as ParkingStatus) : null
 
+  const lat = latRaw.trim() ? Number(latRaw) : null
+  const lng = lngRaw.trim() ? Number(lngRaw) : null
+
   const { error } = await supabase
     .from("listings")
     .update({
@@ -152,6 +164,10 @@ export async function updateListingSettings(
       couples,
       parking_status: kind === "parking" ? parkingStatus : null,
       vehicle_note: kind === "parking" ? vehicleNote.trim() || null : null,
+      phone: phone.trim() || null,
+      intake_method: intakeMethod,
+      lat: Number.isFinite(lat) ? lat : null,
+      lng: Number.isFinite(lng) ? lng : null,
       published,
       last_confirmed_at: new Date().toISOString(),
     })

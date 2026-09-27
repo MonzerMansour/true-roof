@@ -4,6 +4,7 @@ import { Noto_Sans, Nunito_Sans } from "next/font/google"
 
 import { AppProviders } from "@/components/app-providers"
 import { cn } from "@/lib/utils"
+import { getAppSession } from "@/lib/auth/session"
 import { site } from "@/lib/site"
 
 import "./globals.css"
@@ -20,17 +21,19 @@ const notoSans = Noto_Sans({
 
 export const metadata: Metadata = {
   title: {
-    default: `${site.name} — ${site.tagline}`,
+    default: `${site.name}: ${site.tagline}`,
     template: `%s · ${site.name}`,
   },
   description: site.description,
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: ReactNode
 }>) {
+  const session = await getAppSession()
+
   return (
     <html
       lang="en"
@@ -42,7 +45,7 @@ export default function RootLayout({
       )}
     >
       <body>
-        <AppProviders>
+        <AppProviders session={session}>
           <a
             href="#main"
             className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-background focus:px-3 focus:py-2 focus:ring-3 focus:ring-ring/50"

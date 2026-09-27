@@ -1,11 +1,11 @@
 "use client"
 
 import * as React from "react"
-import Link from "next/link"
+import { useRouter, useSearchParams } from "next/navigation"
 import { IconArrowLeft, IconArrowRight, IconCheck } from "@tabler/icons-react"
 import { toast } from "sonner"
 
-import { Button, buttonVariants } from "@/components/ui/button"
+import { Button } from "@/components/ui/button"
 import {
   Field,
   FieldContent,
@@ -21,14 +21,11 @@ import { Input } from "@/components/ui/input"
 import { Progress } from "@/components/ui/progress"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import {
-  formatTime,
   householdLabel,
   idLabel,
-  latestEntryLabel,
   latestEntryOptions,
   partnerRoomsLabel,
   petLabel,
-  stayLabel,
   stayOptions,
   vehicleLabel,
   vehicleRegisteredLabel,
@@ -259,26 +256,43 @@ function entries<T extends string>(labels: Record<T, string>): Choice[] {
 }
 
 export function FindAPlaceForm() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const editParam = searchParams.get("edit")
+  const fromSettings = Boolean(editParam)
   const [draft, setDraft] = React.useState<Draft>(emptyDraft)
   const [index, setIndex] = React.useState(0)
   const [saved, setSaved] = React.useState<SeekerNeeds | null>(null)
   const [ready, setReady] = React.useState(false)
-  const [synced, setSynced] = React.useState(false)
-  // Changing one answer: only that question (plus any follow-up it newly
-  // needs) is shown, then the person lands back on their answers.
+  const [resumed, setResumed] = React.useState(false)
   const [editing, setEditing] = React.useState<{
     stepId: StepId
     before: StepId[]
     pos: number
   } | null>(null)
-  const [resumed, setResumed] = React.useState(false)
   const headingRef = React.useRef<HTMLDivElement>(null)
 
   React.useEffect(() => {
     const existing = loadNeeds()
+
+    if (existing && !editParam) {
+      router.replace("/places")
+      return
+    }
+
     if (existing) {
-      setDraft(fromNeeds(existing))
+      const nextDraft = fromNeeds(existing)
+      setDraft(nextDraft)
       setSaved(existing)
+
+      if (editParam && editParam !== "all") {
+        const stepId = editParam as StepId
+        setEditing({
+          stepId,
+          before: visibleSteps(nextDraft),
+          pos: 0,
+        })
+      }
     } else {
       const stored = loadDraft()
       if (stored) {
@@ -288,7 +302,7 @@ export function FindAPlaceForm() {
       }
     }
     setReady(true)
-  }, [])
+  }, [editParam, router])
 
   // Keep progress on this phone so a refresh or a dropped connection does not
   // send anyone back to question one.
@@ -345,19 +359,17 @@ export function FindAPlaceForm() {
     setResumed(false)
     setSaved(needs)
     setEditing(null)
-    setSynced(false)
     toast.success("Saved on this phone.")
 
-    // Signed-in accounts also keep a copy that helps match places. Guests get
-    // a 401 here and stay phone-only.
     fetch("/api/needs/embed", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(needs),
+    }).catch(() => {
+      // Phone copy is enough if the account copy fails.
     })
-      .then((response) => response.json())
-      .then((result: { stored?: boolean }) => setSynced(Boolean(result.stored)))
-      .catch(() => setSynced(false))
+
+    router.push(fromSettings ? "/settings" : "/places")
   }
 
   function startOver() {
@@ -369,24 +381,6 @@ export function FindAPlaceForm() {
   }
 
   if (!ready) return null
-
-  if (saved && !editing) {
-    return (
-      <Summary
-        needs={saved}
-        synced={synced}
-        onEditStep={(stepId) => {
-          setEditing({ stepId, before: visibleSteps(draft), pos: 0 })
-          requestAnimationFrame(() => headingRef.current?.focus())
-        }}
-        onRedo={() => {
-          setSaved(null)
-          setIndex(0)
-        }}
-        onClear={startOver}
-      />
-    )
-  }
 
   return (
     <form
@@ -665,6 +659,10 @@ export function FindAPlaceForm() {
             size="lg"
             onClick={() => {
               if (saved) setDraft(fromNeeds(saved))
+              if (fromSettings) {
+                router.push("/settings")
+                return
+              }
               setEditing(null)
             }}
           >
@@ -680,7 +678,7 @@ export function FindAPlaceForm() {
           {isLast ? (
             <>
               <IconCheck />
-              {editing ? "Save change" : "Save my answers"}
+              {editing ? "Save change" : "See my places"}
             </>
           ) : (
             <>
@@ -694,109 +692,5 @@ export function FindAPlaceForm() {
         {answered ? "" : "Choose an answer to continue."}
       </p>
     </form>
-  )
-}
-
-function Summary({
-  needs,
-  synced,
-  onEditStep,
-  onRedo,
-  onClear,
-}: {
-  needs: SeekerNeeds
-  synced: boolean
-  onEditStep: (step: StepId) => void
-  onRedo: () => void
-  onClear: () => void
-}) {
-  const rows: [string, string, StepId][] = [
-    ["Who", householdLabel[needs.household], "household"],
-  ]
-
-  if (needs.partnerRooms) {
-    rows.push(["Rooms", partnerRoomsLabel[needs.partnerRooms], "partnerRooms"])
-  }
-
-  rows.push(["Pet", petLabel[needs.pet], "pet"])
-
-  if (needs.pet === "small_pet") {
-    rows.push([
-      "Pet weight",
-      needs.petWeightLbs ? `About ${needs.petWeightLbs} pounds` : "Not given",
-      "petWeight",
-    ])
-  }
-
-  rows.push(["Photo ID", idLabel[needs.idStatus], "id"])
-  rows.push(["Vehicle", vehicleLabel[needs.vehicle], "vehicle"])
-
-  if (needs.vehicleSize) {
-    rows.push(["Vehicle size", vehicleSizeLabel[needs.vehicleSize], "vehicleDetails"])
-  }
-  if (needs.vehicleRegistered) {
-    rows.push([
-      "Registered",
-      vehicleRegisteredLabel[needs.vehicleRegistered],
-      "vehicleDetails",
-    ])
-  }
-
-  rows.push([
-    "Can check in",
-    `${formatTime(needs.arrivalFrom)} to ${formatTime(needs.arrivalTo)}`,
-    "arrival",
-  ])
-  rows.push(["Late entry", latestEntryLabel(needs.latestEntry), "curfew"])
-  rows.push(["Bed needed", stayLabel(needs.daysNeeded), "stay"])
-
-  return (
-    <div className="max-w-xl">
-      <h2 className="font-heading text-2xl font-semibold">Your answers</h2>
-      <p className="mt-2 text-muted-foreground">
-        {synced
-          ? "Saved on this phone and to your account, so True Roof can match you to places. Nothing is sent to a shelter."
-          : "Saved on this phone. Nothing is sent to a shelter."}{" "}
-        Matching to real shelters and parking lots is still being built.
-      </p>
-
-      <dl className="mt-6 divide-y rounded-lg border">
-        {rows.map(([label, value, stepId]) => (
-          <div
-            key={label}
-            className="flex items-center justify-between gap-3 p-3"
-          >
-            <div className="flex flex-col gap-0.5">
-              <dt className="text-sm text-muted-foreground">{label}</dt>
-              <dd className="font-medium">{value}</dd>
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => onEditStep(stepId)}
-            >
-              Change
-              <span className="sr-only"> {label}</span>
-            </Button>
-          </div>
-        ))}
-      </dl>
-
-      <div className="mt-8 flex flex-wrap gap-3">
-        <Button size="lg" variant="outline" onClick={onRedo}>
-          Answer everything again
-        </Button>
-        <Button size="lg" variant="outline" onClick={onClear}>
-          Delete my answers
-        </Button>
-        <Link
-          href="/get-started"
-          className={buttonVariants({ size: "lg", variant: "ghost" })}
-        >
-          Back
-        </Link>
-      </div>
-    </div>
   )
 }
