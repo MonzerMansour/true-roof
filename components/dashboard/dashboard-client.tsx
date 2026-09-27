@@ -26,6 +26,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -78,8 +79,15 @@ export function DashboardClient() {
   )
 
   const risk = React.useMemo(
-    () => assessRisk(occurrences, completedIds),
-    [occurrences, completedIds]
+    () =>
+      assessRisk(occurrences, completedIds, {
+        monthlyIncome: profile?.monthlyIncome ?? null,
+        previousMonthlyIncome: profile?.previousMonthlyIncome ?? null,
+        incomeUpdatedAt: profile?.incomeUpdatedAt ?? null,
+        lastShutoffNoticeAt: profile?.lastShutoffNoticeAt ?? null,
+        lastCheckInAt: profile?.lastCheckInAt ?? null,
+      }),
+    [occurrences, completedIds, profile]
   )
 
   function handleToggle(id: string) {
@@ -97,6 +105,27 @@ export function DashboardClient() {
     const next = updateProfile({
       savingsSaved: (profile?.savingsSaved ?? 0) + amount,
     })
+    if (next) setProfile(next)
+  }
+
+  function handleCheckIn() {
+    const next = updateProfile({ lastCheckInAt: isoDate(new Date()) })
+    if (next) setProfile(next)
+    toast.success("Checked in.")
+  }
+
+  function handleUpdateIncome(amount: number) {
+    const next = updateProfile({
+      previousMonthlyIncome: profile?.monthlyIncome ?? null,
+      monthlyIncome: amount,
+      incomeUpdatedAt: isoDate(new Date()),
+    })
+    if (next) setProfile(next)
+    toast.success("Income updated.")
+  }
+
+  function handleLogShutoffNotice() {
+    const next = updateProfile({ lastShutoffNoticeAt: isoDate(new Date()) })
     if (next) setProfile(next)
   }
 
@@ -170,6 +199,15 @@ export function DashboardClient() {
             </Button>
           </CardContent>
         </Card>
+
+        <CheckInCard
+          lastCheckInAt={profile.lastCheckInAt}
+          onCheckIn={handleCheckIn}
+        />
+        <IncomeCard
+          monthlyIncome={profile.monthlyIncome}
+          onUpdate={handleUpdateIncome}
+        />
       </div>
 
       <Tabs defaultValue="calendar">
@@ -201,7 +239,11 @@ export function DashboardClient() {
         </TabsContent>
 
         <TabsContent value="scanner" className="pt-4">
-          <ScannerTab payments={payments} onLog={handleLogPayment} />
+          <ScannerTab
+            payments={payments}
+            onLog={handleLogPayment}
+            onLogShutoffNotice={handleLogShutoffNotice}
+          />
         </TabsContent>
       </Tabs>
     </div>
@@ -261,6 +303,91 @@ function isoDate(date: Date) {
 function parseLocalDate(iso: string) {
   const [year, month, day] = iso.split("-").map(Number)
   return new Date(year, (month ?? 1) - 1, day ?? 1)
+}
+
+function CheckInCard({
+  lastCheckInAt,
+  onCheckIn,
+}: {
+  lastCheckInAt: string | null
+  onCheckIn: () => void
+}) {
+  const daysSince = lastCheckInAt
+    ? Math.round(
+        (startOfDayClient(new Date()).getTime() -
+          parseLocalDate(lastCheckInAt).getTime()) /
+          (1000 * 60 * 60 * 24)
+      )
+    : null
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Weekly check-in</CardTitle>
+        <CardDescription>
+          {daysSince === null
+            ? "You have not checked in yet."
+            : `Last check-in: ${daysSince} day${daysSince === 1 ? "" : "s"} ago.`}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Button type="button" size="sm" onClick={onCheckIn}>
+          I&apos;m doing OK, check in
+        </Button>
+      </CardContent>
+    </Card>
+  )
+}
+
+function startOfDayClient(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate())
+}
+
+function IncomeCard({
+  monthlyIncome,
+  onUpdate,
+}: {
+  monthlyIncome: number | null
+  onUpdate: (amount: number) => void
+}) {
+  const [value, setValue] = React.useState("")
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Monthly income</CardTitle>
+        <CardDescription>
+          {monthlyIncome != null
+            ? `Currently $${monthlyIncome.toLocaleString()}`
+            : "Not set yet"}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="flex gap-2">
+        <Input
+          type="number"
+          inputMode="decimal"
+          min={0}
+          placeholder="New amount"
+          aria-label="New monthly income"
+          className="w-28"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+        />
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={!value}
+          onClick={() => {
+            onUpdate(Number(value))
+            setValue("")
+          }}
+        >
+          Update
+        </Button>
+      </CardContent>
+    </Card>
+  )
 }
 
 const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
@@ -576,14 +703,17 @@ function NotificationsTab({
 function ScannerTab({
   payments,
   onLog,
+  onLogShutoffNotice,
 }: {
   payments: Payment[]
   onLog: (payment: Payment) => void
+  onLogShutoffNotice: () => void
 }) {
   const [amount, setAmount] = React.useState("")
   const [paidTo, setPaidTo] = React.useState("")
   const [note, setNote] = React.useState("")
   const [fileName, setFileName] = React.useState<string | null>(null)
+  const [isShutoffNotice, setIsShutoffNotice] = React.useState(false)
 
   function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -596,10 +726,16 @@ function ScannerTab({
       note,
     })
 
+    if (isShutoffNotice) {
+      onLogShutoffNotice()
+      toast.warning("Flagged as a shutoff notice. Get Help will show it as a warning.")
+    }
+
     setAmount("")
     setPaidTo("")
     setNote("")
     setFileName(null)
+    setIsShutoffNotice(false)
   }
 
   return (
@@ -623,7 +759,7 @@ function ScannerTab({
                     type="number"
                     inputMode="decimal"
                     min={0}
-                    required
+                    required={!isShutoffNotice}
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
                   />
@@ -660,6 +796,16 @@ function ScannerTab({
                   onChange={(e) => setNote(e.target.value)}
                 />
               </Field>
+              <FieldLabel htmlFor="payment-shutoff" className="w-fit">
+                <Checkbox
+                  id="payment-shutoff"
+                  checked={isShutoffNotice}
+                  onCheckedChange={(checked) =>
+                    setIsShutoffNotice(Boolean(checked))
+                  }
+                />
+                This is a shutoff or disconnection notice
+              </FieldLabel>
               <Button type="submit" className="w-fit">
                 Log it
               </Button>

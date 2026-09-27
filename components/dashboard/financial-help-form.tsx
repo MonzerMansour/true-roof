@@ -54,6 +54,7 @@ type StepId =
   | "programs"
   | "programDates"
   | "utilities"
+  | "income"
   | "caseManager"
 
 const BILL_FREQUENCIES: BillFrequency[] = ["monthly", "every_2_months", "quarterly"]
@@ -117,6 +118,7 @@ export function FinancialHelpForm() {
   const [voucherInspectionDate, setVoucherInspectionDate] = React.useState("")
   const [otherLabel, setOtherLabel] = React.useState("")
   const [utilities, setUtilities] = React.useState<UtilityFormState[]>([])
+  const [monthlyIncome, setMonthlyIncome] = React.useState("")
 
   React.useEffect(() => {
     const existing = loadProfile()
@@ -130,6 +132,9 @@ export function FinancialHelpForm() {
     setCaseManagerName(existing.caseManagerName ?? "")
     setCaseManagerContact(existing.caseManagerContact ?? "")
     setVoucherInspectionDate(existing.voucherInspectionDate ?? "")
+    setMonthlyIncome(
+      existing.monthlyIncome != null ? String(existing.monthlyIncome) : ""
+    )
     setUtilities(
       existing.utilities.map((u) => ({
         id: u.id,
@@ -224,6 +229,7 @@ export function FinancialHelpForm() {
     "programs",
     ...(anyProgram ? (["programDates"] as StepId[]) : []),
     "utilities",
+    "income",
     "caseManager",
   ]
   const position = Math.min(index, steps.length - 1)
@@ -267,6 +273,7 @@ export function FinancialHelpForm() {
 
   function finish() {
     const rent = Number(rentAmount) || 0
+    const existing = loadProfile()
 
     const profile: ObligationsProfile = {
       moveInDate,
@@ -296,7 +303,15 @@ export function FinancialHelpForm() {
           frequency: u.frequency,
         })),
       savingsGoal: rent,
-      savingsSaved: loadProfile()?.savingsSaved ?? 0,
+      savingsSaved: existing?.savingsSaved ?? 0,
+      monthlyIncome: monthlyIncome ? Number(monthlyIncome) : null,
+      // A change made here is a correction, not a "my income changed" event —
+      // that only happens through the dedicated update action on Financials,
+      // so the drop-detection baseline carries over untouched.
+      previousMonthlyIncome: existing?.previousMonthlyIncome ?? null,
+      incomeUpdatedAt: existing?.incomeUpdatedAt ?? null,
+      lastShutoffNoticeAt: existing?.lastShutoffNoticeAt ?? null,
+      lastCheckInAt: existing?.lastCheckInAt ?? null,
     }
 
     saveProfile(profile)
@@ -613,6 +628,28 @@ export function FinancialHelpForm() {
               Add a bill
             </Button>
             {error ? <FieldError>{error}</FieldError> : null}
+          </Question>
+        ) : null}
+
+        {step === "income" ? (
+          <Question
+            legend="What's your monthly income?"
+            hint="Optional. Helps True Roof flag it if your income drops later."
+          >
+            <Field className="w-40">
+              <FieldLabel htmlFor="monthly-income">
+                Monthly income ($)
+              </FieldLabel>
+              <Input
+                id="monthly-income"
+                type="number"
+                inputMode="decimal"
+                min={0}
+                className="h-12 text-base"
+                value={monthlyIncome}
+                onChange={(e) => setMonthlyIncome(e.target.value)}
+              />
+            </Field>
           </Question>
         ) : null}
 

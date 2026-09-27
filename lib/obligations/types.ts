@@ -48,6 +48,11 @@ export type ObligationsProfile = {
   utilities: Utility[]
   savingsGoal: number
   savingsSaved: number
+  monthlyIncome: number | null
+  previousMonthlyIncome: number | null
+  incomeUpdatedAt: string | null
+  lastShutoffNoticeAt: string | null
+  lastCheckInAt: string | null
 }
 
 export type Payment = {
@@ -80,4 +85,9 @@ export const emptyProfile: ObligationsProfile = {
   utilities: [],
   savingsGoal: 0,
   savingsSaved: 0,
+  monthlyIncome: null,
+  previousMonthlyIncome: null,
+  incomeUpdatedAt: null,
+  lastShutoffNoticeAt: null,
+  lastCheckInAt: null,
 }

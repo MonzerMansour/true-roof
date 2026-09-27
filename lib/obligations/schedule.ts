@@ -131,9 +131,25 @@ export type RiskAssessment = {
   reasons: string[]
 }
 
+type RiskSignals = Pick<
+  ObligationsProfile,
+  | "monthlyIncome"
+  | "previousMonthlyIncome"
+  | "incomeUpdatedAt"
+  | "lastShutoffNoticeAt"
+  | "lastCheckInAt"
+>
+
+function daysSince(iso: string, today: Date) {
+  return Math.round(
+    (today.getTime() - parseLocalDate(iso).getTime()) / (1000 * 60 * 60 * 24)
+  )
+}
+
 export function assessRisk(
   occurrences: Occurrence[],
   completedIds: string[],
+  signals: RiskSignals,
   now = new Date()
 ): RiskAssessment {
   const today = startOfDay(now)
@@ -161,6 +177,41 @@ export function assessRisk(
       score += 10
       reasons.push(`${occurrence.title} is due in ${daysUntil} day(s)`)
     }
+  }
+
+  if (
+    signals.monthlyIncome != null &&
+    signals.previousMonthlyIncome != null &&
+    signals.incomeUpdatedAt &&
+    signals.monthlyIncome < signals.previousMonthlyIncome * 0.9 &&
+    daysSince(signals.incomeUpdatedAt, today) <= 30
+  ) {
+    score += 15
+    reasons.push(
+      `Income dropped from $${signals.previousMonthlyIncome.toLocaleString()} to $${signals.monthlyIncome.toLocaleString()}`
+    )
+  }
+
+  if (
+    signals.lastShutoffNoticeAt &&
+    daysSince(signals.lastShutoffNoticeAt, today) <= 14
+  ) {
+    score += 25
+    reasons.push(
+      `A shutoff or disconnection notice was logged on ${signals.lastShutoffNoticeAt}`
+    )
+  }
+
+  const daysSinceCheckIn = signals.lastCheckInAt
+    ? daysSince(signals.lastCheckInAt, today)
+    : null
+  if (daysSinceCheckIn === null || daysSinceCheckIn > 7) {
+    score += 10
+    reasons.push(
+      daysSinceCheckIn === null
+        ? "You have not checked in yet"
+        : `No check-in in ${daysSinceCheckIn} days`
+    )
   }
 
   const level: RiskLevel = score >= 40 ? "act" : score >= 10 ? "watch" : "steady"
