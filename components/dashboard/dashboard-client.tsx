@@ -392,7 +392,7 @@ function MonthCalendar({
               aria-pressed={isSelected}
               className={cn(
                 "flex aspect-square flex-col items-center justify-start gap-1 rounded-lg border p-1 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50 sm:p-2",
-                inMonth ? "bg-card" : "bg-muted/30 text-muted-foreground",
+                inMonth ? "bg-card" : "bg-muted text-muted-foreground/60",
                 isSelected && "border-primary ring-2 ring-primary/40",
                 iso === todayIso && "font-semibold text-primary"
               )}
