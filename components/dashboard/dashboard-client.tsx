@@ -295,7 +295,16 @@ function MonthCalendar({
     const start = new Date(firstOfMonth)
     start.setDate(start.getDate() - firstOfMonth.getDay())
 
-    return Array.from({ length: 42 }, (_, i) => {
+    const daysInMonth = new Date(
+      cursor.getFullYear(),
+      cursor.getMonth() + 1,
+      0
+    ).getDate()
+    // Only as many weeks as this month actually needs (5 most months, 6 when
+    // a long month starts late in the week), not a fixed 6.
+    const weeksNeeded = Math.ceil((firstOfMonth.getDay() + daysInMonth) / 7)
+
+    return Array.from({ length: weeksNeeded * 7 }, (_, i) => {
       const date = new Date(start)
       date.setDate(start.getDate() + i)
       return {
