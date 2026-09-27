@@ -1,9 +1,12 @@
 import type { Metadata } from "next"
+import Link from "next/link"
 
 import { Container } from "@/components/marketing/container"
 import { IncomeCheckForm } from "@/components/dashboard/income-check-form"
 import { NeedsSignIn } from "@/components/dashboard/needs-sign-in"
+import { buttonVariants } from "@/components/ui/button"
 import { hasSeekerAccess } from "@/lib/guest-server"
+import { cn } from "cn"
 
 export const metadata: Metadata = {
   title: "Will this job hurt me?",
@@ -15,6 +18,12 @@ export default async function IncomePage() {
 
   return (
     <Container className="py-8 sm:py-10">
+      <Link
+        href="/financials"
+        className={cn(buttonVariants({ variant: "outline", size: "sm" }), "mb-4")}
+      >
+        Back to Financials
+      </Link>
       <p className="text-sm font-medium text-primary">Financials</p>
       <h1 className="font-heading mt-2 max-w-2xl text-3xl font-semibold tracking-tight sm:text-4xl">
         Will this job hurt me?
