@@ -23,6 +23,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { GUEST_COOKIE, GUEST_MAX_AGE } from "@/lib/guest"
+import { safeNextPath } from "@/lib/auth/next-path"
 import { audienceFromPath } from "@/lib/site"
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/client"
 import { IconBrandGoogle } from "@tabler/icons-react"
@@ -33,7 +34,7 @@ export function SignInDialog() {
   const pathname = usePathname()
   const router = useRouter()
   const role = audienceFromPath(pathname)
-  const { open, setOpen } = useSignIn()
+  const { open, setOpen, next } = useSignIn()
   const [mode, setMode] = React.useState<Mode>("signin")
   const [email, setEmail] = React.useState("")
   const [password, setPassword] = React.useState("")
@@ -43,6 +44,24 @@ export function SignInDialog() {
     setEmail("")
     setPassword("")
     setPending(false)
+  }
+
+  function callbackUrl() {
+    const redirect = new URL("/auth/callback", window.location.origin)
+    redirect.searchParams.set("role", role)
+    redirect.searchParams.set(
+      "next",
+      role === "provider" ? "/portal" : (safeNextPath(next) ?? "/home")
+    )
+    return redirect.toString()
+  }
+
+  function afterAuth() {
+    if (role === "provider") {
+      router.push("/portal")
+      return
+    }
+    router.push(safeNextPath(next) ?? "/home")
   }
 
   async function withClient() {
@@ -73,7 +92,7 @@ export function SignInDialog() {
           password,
           options: {
             data: { role },
-            emailRedirectTo: `${window.location.origin}/auth/callback`,
+            emailRedirectTo: callbackUrl(),
           },
         })
 
@@ -101,14 +120,7 @@ export function SignInDialog() {
       toast.success("You are signed in.")
       setOpen(false)
       reset()
-
-      if (role === "provider") {
-        router.push("/portal")
-      } else if (role === "seeker" && pathname === "/") {
-        router.push("/get-started")
-      } else {
-        router.refresh()
-      }
+      afterAuth()
     } finally {
       setPending(false)
     }
@@ -123,17 +135,10 @@ export function SignInDialog() {
 
       document.cookie = `true-roof-pending-role=${role}; path=/; max-age=600; samesite=lax`
 
-      const redirect = new URL("/auth/callback", window.location.origin)
-      redirect.searchParams.set("role", role)
-      redirect.searchParams.set(
-        "next",
-        role === "seeker" && pathname === "/" ? "/get-started" : pathname
-      )
-
       const { error } = await client.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: redirect.toString(),
+          redirectTo: callbackUrl(),
           queryParams: {
             access_type: "offline",
             prompt: "select_account",
@@ -155,12 +160,7 @@ export function SignInDialog() {
     toast.success("You are in as a guest.")
     setOpen(false)
     reset()
-
-    if (role === "seeker" && pathname === "/") {
-      router.push("/get-started")
-    } else {
-      router.refresh()
-    }
+    afterAuth()
   }
 
   async function onMagicLink() {
@@ -180,7 +180,7 @@ export function SignInDialog() {
         options: {
           shouldCreateUser: true,
           data: { role },
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          emailRedirectTo: callbackUrl(),
         },
       })
 
@@ -209,8 +209,9 @@ export function SignInDialog() {
         <DialogHeader>
           <DialogTitle>Sign in to True Roof</DialogTitle>
           <DialogDescription>
-            One account works on this phone or a borrowed one. You can export or
-            delete your data later in one tap.
+            {next?.includes("intent=")
+              ? "Sign in or create an account to join a waitlist or ask for a bed. Guest mode cannot send that."
+              : "One account works on this phone or a borrowed one. You can export or delete your data later in one tap."}
           </DialogDescription>
         </DialogHeader>
 
@@ -236,6 +237,7 @@ export function SignInDialog() {
               onMagicLink={onMagicLink}
               onGoogle={onGoogle}
               onGuest={onGuest}
+              hideGuest={Boolean(next?.includes("intent="))}
             />
           </TabsContent>
 
@@ -252,6 +254,7 @@ export function SignInDialog() {
               onMagicLink={onMagicLink}
               onGoogle={onGoogle}
               onGuest={onGuest}
+              hideGuest={Boolean(next?.includes("intent="))}
             />
           </TabsContent>
         </Tabs>
@@ -279,6 +282,7 @@ function AuthForm({
   onMagicLink,
   onGoogle,
   onGuest,
+  hideGuest,
 }: {
   email: string
   password: string
@@ -291,6 +295,7 @@ function AuthForm({
   onMagicLink: () => void
   onGoogle: () => void
   onGuest: () => void
+  hideGuest?: boolean
 }) {
   return (
     <form onSubmit={onSubmit}>
@@ -349,19 +354,23 @@ function AuthForm({
           >
             Email me a sign-in link
           </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            disabled={pending}
-            className="w-full"
-            onClick={onGuest}
-          >
-            Continue as a guest
-          </Button>
-          <p className="text-center text-xs text-muted-foreground">
-            Guest access lasts 30 days on this phone. Clear this browser or switch
-            phones and it is gone.
-          </p>
+          {hideGuest ? null : (
+            <>
+              <Button
+                type="button"
+                variant="ghost"
+                disabled={pending}
+                className="w-full"
+                onClick={onGuest}
+              >
+                Continue as a guest
+              </Button>
+              <p className="text-center text-xs text-muted-foreground">
+                Guest access lasts 30 days on this phone. Clear this browser or switch
+                phones and it is gone.
+              </p>
+            </>
+          )}
         </div>
       </FieldGroup>
     </form>

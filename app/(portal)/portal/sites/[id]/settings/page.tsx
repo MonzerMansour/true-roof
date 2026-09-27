@@ -1,6 +1,8 @@
 import type { Metadata } from "next"
 
+import { ListingInterestPanel } from "@/components/portal/listing-interest-panel"
 import { ListingSettingsForm } from "@/components/portal/listing-settings-form"
+import { getInterestForListing } from "@/lib/listings/interest"
 import { getListingForPortal } from "@/lib/portal/queries"
 
 export const metadata: Metadata = {
@@ -14,6 +16,7 @@ export default async function SiteSettingsPage({
 }) {
   const { id } = await params
   const { listing, organization, canManage } = await getListingForPortal(id)
+  const interest = await getInterestForListing(id)
 
   return (
     <div className="flex flex-col gap-6">
@@ -24,6 +27,7 @@ export default async function SiteSettingsPage({
           badge honest.
         </p>
       </div>
+      <ListingInterestPanel rows={interest} />
       <ListingSettingsForm
         listing={listing}
         organization={organization}

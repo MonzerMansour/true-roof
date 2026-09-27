@@ -15,7 +15,7 @@ export default async function FinancialHelpPage() {
   const user = await hasSeekerAccess()
 
   return (
-    <Container className="py-16">
+    <Container className="py-8 sm:py-10">
       <p className="text-sm font-medium text-primary">After you get housed</p>
       <h1 className="font-heading mt-2 max-w-2xl text-4xl font-semibold tracking-tight sm:text-5xl">
         A few facts, and True Roof writes the year
@@ -25,7 +25,7 @@ export default async function FinancialHelpPage() {
         sets up your deadlines, reminders, and rent cushion.
       </p>
 
-      <div className="mt-10">
+      <div className="mt-8">
         {user ? <FinancialHelpForm /> : <NeedsSignIn />}
       </div>
     </Container>

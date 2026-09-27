@@ -16,11 +16,11 @@ Never invert this. Seeker copy, IA, and CTAs come first.
 
 ## Scope right now
 
-Marketing pages + sign-in dialog only. Do not build the matcher, calendar, document parser, or provider dashboard until asked.
+Marketing pages, sign-in, the seeker app (Dashboard `/home`, Places `/places`, Financials `/financials`), and the staff portal. Logged-in seekers use a closable sidebar (default open). Do not invent a second matcher. Ranking uses `match_listings` when embeddings exist. Hard filters live in `lib/matching/hard-filters.ts`.
 
 ## Product facts (do not invent others)
 
-- One listing row per **physical site**, linked to a shared org. Enums only — never free-text categories.
+- One listing row per **physical site**, linked to a shared org. Enums only. Never free-text categories.
 - Hard constraints (pets, cars, intake closed) **remove** a listing. Zero fits → Here4You. Household split can surface **two** listings.
 - Freshness is one badge for the whole listing: Live / Recent / Call first. Confidence decays on a curve; conflicting reports lower confidence, they do not overwrite.
 - Vehicle intake is first-class: car/RV questions, then shelters **and** safe parking side by side.

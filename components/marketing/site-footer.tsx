@@ -20,8 +20,8 @@ export function SiteFooter() {
         <div className="lg:col-span-1">
           <LogoLockup className="w-36" />
           <p className="mt-3 max-w-xs text-sm text-muted-foreground">
-            {site.tagline} Built for people first. Shelters and lots come second
-            — and they get a real dashboard.
+            {site.tagline} Built for people first. Shelters and lots come second,
+            and they get a real dashboard.
           </p>
         </div>
 
@@ -55,14 +55,14 @@ export function SiteFooter() {
           <p className="text-sm font-medium">Account</p>
           <button
             type="button"
-            onClick={openSignIn}
+            onClick={() => openSignIn()}
             className="w-fit text-left text-sm text-muted-foreground hover:text-foreground"
           >
             Sign in
           </button>
           <button
             type="button"
-            onClick={openSignIn}
+            onClick={() => openSignIn()}
             className={cn(buttonVariants({ size: "sm" }), "w-fit")}
           >
             Get started

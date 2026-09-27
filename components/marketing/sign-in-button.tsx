@@ -23,7 +23,7 @@ export function SignInButton({
       variant={variant}
       size={size}
       className={className}
-      onClick={openSignIn}
+      onClick={() => openSignIn()}
     >
       {children}
     </Button>

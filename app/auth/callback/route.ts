@@ -8,7 +8,7 @@ export async function GET(request: Request) {
   const nextParam = searchParams.get("next")
   const hasExplicitNext =
     !!nextParam && nextParam.startsWith("/") && !nextParam.startsWith("//")
-  let next = hasExplicitNext ? (nextParam as string) : "/"
+  let next = hasExplicitNext ? (nextParam as string) : "/home"
 
   if (code) {
     const supabase = await createServerSupabaseClient()
@@ -58,6 +58,8 @@ export async function GET(request: Request) {
 
           if (profile?.role === "provider") {
             next = "/portal"
+          } else {
+            next = "/home"
           }
         }
       }

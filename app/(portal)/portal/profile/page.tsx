@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 
+import { SignOutButton } from "@/components/auth/sign-out-button"
 import {
   Card,
   CardContent,
@@ -43,11 +44,12 @@ export default async function ProfilePage() {
           <CardTitle>Account</CardTitle>
           <CardDescription>Signed in as a provider.</CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-col gap-1 text-sm">
+        <CardContent className="flex flex-col gap-3 text-sm">
           <p>
             <span className="text-muted-foreground">Email: </span>
             {context?.email ?? "Not available"}
           </p>
+          <SignOutButton />
         </CardContent>
       </Card>
 

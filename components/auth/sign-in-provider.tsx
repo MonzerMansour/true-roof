@@ -2,24 +2,32 @@
 
 import * as React from "react"
 
+import { safeNextPath } from "@/lib/auth/next-path"
+
 type SignInContextValue = {
   open: boolean
   setOpen: (open: boolean) => void
-  openSignIn: () => void
+  next: string | null
+  openSignIn: (opts?: { next?: string }) => void
 }
 
 const SignInContext = React.createContext<SignInContextValue | null>(null)
 
 export function SignInProvider({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = React.useState(false)
+  const [next, setNext] = React.useState<string | null>(null)
 
   const value = React.useMemo(
     () => ({
       open,
       setOpen,
-      openSignIn: () => setOpen(true),
+      next,
+      openSignIn: (opts?: { next?: string }) => {
+        setNext(safeNextPath(opts?.next))
+        setOpen(true)
+      },
     }),
-    [open]
+    [open, next]
   )
 
   return <SignInContext.Provider value={value}>{children}</SignInContext.Provider>

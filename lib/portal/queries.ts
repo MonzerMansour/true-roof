@@ -31,6 +31,10 @@ type ListingRow = {
   vehicle_note: string | null
   city: string
   published: boolean
+  lat?: number | null
+  lng?: number | null
+  phone?: string | null
+  intake_method?: string | null
 }
 
 function mapMember(row: MemberRow): OrganizationMember {
@@ -58,6 +62,10 @@ function mapListing(row: ListingRow): PortalListing {
     vehicleNote: row.vehicle_note,
     city: row.city,
     published: row.published,
+    lat: row.lat ?? null,
+    lng: row.lng ?? null,
+    phone: row.phone ?? null,
+    intakeMethod: row.intake_method ?? null,
   }
 }
 
@@ -82,7 +90,7 @@ export async function requireProviderSession() {
     .maybeSingle()
 
   if (profile?.role !== "provider") {
-    redirect("/?portal=providers-only")
+    redirect("/home?portal=providers-only")
   }
 
   return { supabase, user }
@@ -138,13 +146,26 @@ export async function getPortalContext(): Promise<PortalContext | null> {
       }
     }
 
-    const { data: listingRows } = await supabase
+    const listingSelectFull =
+      "id, organization_id, name, kind, freshness, last_confirmed_at, pets, couples, parking_status, vehicle_note, city, published, lat, lng, phone, intake_method"
+    const listingSelectBase =
+      "id, organization_id, name, kind, freshness, last_confirmed_at, pets, couples, parking_status, vehicle_note, city, published"
+
+    const fullListings = await supabase
       .from("listings")
-      .select(
-        "id, organization_id, name, kind, freshness, last_confirmed_at, pets, couples, parking_status, vehicle_note, city, published"
-      )
+      .select(listingSelectFull)
       .eq("organization_id", primaryMembership.organizationId)
       .order("created_at", { ascending: true })
+
+    const listingRows = fullListings.error
+      ? (
+          await supabase
+            .from("listings")
+            .select(listingSelectBase)
+            .eq("organization_id", primaryMembership.organizationId)
+            .order("created_at", { ascending: true })
+        ).data
+      : fullListings.data
 
     listings = (listingRows ?? []).map((row) => mapListing(row as ListingRow))
 
@@ -191,19 +212,32 @@ export async function getListingForPortal(listingId: string) {
   const { data: listing, error } = await supabase
     .from("listings")
     .select(
-      "id, organization_id, name, kind, freshness, last_confirmed_at, pets, couples, parking_status, vehicle_note, city, published"
+      "id, organization_id, name, kind, freshness, last_confirmed_at, pets, couples, parking_status, vehicle_note, city, published, lat, lng, phone, intake_method"
     )
     .eq("id", listingId)
     .maybeSingle()
 
-  if (error || !listing) {
+  const listingRow =
+    error || !listing
+      ? (
+          await supabase
+            .from("listings")
+            .select(
+              "id, organization_id, name, kind, freshness, last_confirmed_at, pets, couples, parking_status, vehicle_note, city, published"
+            )
+            .eq("id", listingId)
+            .maybeSingle()
+        ).data
+      : listing
+
+  if (!listingRow) {
     redirect("/portal")
   }
 
   const { data: membership } = await supabase
     .from("organization_members")
     .select("status, role")
-    .eq("organization_id", listing.organization_id)
+    .eq("organization_id", listingRow.organization_id)
     .eq("user_id", user.id)
     .eq("status", "active")
     .maybeSingle()
@@ -215,11 +249,11 @@ export async function getListingForPortal(listingId: string) {
   const { data: orgRow } = await supabase
     .from("organizations")
     .select("id, name, description")
-    .eq("id", listing.organization_id)
+    .eq("id", listingRow.organization_id)
     .maybeSingle()
 
   return {
-    listing: mapListing(listing as ListingRow),
+    listing: mapListing(listingRow as ListingRow),
     organization: orgRow
       ? {
           id: orgRow.id,

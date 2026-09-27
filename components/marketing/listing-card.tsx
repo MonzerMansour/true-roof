@@ -1,3 +1,5 @@
+import Link from "next/link"
+
 import { Badge } from "@/components/ui/badge"
 import {
   Card,
@@ -41,6 +43,7 @@ export function ListingCard({
     .join(" · ")
 
   return (
+    <Link href={`/places/${listing.id}`} className="block h-full">
     <Card
       className={cn(
         "min-w-[16rem] flex-1",
@@ -77,10 +80,11 @@ export function ListingCard({
       </CardHeader>
       <CardContent className={cn("text-sm", onDark ? "text-white/80" : "text-muted-foreground")}>
         {isParking
-          ? "Parking reads as open, full, or waitlist — not a bed-style freshness badge."
+          ? "Parking reads as open, full, or waitlist. Not a bed-style freshness badge."
           : "One freshness badge for the whole listing. Hard filters already applied."}
       </CardContent>
     </Card>
+    </Link>
   )
 }
 

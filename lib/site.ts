@@ -26,9 +26,40 @@ export const primaryNav: NavItem[] = [
     description: "Need a place tonight, or just got housed.",
   },
   {
+    href: "/places",
+    label: "Places",
+    description: "Shelters and safe parking in one list.",
+  },
+  {
     href: "/for-providers",
     label: "For shelters & lots",
     description: "Update your site. See who is looking.",
+  },
+]
+
+export const seekerAppNav: NavItem[] = [
+  {
+    href: "/home",
+    label: "Dashboard",
+    description: "Asks, saved places, recent visits, and deadlines.",
+  },
+  {
+    href: "/places",
+    label: "Places",
+    description: "Shelters and safe parking in one list.",
+  },
+  {
+    href: "/financials",
+    label: "Financials",
+    description: "Rent, bills, and recerts after you have keys.",
+  },
+]
+
+export const providerAppNav: NavItem[] = [
+  {
+    href: "/portal",
+    label: "Home",
+    description: "Your sites and staff.",
   },
 ]
 
@@ -46,7 +77,7 @@ export const featureNav: NavItem[] = [
   {
     href: "/features/deadlines",
     label: "Deadlines",
-    description: "Rent, CalFresh, Medi-Cal — on a list and on your calendar.",
+    description: "Rent, CalFresh, and Medi-Cal on a list and on your calendar.",
   },
   {
     href: "/features/letters",

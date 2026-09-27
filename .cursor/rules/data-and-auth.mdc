@@ -5,31 +5,36 @@ alwaysApply: true
 
 # Data and auth
 
-Marketing phase only. Do not add matcher, calendar, document parser, or provider dashboard tables until asked.
+Marketing phase plus the seeker Places feed and staff portal. Do not add matcher scoring tables beyond `listing_embeddings` / `seeker_needs`. Calendar and document parser wait until asked.
 
 ## Layout
 
-- `supabase/migrations/20260918000000_listings.sql` — canonical schema + sample sites. Same contents as `supabase/seed.sql`.
-- `lib/listings/types.ts` — enums. Never free-text categories.
-- `lib/listings/queries.ts` — server fetch of featured listings. Falls back to `lib/listings/seed.ts` if the table is missing. Keep seed IDs in lockstep with the SQL.
-- `lib/supabase/client.ts` — browser client. Returns `null` when env is missing.
-- `lib/supabase/server.ts` — cookie session for Route Handlers.
-- `proxy.ts` — Next.js 16 session refresh (this is middleware).
-- `app/auth/callback/route.ts` — PKCE code exchange for Google and magic links.
-- `components/auth/sign-in-dialog.tsx` — password, magic link, Google.
-- `scripts/run-sql.mjs` — `npm run db:setup`. Prefers `npx supabase db query --linked --project-ref` after `npx supabase login`.
-
-## Tables
+- `supabase/migrations/20260918000000_listings.sql`: canonical schema + sample sites. Same contents as `supabase/seed.sql`.
+- `lib/listings/types.ts`: enums. Never free-text categories.
+- `lib/listings/queries.ts`: server fetch of featured and published listings. Falls back to `lib/listings/seed.ts` if the table is missing. Keep seed IDs in lockstep with the SQL.
+- `app/(app)/places`: seeker feed and `/places/[id]` detail pages. Testers are the sample sites. Staff publish more from `/portal`.
+- `lib/matching/rank.ts`: calls `match_listings` when a seeker embedding exists. Otherwise keeps `sort_order`.
+- `lib/matching/hard-filters.ts`: pets, couples, vehicle, full lot. Removes a listing. Does not score.
+- `lib/supabase/client.ts`: browser client. Returns `null` when env is missing.
+- `lib/supabase/server.ts`: cookie session for Route Handlers.
+- `proxy.ts`: Next.js 16 session refresh (this is middleware).
+- `app/auth/callback/route.ts`: PKCE code exchange for Google and magic links.
+- `components/auth/sign-in-dialog.tsx`: password, magic link, Google.
+- `scripts/run-sql.mjs`: `npm run db:setup`. Prefers `npx supabase db query --linked --project-ref` after `npx supabase login`. Applies listings, provider portal, and vector search migrations.
 
 ## Tables
 
 One listing row per **physical site**, linked to an organization.
 
-- `organizations` — `id`, `name`
-- `listings` — `kind` `shelter` | `parking`; `freshness` `live` | `recent` | `call_first`; `pets` / `couples` enums or null; parking uses `parking_status` `open` | `full` | `waitlist` plus `vehicle_note`. `featured` + `sort_order` drive the homepage hero (first three).
-- `profiles` — `id` = `auth.users.id`, `role` `seeker` | `provider`. Created by `handle_new_user` on signup.
+- `organizations`: `id`, `name`, `description`, `access_code`
+- `listings`: `kind` `shelter` | `parking`; `freshness` `live` | `recent` | `call_first`; `pets` / `couples` enums or null; parking uses `parking_status` `open` | `full` | `waitlist` plus `vehicle_note`. `lat` / `lng` for near-me distance. `phone` for call intake. `intake_method` `call` | `waitlist` | `register` | `walk_up`. `featured` + `sort_order` drive the homepage hero (first three). `published` puts a row on `/places`.
+- `listing_interest`: seeker waitlist / register / on-the-way rows. Not matcher scoring. Own-row write. Org staff can read.
+- Places feed day-of filters (distance, intake, freshness, hide full lots) live in `lib/listings/place-filters.ts`. Hard filters still remove listings. Distance sorts client-side. It is not a second matcher.
+- `profiles`: `id` = `auth.users.id`, `role` `seeker` | `provider`. Created by `handle_new_user` on signup.
+- `organization_members`: staff roles for the portal.
+- `listing_embeddings` / `seeker_needs`: vector ranking only. The Places feed calls `match_listings` when a row exists.
 
-RLS: anon and authenticated **select** listings and organizations. Profiles are own-row only.
+RLS: anon and authenticated **select** published listings and their orgs. Members can read drafts. Profiles are own-row only.
 
 ## Apply SQL
 
@@ -46,4 +51,4 @@ Project in `.env.local`: `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON
 
 ## Homepage listings
 
-Hero reads `getFeaturedListings()` and slices the first three. Do not add a second “more sites” strip that repeats those cards.
+Hero reads `getFeaturedListings()` and slices the first three. Cards link to `/places/[id]`. The Places feed lists every published site. Do not add a second strip on the homepage that repeats those cards.

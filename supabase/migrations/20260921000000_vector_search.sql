@@ -72,3 +72,6 @@ as $$
   order by e.embedding <=> query_embedding
   limit least(match_count, 50);
 $$;
+
+grant execute on function public.match_listings(extensions.vector, integer)
+  to anon, authenticated;

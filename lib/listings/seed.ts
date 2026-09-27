@@ -1,8 +1,26 @@
 import type { Listing } from "@/lib/listings/types"
+import { extrasForListing } from "@/lib/listings/testers"
 
-/** Mirrors supabase/migrations/20260918000000_listings.sql. Hero uses the first three. */
+function overlay(listing: Omit<Listing, "lat" | "lng" | "phone" | "intakeMethod"> & {
+  lat?: number | null
+  lng?: number | null
+  phone?: string | null
+  intakeMethod?: Listing["intakeMethod"] | null
+}): Listing {
+  const extras = extrasForListing(listing.id)
+
+  return {
+    ...listing,
+    lat: listing.lat ?? extras?.lat ?? null,
+    lng: listing.lng ?? extras?.lng ?? null,
+    phone: listing.phone ?? extras?.phone ?? null,
+    intakeMethod: listing.intakeMethod ?? extras?.intakeMethod ?? "call",
+  }
+}
+
+/** Mirrors sample sites. Hero uses the first three. */
 export const seedListings: Listing[] = [
-  {
+  overlay({
     id: "a1e1c0a0-0b11-4c22-8d33-000000000001",
     name: "St. James Night Shelter",
     kind: "shelter",
@@ -14,8 +32,8 @@ export const seedListings: Listing[] = [
     vehicleNote: null,
     city: "San Jose",
     orgName: "St. James Community",
-  },
-  {
+  }),
+  overlay({
     id: "a1e1c0a0-0b11-4c22-8d33-000000000005",
     name: "Senter Rd Safe Parking",
     kind: "parking",
@@ -27,8 +45,8 @@ export const seedListings: Listing[] = [
     vehicleNote: "Cars and vans under 22 ft",
     city: "San Jose",
     orgName: "City Safe Parking",
-  },
-  {
+  }),
+  overlay({
     id: "a1e1c0a0-0b11-4c22-8d33-000000000002",
     name: "Guadalupe Family Shelter",
     kind: "shelter",
@@ -40,8 +58,8 @@ export const seedListings: Listing[] = [
     vehicleNote: null,
     city: "San Jose",
     orgName: "South Bay Family Housing",
-  },
-  {
+  }),
+  overlay({
     id: "a1e1c0a0-0b11-4c22-8d33-000000000003",
     name: "Eastside Women's Overnight",
     kind: "shelter",
@@ -53,8 +71,8 @@ export const seedListings: Listing[] = [
     vehicleNote: null,
     city: "San Jose",
     orgName: "Eastside Women's Overnight",
-  },
-  {
+  }),
+  overlay({
     id: "a1e1c0a0-0b11-4c22-8d33-000000000004",
     name: "County Overflow Gym",
     kind: "shelter",
@@ -66,8 +84,8 @@ export const seedListings: Listing[] = [
     vehicleNote: null,
     city: "Santa Clara",
     orgName: "County Winter Shelter",
-  },
-  {
+  }),
+  overlay({
     id: "a1e1c0a0-0b11-4c22-8d33-000000000006",
     name: "Westside RV Lot",
     kind: "parking",
@@ -79,5 +97,5 @@ export const seedListings: Listing[] = [
     vehicleNote: "RVs and trailers, max 32 ft",
     city: "San Jose",
     orgName: "Westside Faith Collaborative",
-  },
+  }),
 ]

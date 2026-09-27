@@ -52,6 +52,9 @@ export function ListingSettingsForm({
   const router = useRouter()
   const [pending, setPending] = React.useState(false)
   const [kind, setKind] = React.useState<SiteKind>(listing.kind)
+  const [intakeMethod, setIntakeMethod] = React.useState(
+    listing.intakeMethod ?? "call"
+  )
   const [published, setPublished] = React.useState(listing.published)
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -136,6 +139,72 @@ export function ListingSettingsForm({
         <Field>
           <FieldLabel htmlFor="city">City</FieldLabel>
           <Input id="city" name="city" defaultValue={listing.city} required />
+        </Field>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field>
+            <FieldLabel htmlFor="lat">Latitude</FieldLabel>
+            <Input
+              id="lat"
+              name="lat"
+              type="number"
+              step="0.0001"
+              defaultValue={listing.lat ?? ""}
+              placeholder="37.3382"
+            />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="lng">Longitude</FieldLabel>
+            <Input
+              id="lng"
+              name="lng"
+              type="number"
+              step="0.0001"
+              defaultValue={listing.lng ?? ""}
+              placeholder="-121.8863"
+            />
+          </Field>
+        </div>
+        <FieldDescription>
+          Used to sort nearby sites. Leave empty if you do not know it yet.
+        </FieldDescription>
+
+        <Field>
+          <FieldLabel htmlFor="phone">Phone</FieldLabel>
+          <Input
+            id="phone"
+            name="phone"
+            defaultValue={listing.phone ?? ""}
+            placeholder="+14085550100"
+          />
+          <FieldDescription>
+            Include the country code. Call-first sites need this.
+          </FieldDescription>
+        </Field>
+
+        <Field>
+          <FieldLabel htmlFor="intakeMethod">How people get in</FieldLabel>
+          <Select
+            value={intakeMethod}
+            onValueChange={(value) => {
+              if (value) setIntakeMethod(value)
+            }}
+          >
+            <SelectTrigger id="intakeMethod">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="call">Call first</SelectItem>
+              <SelectItem value="waitlist">Join waitlist</SelectItem>
+              <SelectItem value="register">Ask for a bed</SelectItem>
+              <SelectItem value="walk_up">Walk up</SelectItem>
+            </SelectContent>
+          </Select>
+          <input type="hidden" name="intakeMethod" value={intakeMethod} />
+          <FieldDescription>
+            Call opens the phone. Waitlist and ask for a bed need a True Roof
+            account. Walk up is in person.
+          </FieldDescription>
         </Field>
 
         <Field>
@@ -242,10 +311,10 @@ export function ListingSettingsForm({
         {canManage ? (
           <Field className="flex flex-row items-center justify-between rounded-lg border p-4">
             <div className="space-y-0.5">
-              <FieldLabel htmlFor="published">Publish on homepage</FieldLabel>
+              <FieldLabel htmlFor="published">Publish on the Places list</FieldLabel>
               <FieldDescription>
-                Featured placement is still separate. Publishing only makes the
-                row visible to seekers when it is featured.
+                Seekers see published sites on /places. Featured placement on
+                the homepage is still a separate flag.
               </FieldDescription>
             </div>
             <Switch
