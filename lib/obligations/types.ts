@@ -53,6 +53,7 @@ export type ObligationsProfile = {
   incomeUpdatedAt: string | null
   lastShutoffNoticeAt: string | null
   lastCheckInAt: string | null
+  lastCheckInFlaggedAt: string | null
 }
 
 export type Payment = {
@@ -90,4 +91,5 @@ export const emptyProfile: ObligationsProfile = {
   incomeUpdatedAt: null,
   lastShutoffNoticeAt: null,
   lastCheckInAt: null,
+  lastCheckInFlaggedAt: null,
 }

@@ -86,6 +86,7 @@ export function DashboardClient() {
         incomeUpdatedAt: profile?.incomeUpdatedAt ?? null,
         lastShutoffNoticeAt: profile?.lastShutoffNoticeAt ?? null,
         lastCheckInAt: profile?.lastCheckInAt ?? null,
+        lastCheckInFlaggedAt: profile?.lastCheckInFlaggedAt ?? null,
       }),
     [occurrences, completedIds, profile]
   )
@@ -108,10 +109,18 @@ export function DashboardClient() {
     if (next) setProfile(next)
   }
 
-  function handleCheckIn() {
-    const next = updateProfile({ lastCheckInAt: isoDate(new Date()) })
+  function handleCheckIn(flagged: boolean) {
+    const today = isoDate(new Date())
+    const next = updateProfile({
+      lastCheckInAt: today,
+      lastCheckInFlaggedAt: flagged ? today : null,
+    })
     if (next) setProfile(next)
-    toast.success("Checked in.")
+    toast.success(
+      flagged
+        ? "Checked in. Flagged for follow-up."
+        : "Checked in. Glad things are steady."
+    )
   }
 
   function handleUpdateIncome(amount: number) {
@@ -310,8 +319,10 @@ function CheckInCard({
   onCheckIn,
 }: {
   lastCheckInAt: string | null
-  onCheckIn: () => void
+  onCheckIn: (flagged: boolean) => void
 }) {
+  const [asking, setAsking] = React.useState(false)
+
   const daysSince = lastCheckInAt
     ? Math.round(
         (startOfDayClient(new Date()).getTime() -
@@ -319,6 +330,11 @@ function CheckInCard({
           (1000 * 60 * 60 * 24)
       )
     : null
+
+  function respond(flagged: boolean) {
+    onCheckIn(flagged)
+    setAsking(false)
+  }
 
   return (
     <Card>
@@ -331,9 +347,30 @@ function CheckInCard({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Button type="button" size="sm" onClick={onCheckIn}>
-          I&apos;m doing OK, check in
-        </Button>
+        {asking ? (
+          <div className="grid gap-2">
+            <p className="text-sm font-medium">
+              How are things going this week?
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" size="sm" onClick={() => respond(false)}>
+                Good, nothing&apos;s wrong
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => respond(true)}
+              >
+                Something&apos;s off
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <Button type="button" size="sm" onClick={() => setAsking(true)}>
+            Check in
+          </Button>
+        )}
       </CardContent>
     </Card>
   )
@@ -367,9 +404,9 @@ function IncomeCard({
           type="number"
           inputMode="decimal"
           min={0}
-          placeholder="New amount"
+          placeholder="Amount"
           aria-label="New monthly income"
-          className="w-28"
+          className="min-w-0 flex-1"
           value={value}
           onChange={(e) => setValue(e.target.value)}
         />

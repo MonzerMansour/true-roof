@@ -138,6 +138,7 @@ type RiskSignals = Pick<
   | "incomeUpdatedAt"
   | "lastShutoffNoticeAt"
   | "lastCheckInAt"
+  | "lastCheckInFlaggedAt"
 >
 
 function daysSince(iso: string, today: Date) {
@@ -211,6 +212,16 @@ export function assessRisk(
       daysSinceCheckIn === null
         ? "You have not checked in yet"
         : `No check-in in ${daysSinceCheckIn} days`
+    )
+  }
+
+  if (
+    signals.lastCheckInFlaggedAt &&
+    daysSince(signals.lastCheckInFlaggedAt, today) <= 7
+  ) {
+    score += 25
+    reasons.push(
+      `You flagged something's off at your check-in on ${signals.lastCheckInFlaggedAt}`
     )
   }
 
