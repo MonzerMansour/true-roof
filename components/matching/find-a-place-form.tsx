@@ -20,12 +20,14 @@ import {
 import { Input } from "@/components/ui/input"
 import { Progress } from "@/components/ui/progress"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Textarea } from "@/components/ui/textarea"
 import {
   householdLabel,
   idLabel,
   latestEntryOptions,
   partnerRoomsLabel,
   petLabel,
+  PLACE_NOTE_MAX_LENGTH,
   stayOptions,
   vehicleLabel,
   vehicleRegisteredLabel,
@@ -61,6 +63,7 @@ type Draft = {
   arrivalTo: string
   latestEntry: string | null | undefined
   daysNeeded: number | null
+  placeNote: string
 }
 
 const emptyDraft: Draft = {
@@ -76,6 +79,7 @@ const emptyDraft: Draft = {
   arrivalTo: "20:00",
   latestEntry: undefined,
   daysNeeded: null,
+  placeNote: "",
 }
 
 type StepId =
@@ -89,6 +93,7 @@ type StepId =
   | "arrival"
   | "curfew"
   | "stay"
+  | "placeNote"
 
 // Follow-up questions only appear when an earlier answer needs them.
 function visibleSteps(draft: Draft): StepId[] {
@@ -100,7 +105,7 @@ function visibleSteps(draft: Draft): StepId[] {
   if (draft.vehicle === "car" || draft.vehicle === "rv_van") {
     steps.push("vehicleDetails")
   }
-  steps.push("arrival", "curfew", "stay")
+  steps.push("arrival", "curfew", "stay", "placeNote")
   return steps
 }
 
@@ -126,6 +131,8 @@ function isAnswered(step: StepId, draft: Draft) {
       return draft.latestEntry !== undefined
     case "stay":
       return draft.daysNeeded !== null
+    case "placeNote":
+      return true
   }
 }
 
@@ -182,6 +189,7 @@ function toNeeds(draft: Draft): SeekerNeeds | null {
     arrivalTo: draft.arrivalTo,
     latestEntry: draft.latestEntry,
     daysNeeded: draft.daysNeeded,
+    placeNote: draft.placeNote.trim().slice(0, PLACE_NOTE_MAX_LENGTH) || null,
   }
 }
 
@@ -199,6 +207,7 @@ function fromNeeds(needs: SeekerNeeds): Draft {
     arrivalTo: needs.arrivalTo,
     latestEntry: needs.latestEntry,
     daysNeeded: needs.daysNeeded,
+    placeNote: needs.placeNote ?? "",
   }
 }
 
@@ -637,6 +646,32 @@ export function FindAPlaceForm() {
             }))}
             onChange={(value) => patch({ daysNeeded: Number(value) })}
           />
+        ) : null}
+
+        {step === "placeNote" ? (
+          <Field>
+            <FieldLabel
+              htmlFor="place-note"
+              className="font-heading text-2xl font-semibold"
+            >
+              Anything else you want us to know?
+            </FieldLabel>
+            <FieldDescription className="text-base">
+              Optional, one short sentence. For example, near a park, close to
+              the bus line, or somewhere quiet.
+            </FieldDescription>
+            <Textarea
+              id="place-note"
+              rows={2}
+              maxLength={PLACE_NOTE_MAX_LENGTH}
+              placeholder="Near a park, close to the bus line..."
+              value={draft.placeNote}
+              onChange={(e) => patch({ placeNote: e.target.value })}
+            />
+            <FieldDescription className="text-right">
+              {draft.placeNote.length}/{PLACE_NOTE_MAX_LENGTH}
+            </FieldDescription>
+          </Field>
         ) : null}
       </FieldGroup>
 

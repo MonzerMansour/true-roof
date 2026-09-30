@@ -30,7 +30,16 @@ export type SeekerNeeds = {
   latestEntry: string | null
   /** Nights you need a bed. */
   daysNeeded: number
+  /**
+   * Optional, one sentence, in their own words. "Near a park", "close to
+   * the bus line". Never a hard constraint, never checked against a
+   * listing's rules, only carried into the embedding text as a secondary
+   * signal behind the categorical fields above.
+   */
+  placeNote: string | null
 }
+
+export const PLACE_NOTE_MAX_LENGTH = 140
 
 export const householdLabel: Record<Household, string> = {
   alone: "Just me",

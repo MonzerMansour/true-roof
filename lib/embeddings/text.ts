@@ -34,6 +34,9 @@ export function needsToText(needs: SeekerNeeds) {
     `Can check in between ${formatTime(needs.arrivalFrom)} and ${formatTime(needs.arrivalTo)}.`,
     `Needs late entry: ${latestEntryLabel(needs.latestEntry)}.`,
     `Bed needed: ${stayLabel(needs.daysNeeded)}.`,
+    // Free text, one sentence, always last so the categorical fields above
+    // dominate the embedding and this only nudges the ranking.
+    needs.placeNote?.trim() ? `What they said in their own words: "${needs.placeNote.trim()}".` : null,
   ]
 
   return lines.filter(Boolean).join(" ")
@@ -46,6 +49,9 @@ export function listingToText(listing: Listing) {
     listing.couples ? `${couplesLabel[listing.couples]}.` : null,
     listing.parkingStatus ? `Parking status: ${listing.parkingStatus}.` : null,
     listing.vehicleNote ? `Vehicles: ${listing.vehicleNote}.` : null,
+    // Free text the provider wrote, one short note, always last for the
+    // same reason: categorical fields carry the match, this only nudges it.
+    listing.orgDescription?.trim() ? `What the site says about itself: "${listing.orgDescription.trim()}".` : null,
   ]
 
   return lines.filter(Boolean).join(" ")

@@ -1,0 +1,705 @@
+{
+  "model": "text-embedding-3-small",
+  "points": [
+    {
+      "id": "s01",
+      "label": "Willow Creek Night Shelter",
+      "type": "shelter",
+      "x": -0.507211937882536,
+      "y": 0.16827935275771208
+    },
+    {
+      "id": "s02",
+      "label": "St. Anne's Family House",
+      "type": "shelter",
+      "x": -0.42953153279793915,
+      "y": 0.2182874303440882
+    },
+    {
+      "id": "s03",
+      "label": "Second Chance Men's Shelter",
+      "type": "shelter",
+      "x": -0.4654378521177116,
+      "y": 0.22903644964933667
+    },
+    {
+      "id": "s04",
+      "label": "Cedar Street Drop-In",
+      "type": "shelter",
+      "x": -0.46302350482686216,
+      "y": 0.20600929781092817
+    },
+    {
+      "id": "s05",
+      "label": "Grace Community Shelter",
+      "type": "shelter",
+      "x": -0.5196730144578144,
+      "y": 0.2089322641963475
+    },
+    {
+      "id": "s06",
+      "label": "Open Arms Youth Shelter",
+      "type": "shelter",
+      "x": -0.4640601530944977,
+      "y": 0.23568195532802602
+    },
+    {
+      "id": "s07",
+      "label": "North Gate Overnight Center",
+      "type": "shelter",
+      "x": -0.4224716251172482,
+      "y": 0.1355764675414562
+    },
+    {
+      "id": "s08",
+      "label": "Maple House Women's Shelter",
+      "type": "shelter",
+      "x": -0.4735485087675308,
+      "y": 0.21427846435005973
+    },
+    {
+      "id": "s09",
+      "label": "Fairview Emergency Shelter",
+      "type": "shelter",
+      "x": -0.4567897778547456,
+      "y": 0.13746760193790453
+    },
+    {
+      "id": "s10",
+      "label": "Trinity Overflow Shelter",
+      "type": "shelter",
+      "x": -0.5118153581999229,
+      "y": 0.2019650216739214
+    },
+    {
+      "id": "s11",
+      "label": "Oakridge Transitional Housing",
+      "type": "shelter",
+      "x": -0.43660497549042204,
+      "y": 0.21850475528532354
+    },
+    {
+      "id": "s12",
+      "label": "Hope Street Shelter",
+      "type": "shelter",
+      "x": -0.5015487890879591,
+      "y": 0.25152443243196015
+    },
+    {
+      "id": "s13",
+      "label": "Pine Valley Overnight Shelter",
+      "type": "shelter",
+      "x": -0.452659601060548,
+      "y": 0.1472059164419904
+    },
+    {
+      "id": "s14",
+      "label": "Cornerstone Family Shelter",
+      "type": "shelter",
+      "x": -0.522724184388843,
+      "y": 0.2500101003145491
+    },
+    {
+      "id": "s15",
+      "label": "Elm Street Men's Refuge",
+      "type": "shelter",
+      "x": -0.4515878349675455,
+      "y": 0.20202897066687195
+    },
+    {
+      "id": "s16",
+      "label": "Unity House Shelter",
+      "type": "shelter",
+      "x": -0.4699191620373618,
+      "y": 0.31950703083936993
+    },
+    {
+      "id": "s17",
+      "label": "Sequoia Night Shelter",
+      "type": "shelter",
+      "x": -0.4566754533392439,
+      "y": 0.2006461206227528
+    },
+    {
+      "id": "s18",
+      "label": "New Horizons Shelter",
+      "type": "shelter",
+      "x": -0.44636393562158144,
+      "y": 0.23359878736676148
+    },
+    {
+      "id": "s19",
+      "label": "Delta Overnight Shelter",
+      "type": "shelter",
+      "x": -0.40575800422732844,
+      "y": 0.19102884097979245
+    },
+    {
+      "id": "s20",
+      "label": "Beacon House",
+      "type": "shelter",
+      "x": -0.46990587847453835,
+      "y": 0.2531584412714253
+    },
+    {
+      "id": "s21",
+      "label": "Ridgeline Overflow Center",
+      "type": "shelter",
+      "x": -0.4370647011041965,
+      "y": 0.025099587598194317
+    },
+    {
+      "id": "s22",
+      "label": "St. Mark's Overnight Shelter",
+      "type": "shelter",
+      "x": -0.42281265519335315,
+      "y": 0.21604848647074432
+    },
+    {
+      "id": "s23",
+      "label": "Valley View Family Center",
+      "type": "shelter",
+      "x": -0.4609089440522179,
+      "y": 0.17253297075389817
+    },
+    {
+      "id": "s24",
+      "label": "Sunset Walk-Up Shelter",
+      "type": "shelter",
+      "x": -0.43778019102592025,
+      "y": 0.15174025174077044
+    },
+    {
+      "id": "s25",
+      "label": "Bright Path Shelter",
+      "type": "shelter",
+      "x": -0.4989502892761787,
+      "y": 0.1849115605117105
+    },
+    {
+      "id": "s26",
+      "label": "Iron Bridge Men's Shelter",
+      "type": "shelter",
+      "x": -0.4689202305725009,
+      "y": 0.25138632819457024
+    },
+    {
+      "id": "s27",
+      "label": "Serenity House",
+      "type": "shelter",
+      "x": -0.4540705841956037,
+      "y": 0.20013052461963593
+    },
+    {
+      "id": "s28",
+      "label": "Whitmore Overnight Center",
+      "type": "shelter",
+      "x": -0.46074930627529326,
+      "y": 0.18079598846930234
+    },
+    {
+      "id": "s29",
+      "label": "Restful Nights Shelter",
+      "type": "shelter",
+      "x": -0.49302792039106197,
+      "y": 0.19901145863368738
+    },
+    {
+      "id": "s30",
+      "label": "Junction Family Shelter",
+      "type": "shelter",
+      "x": -0.4783444617132939,
+      "y": 0.22111219341741106
+    },
+    {
+      "id": "s31",
+      "label": "Kindred Spirits Shelter",
+      "type": "shelter",
+      "x": -0.44830642848002433,
+      "y": 0.27842562580167873
+    },
+    {
+      "id": "s32",
+      "label": "Stonegate Men's Center",
+      "type": "shelter",
+      "x": -0.5038911254311877,
+      "y": 0.22292090927533506
+    },
+    {
+      "id": "s33",
+      "label": "Evening Star Drop-In",
+      "type": "shelter",
+      "x": -0.38612980632397975,
+      "y": 0.14750061619153912
+    },
+    {
+      "id": "s34",
+      "label": "Millbrook Family Housing",
+      "type": "shelter",
+      "x": -0.43356493178030175,
+      "y": 0.21948410281413122
+    },
+    {
+      "id": "s35",
+      "label": "Harborview Safe Parking Lot",
+      "type": "shelter",
+      "x": -0.3852653808510616,
+      "y": -0.5193872341505503
+    },
+    {
+      "id": "s36",
+      "label": "Riverside RV Corner",
+      "type": "shelter",
+      "x": -0.3598305758904972,
+      "y": -0.48925733718175496
+    },
+    {
+      "id": "s37",
+      "label": "Sunrise Safe Parking",
+      "type": "shelter",
+      "x": -0.40873459573075194,
+      "y": -0.4363906122294854
+    },
+    {
+      "id": "s38",
+      "label": "Bayside Parking Program",
+      "type": "shelter",
+      "x": -0.3502737288579005,
+      "y": -0.5137136140505857
+    },
+    {
+      "id": "s39",
+      "label": "Lakeside RV and Van Lot",
+      "type": "shelter",
+      "x": -0.39366887724080624,
+      "y": -0.5265457721201869
+    },
+    {
+      "id": "s40",
+      "label": "Meridian Safe Parking",
+      "type": "shelter",
+      "x": -0.35365886844048683,
+      "y": -0.5206216345099667
+    },
+    {
+      "id": "s41",
+      "label": "Golden Gate Waitlist Lot",
+      "type": "shelter",
+      "x": -0.3331268255319603,
+      "y": -0.562077839045781
+    },
+    {
+      "id": "s42",
+      "label": "Coastal Van Life Lot",
+      "type": "shelter",
+      "x": -0.39671153329886144,
+      "y": -0.46514492611096
+    },
+    {
+      "id": "s43",
+      "label": "Foothill Safe Parking Site",
+      "type": "shelter",
+      "x": -0.4273607320307419,
+      "y": -0.4483901986875205
+    },
+    {
+      "id": "s44",
+      "label": "Harbor Lights Parking Program",
+      "type": "shelter",
+      "x": -0.3732348283993698,
+      "y": -0.4164557282213753
+    },
+    {
+      "id": "s45",
+      "label": "Prairie Wind Safe Parking",
+      "type": "shelter",
+      "x": -0.37797122886300566,
+      "y": -0.44324782008315605
+    },
+    {
+      "id": "s46",
+      "label": "Clearwater RV Lot",
+      "type": "shelter",
+      "x": -0.39723824737468866,
+      "y": -0.47590651703432063
+    },
+    {
+      "id": "s47",
+      "label": "Anchor Point Parking Lot",
+      "type": "shelter",
+      "x": -0.3760941076329739,
+      "y": -0.42470733390812115
+    },
+    {
+      "id": "s48",
+      "label": "Desert Bloom Safe Parking",
+      "type": "shelter",
+      "x": -0.3595383775263774,
+      "y": -0.48320524588383634
+    },
+    {
+      "id": "s49",
+      "label": "Willowbrook RV Registration Lot",
+      "type": "shelter",
+      "x": -0.36805014480308496,
+      "y": -0.4402217751679037
+    },
+    {
+      "id": "s50",
+      "label": "Copper Creek Safe Parking",
+      "type": "shelter",
+      "x": -0.38351353238097874,
+      "y": -0.4794300588320675
+    },
+    {
+      "id": "case-1",
+      "label": "Case 1",
+      "type": "need",
+      "x": 0.4407021791857022,
+      "y": 0.013816775090206271
+    },
+    {
+      "id": "case-2",
+      "label": "Case 2",
+      "type": "need",
+      "x": 0.39687043296966756,
+      "y": 0.06662446449846907
+    },
+    {
+      "id": "case-3",
+      "label": "Case 3",
+      "type": "need",
+      "x": 0.4789351201407025,
+      "y": 0.03241791170358331
+    },
+    {
+      "id": "case-4",
+      "label": "Case 4",
+      "type": "need",
+      "x": 0.41955029659303406,
+      "y": -0.07372080090043226
+    },
+    {
+      "id": "case-5",
+      "label": "Case 5",
+      "type": "need",
+      "x": 0.4201985616650885,
+      "y": 0.11938118688889904
+    },
+    {
+      "id": "case-6",
+      "label": "Case 6",
+      "type": "need",
+      "x": 0.3934340136343181,
+      "y": 0.03703401264739898
+    },
+    {
+      "id": "case-7",
+      "label": "Case 7",
+      "type": "need",
+      "x": 0.40612089877929003,
+      "y": -0.10774402659547197
+    },
+    {
+      "id": "case-8",
+      "label": "Case 8",
+      "type": "need",
+      "x": 0.4278697054764198,
+      "y": 0.09626833997026646
+    },
+    {
+      "id": "case-9",
+      "label": "Case 9",
+      "type": "need",
+      "x": 0.4570184839377467,
+      "y": 0.007141972951978509
+    },
+    {
+      "id": "case-10",
+      "label": "Case 10",
+      "type": "need",
+      "x": 0.4262093868224647,
+      "y": -0.051343378646932704
+    },
+    {
+      "id": "case-11",
+      "label": "Case 11",
+      "type": "need",
+      "x": 0.44205154574644406,
+      "y": 0.10612469276681746
+    },
+    {
+      "id": "case-12",
+      "label": "Case 12",
+      "type": "need",
+      "x": 0.39462876388903884,
+      "y": 0.02118585270247963
+    },
+    {
+      "id": "case-13",
+      "label": "Case 13",
+      "type": "need",
+      "x": 0.41328249102911213,
+      "y": -0.10290099641579643
+    },
+    {
+      "id": "case-14",
+      "label": "Case 14",
+      "type": "need",
+      "x": 0.4272600775461103,
+      "y": 0.1003207953554487
+    },
+    {
+      "id": "case-15",
+      "label": "Case 15",
+      "type": "need",
+      "x": 0.4259541521977959,
+      "y": 0.0013737884614122287
+    },
+    {
+      "id": "case-16",
+      "label": "Case 16",
+      "type": "need",
+      "x": 0.4095049138504514,
+      "y": 0.04487650038496581
+    },
+    {
+      "id": "case-17",
+      "label": "Case 17",
+      "type": "need",
+      "x": 0.48872665779248076,
+      "y": 0.04534748985946793
+    },
+    {
+      "id": "case-18",
+      "label": "Case 18",
+      "type": "need",
+      "x": 0.4234209015562661,
+      "y": -0.051091081660916866
+    },
+    {
+      "id": "case-19",
+      "label": "Case 19",
+      "type": "need",
+      "x": 0.3928081174431424,
+      "y": 0.10191149578019583
+    },
+    {
+      "id": "case-20",
+      "label": "Case 20",
+      "type": "need",
+      "x": 0.4814650263663055,
+      "y": 0.029675434473882472
+    },
+    {
+      "id": "case-21",
+      "label": "Case 21",
+      "type": "need",
+      "x": 0.4291263501803502,
+      "y": 0.0006118407598360505
+    },
+    {
+      "id": "case-22",
+      "label": "Case 22",
+      "type": "need",
+      "x": 0.45113311907849135,
+      "y": 0.011899945007829383
+    },
+    {
+      "id": "case-23",
+      "label": "Case 23",
+      "type": "need",
+      "x": 0.4537189805179244,
+      "y": -0.09030608914855251
+    },
+    {
+      "id": "case-24",
+      "label": "Case 24",
+      "type": "need",
+      "x": 0.40625211253615245,
+      "y": 0.13739994266474798
+    },
+    {
+      "id": "case-25",
+      "label": "Case 25",
+      "type": "need",
+      "x": 0.4838706749890844,
+      "y": -0.07795789050802161
+    },
+    {
+      "id": "case-26",
+      "label": "Case 26",
+      "type": "need",
+      "x": 0.42918312458752256,
+      "y": 0.005602362855020269
+    },
+    {
+      "id": "case-27",
+      "label": "Case 27",
+      "type": "need",
+      "x": 0.4542699945978261,
+      "y": 0.0074353598760681485
+    },
+    {
+      "id": "case-28",
+      "label": "Case 28",
+      "type": "need",
+      "x": 0.4377569636845364,
+      "y": 0.10342804241365394
+    },
+    {
+      "id": "case-29",
+      "label": "Case 29",
+      "type": "need",
+      "x": 0.4263802637335564,
+      "y": -0.11663733512441884
+    },
+    {
+      "id": "case-30",
+      "label": "Case 30",
+      "type": "need",
+      "x": 0.39105651636381983,
+      "y": 0.03793116778935794
+    },
+    {
+      "id": "case-31",
+      "label": "Case 31",
+      "type": "need",
+      "x": 0.4988059981472347,
+      "y": 0.022853295077827778
+    },
+    {
+      "id": "case-32",
+      "label": "Case 32",
+      "type": "need",
+      "x": 0.3927930248056364,
+      "y": 0.10516510891493926
+    },
+    {
+      "id": "case-33",
+      "label": "Case 33",
+      "type": "need",
+      "x": 0.43183700274120757,
+      "y": -0.11036920008782154
+    },
+    {
+      "id": "case-34",
+      "label": "Case 34",
+      "type": "need",
+      "x": 0.4869522354652584,
+      "y": 0.030582220116704285
+    },
+    {
+      "id": "case-35",
+      "label": "Case 35",
+      "type": "need",
+      "x": 0.435626403608826,
+      "y": 0.016667990994732554
+    },
+    {
+      "id": "case-36",
+      "label": "Case 36",
+      "type": "need",
+      "x": 0.3804011975439238,
+      "y": -0.09469926599762574
+    },
+    {
+      "id": "case-37",
+      "label": "Case 37",
+      "type": "need",
+      "x": 0.4394887095527377,
+      "y": 0.09218586842809064
+    },
+    {
+      "id": "case-38",
+      "label": "Case 38",
+      "type": "need",
+      "x": 0.42288521718380145,
+      "y": 0.061118979441334
+    },
+    {
+      "id": "case-39",
+      "label": "Case 39",
+      "type": "need",
+      "x": 0.4239249476609481,
+      "y": 0.047587647942706986
+    },
+    {
+      "id": "case-40",
+      "label": "Case 40",
+      "type": "need",
+      "x": 0.4823889314396869,
+      "y": 0.05696258823941956
+    },
+    {
+      "id": "case-41",
+      "label": "Case 41",
+      "type": "need",
+      "x": 0.43573767421319565,
+      "y": -0.09022023153025321
+    },
+    {
+      "id": "case-42",
+      "label": "Case 42",
+      "type": "need",
+      "x": 0.3919129558751868,
+      "y": 0.06106391563200554
+    },
+    {
+      "id": "case-43",
+      "label": "Case 43",
+      "type": "need",
+      "x": 0.5061626332615157,
+      "y": 0.02579704981709989
+    },
+    {
+      "id": "case-44",
+      "label": "Case 44",
+      "type": "need",
+      "x": 0.42211886835793166,
+      "y": -0.07662986992249476
+    },
+    {
+      "id": "case-45",
+      "label": "Case 45",
+      "type": "need",
+      "x": 0.5007147079988232,
+      "y": 0.02644759145561803
+    },
+    {
+      "id": "case-46",
+      "label": "Case 46",
+      "type": "need",
+      "x": 0.39439505624924226,
+      "y": 0.09770677832761863
+    },
+    {
+      "id": "case-47",
+      "label": "Case 47",
+      "type": "need",
+      "x": 0.4393267790066679,
+      "y": 0.005531623922488394
+    },
+    {
+      "id": "case-48",
+      "label": "Case 48",
+      "type": "need",
+      "x": 0.48797400767558585,
+      "y": 0.051435700241995556
+    },
+    {
+      "id": "case-49",
+      "label": "Case 49",
+      "type": "need",
+      "x": 0.44111572379927017,
+      "y": -0.10389667895967138
+    },
+    {
+      "id": "case-50",
+      "label": "Case 50",
+      "type": "need",
+      "x": 0.41278234300331607,
+      "y": 0.0694764529582264
+    }
+  ]
+}

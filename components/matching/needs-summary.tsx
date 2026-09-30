@@ -28,6 +28,7 @@ export type NeedsStepId =
   | "arrival"
   | "curfew"
   | "stay"
+  | "placeNote"
 
 export function NeedsSummary({
   needs,
@@ -77,6 +78,7 @@ export function NeedsSummary({
   ])
   rows.push(["Late entry", latestEntryLabel(needs.latestEntry), "curfew"])
   rows.push(["Bed needed", stayLabel(needs.daysNeeded), "stay"])
+  rows.push(["In your words", needs.placeNote ?? "Nothing added", "placeNote"])
 
   return (
     <div>
