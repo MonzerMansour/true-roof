@@ -44,46 +44,50 @@ export function ListingCard({
 
   return (
     <Link href={`/places/${listing.id}`} className="block h-full">
-    <Card
-      className={cn(
-        "min-w-[16rem] flex-1",
-        onDark &&
-          "border-white/15 bg-black/40 text-white ring-white/15 backdrop-blur-md"
-      )}
-    >
-      <CardHeader>
-        <div className="flex items-center gap-2">
-          <Badge
-            className={cn(
-              listing.freshness === "live" || listing.parkingStatus === "open"
-                ? "bg-emerald-500/90 text-white"
-                : listing.freshness === "recent" ||
-                    listing.parkingStatus === "waitlist"
-                  ? "bg-amber-500/90 text-white"
-                  : "bg-white/20 text-white",
-              !onDark &&
-                listing.freshness === "call_first" &&
-                listing.parkingStatus !== "open" &&
-                "bg-muted text-foreground"
-            )}
-          >
-            {badgeText}
-          </Badge>
-          <CardTitle className={cn(onDark && "text-white")}>
-            {listing.name}
-          </CardTitle>
-        </div>
-        <CardDescription className={cn(onDark && "text-white/70")}>
-          {formatConfirmedAt(listing.lastConfirmedAt)}
-          {details ? ` · ${details}` : ""}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className={cn("text-sm", onDark ? "text-white/80" : "text-muted-foreground")}>
-        {isParking
-          ? "Parking reads as open, full, or waitlist. Not a bed-style freshness badge."
-          : "One freshness badge for the whole listing. Hard filters already applied."}
-      </CardContent>
-    </Card>
+      <Card
+        className={cn(
+          "min-w-[16rem] flex-1",
+          onDark &&
+            "border-white/15 bg-black/40 text-white ring-white/15 backdrop-blur-md"
+        )}
+      >
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            {/* Theme tokens, measured for contrast in both themes. These were
+              bg-emerald-500/90 and bg-amber-500/90 with white text, which
+              measured 3.77:1 and 2.15:1. AA needs 4.5:1. */}
+            <Badge
+              variant={
+                listing.freshness === "live" || listing.parkingStatus === "open"
+                  ? "success"
+                  : listing.freshness === "recent" ||
+                      listing.parkingStatus === "waitlist"
+                    ? "warning"
+                    : "secondary"
+              }
+            >
+              {badgeText}
+            </Badge>
+            <CardTitle className={cn(onDark && "text-white")}>
+              {listing.name}
+            </CardTitle>
+          </div>
+          <CardDescription className={cn(onDark && "text-white/70")}>
+            {formatConfirmedAt(listing.lastConfirmedAt)}
+            {details ? ` · ${details}` : ""}
+          </CardDescription>
+        </CardHeader>
+        <CardContent
+          className={cn(
+            "text-sm",
+            onDark ? "text-white/80" : "text-muted-foreground"
+          )}
+        >
+          {isParking
+            ? "Parking reads as open, full, or waitlist. Not a bed-style freshness badge."
+            : "One freshness badge for the whole listing. Hard filters already applied."}
+        </CardContent>
+      </Card>
     </Link>
   )
 }

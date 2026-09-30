@@ -1,5 +1,22 @@
 import { redirect } from "next/navigation"
 
+import { portalListingSelectTiers } from "@/lib/listings/columns"
+import type { DataSource } from "@/lib/listings/sources"
+import { normalizeTime } from "@/lib/listings/types"
+import type {
+  CouplesPolicy,
+  CurfewPolicy,
+  Freshness,
+  IdRequired,
+  IntakeMethod,
+  MaxStay,
+  ParkingStatus,
+  PetsPolicy,
+  ProjectType,
+  RegistrationRequired,
+  SiteKind,
+  VehicleAllowed,
+} from "@/lib/listings/types"
 import type {
   OrganizationMember,
   PendingMemberRequest,
@@ -22,19 +39,52 @@ type ListingRow = {
   id: string
   organization_id: string
   name: string
-  kind: PortalListing["kind"]
-  freshness: PortalListing["freshness"]
+  kind: SiteKind
+  freshness: Freshness
   last_confirmed_at: string
-  pets: string | null
-  couples: string | null
-  parking_status: string | null
+  pets: PetsPolicy | null
+  couples: CouplesPolicy | null
+  parking_status: ParkingStatus | null
   vehicle_note: string | null
   city: string
   published: boolean
+  // Optional because the narrower select tiers omit them.
   lat?: number | null
   lng?: number | null
   phone?: string | null
-  intake_method?: string | null
+  intake_method?: IntakeMethod | null
+  address?: string | null
+  id_required?: IdRequired | null
+  curfew_policy?: CurfewPolicy | null
+  curfew_time?: string | null
+  intake_from?: string | null
+  intake_to?: string | null
+  max_stay?: MaxStay | null
+  pet_weight_limit_lbs?: number | null
+  vehicle_allowed?: VehicleAllowed | null
+  vehicle_max_length_ft?: number | null
+  registration_required?: RegistrationRequired | null
+  project_type?: ProjectType | null
+  total_beds?: number | null
+  data_source?: DataSource | null
+  source_url?: string | null
+  source_as_of?: string | null
+}
+
+/** Try the widest select first and fall back, so a project that has not run
+ * every migration still loads the portal. Same tiering as
+ * lib/listings/queries.ts, driven by the same column registry. */
+async function selectPortalListings(
+  build: (select: string) => PromiseLike<{
+    error: { message: string } | null
+    data: unknown
+  }>
+) {
+  for (const select of portalListingSelectTiers) {
+    const result = await build(select)
+    if (!result.error && result.data) return result.data
+  }
+  return null
 }
 
 function mapMember(row: MemberRow): OrganizationMember {
@@ -62,10 +112,27 @@ function mapListing(row: ListingRow): PortalListing {
     vehicleNote: row.vehicle_note,
     city: row.city,
     published: row.published,
+    address: row.address ?? null,
     lat: row.lat ?? null,
     lng: row.lng ?? null,
     phone: row.phone ?? null,
+    // Stays null on purpose. Staff need to see that nobody has chosen yet.
     intakeMethod: row.intake_method ?? null,
+    idRequired: row.id_required ?? null,
+    curfewPolicy: row.curfew_policy ?? null,
+    curfewTime: normalizeTime(row.curfew_time ?? null),
+    intakeFrom: normalizeTime(row.intake_from ?? null),
+    intakeTo: normalizeTime(row.intake_to ?? null),
+    maxStay: row.max_stay ?? null,
+    petWeightLimitLbs: row.pet_weight_limit_lbs ?? null,
+    vehicleAllowed: row.vehicle_allowed ?? null,
+    vehicleMaxLengthFt: row.vehicle_max_length_ft ?? null,
+    registrationRequired: row.registration_required ?? null,
+    projectType: row.project_type ?? null,
+    totalBeds: row.total_beds ?? null,
+    dataSource: row.data_source ?? null,
+    sourceUrl: row.source_url ?? null,
+    sourceAsOf: row.source_as_of ?? null,
   }
 }
 
@@ -146,31 +213,19 @@ export async function getPortalContext(): Promise<PortalContext | null> {
       }
     }
 
-    const listingSelectFull =
-      "id, organization_id, name, kind, freshness, last_confirmed_at, pets, couples, parking_status, vehicle_note, city, published, lat, lng, phone, intake_method"
-    const listingSelectBase =
-      "id, organization_id, name, kind, freshness, last_confirmed_at, pets, couples, parking_status, vehicle_note, city, published"
+    const listingRows = await selectPortalListings((select) =>
+      supabase
+        .from("listings")
+        .select(select)
+        .eq("organization_id", primaryMembership.organizationId)
+        .order("created_at", { ascending: true })
+    )
 
-    const fullListings = await supabase
-      .from("listings")
-      .select(listingSelectFull)
-      .eq("organization_id", primaryMembership.organizationId)
-      .order("created_at", { ascending: true })
-
-    const listingRows = fullListings.error
-      ? (
-          await supabase
-            .from("listings")
-            .select(listingSelectBase)
-            .eq("organization_id", primaryMembership.organizationId)
-            .order("created_at", { ascending: true })
-        ).data
-      : fullListings.data
-
-    listings = (listingRows ?? []).map((row) => mapListing(row as ListingRow))
+    listings = ((listingRows as ListingRow[] | null) ?? []).map(mapListing)
 
     const isDirector =
-      active?.role === "director" && active.organizationId === primaryMembership.organizationId
+      active?.role === "director" &&
+      active.organizationId === primaryMembership.organizationId
 
     if (isDirector && active) {
       const { data: pendingRows } = await supabase
@@ -209,26 +264,11 @@ export async function getPortalContext(): Promise<PortalContext | null> {
 export async function getListingForPortal(listingId: string) {
   const { supabase, user } = await requireProviderSession()
 
-  const { data: listing, error } = await supabase
-    .from("listings")
-    .select(
-      "id, organization_id, name, kind, freshness, last_confirmed_at, pets, couples, parking_status, vehicle_note, city, published, lat, lng, phone, intake_method"
-    )
-    .eq("id", listingId)
-    .maybeSingle()
+  const selected = await selectPortalListings((select) =>
+    supabase.from("listings").select(select).eq("id", listingId).maybeSingle()
+  )
 
-  const listingRow =
-    error || !listing
-      ? (
-          await supabase
-            .from("listings")
-            .select(
-              "id, organization_id, name, kind, freshness, last_confirmed_at, pets, couples, parking_status, vehicle_note, city, published"
-            )
-            .eq("id", listingId)
-            .maybeSingle()
-        ).data
-      : listing
+  const listingRow = selected as ListingRow | null
 
   if (!listingRow) {
     redirect("/portal")

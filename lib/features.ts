@@ -21,7 +21,7 @@ export const features: Feature[] = [
     slug: "matcher",
     eyebrow: "Short term",
     title: "Find a place that actually fits",
-    lede: "Tell True Roof the real constraints — pets, ID, a partner, a curfew, a car. Hard rules remove a listing. What is left is sorted by distance and how fresh the information is.",
+    lede: "Tell True Roof the real constraints: pets, ID, a partner, a curfew, a car. Hard rules remove a listing. What is left is sorted by distance and how fresh the information is.",
     photo: photos.building,
     audience: "seeker",
     sections: [
@@ -36,7 +36,7 @@ export const features: Feature[] = [
           "Pets: not allowed / service animals only / small pets under a weight limit / any pet",
           "ID: required / not required / case by case",
           "Couples: not allowed / same room / separate rooms",
-          "Curfew, intake window, and max stay are real times — not a paragraph",
+          "Curfew, intake window, and max stay are real times, not a paragraph",
         ],
       },
       {
@@ -45,7 +45,7 @@ export const features: Feature[] = [
       },
       {
         title: "Trust the listing as a whole",
-        body: "You do not get a badge per field. You get one freshness read: Live, Recent, or Call first. Tap for the detail (“confirmed 40 minutes ago”). Confidence fades on a curve, using that site’s own update history. A conflicting report lowers confidence and pings the shelter — it does not silently overwrite the number.",
+        body: "You do not get a badge per field. You get one freshness read: Live, Recent, or Call first. Tap for the detail (“confirmed 40 minutes ago”). Confidence fades on a curve, using that site’s own update history. A conflicting report lowers confidence and pings the shelter. It does not silently overwrite the number.",
       },
       {
         title: "Reviews go both ways",
@@ -57,7 +57,7 @@ export const features: Feature[] = [
     slug: "parking",
     eyebrow: "Short term",
     title: "Safe parking is a first-class result",
-    lede: "If you sleep in a car or RV, that is the intake — not a footnote. Shelters and lots show up together.",
+    lede: "If you sleep in a car or RV, that is the intake, not a footnote. Shelters and lots show up together.",
     photo: photos.parking,
     audience: "seeker",
     sections: [
@@ -67,7 +67,7 @@ export const features: Feature[] = [
       },
       {
         title: "Legal status, in three words",
-        body: "City-sanctioned, org-run, or informally tolerated. Informal lots stay hidden until you opt in, with a disclaimer. Enforcement risk is a later layer — not in the first version.",
+        body: "City-sanctioned, org-run, or informally tolerated. Informal lots stay hidden until you opt in, with a disclaimer. Enforcement risk is a later layer, not in the first version.",
       },
       {
         title: "How you get in",
@@ -167,7 +167,7 @@ export const features: Feature[] = [
     slug: "income",
     eyebrow: "Work and benefits",
     title: "Will this job hurt me?",
-    lede: "A raise can cost Medi-Cal. A gig week can look like too much income. True Roof shows rent share, CalFresh, and coverage before and after — then the honest monthly net.",
+    lede: "A raise can cost Medi-Cal. A gig week can look like too much income. True Roof shows rent share, CalFresh, and coverage before and after, then the honest monthly net.",
     photo: photos.work,
     audience: "seeker",
     sections: [
@@ -207,7 +207,7 @@ export const features: Feature[] = [
       },
       {
         title: "Access",
-        body: "Large text, high contrast, screen reader, voice input, one-handed layout. Dictate is a first-class way in — not an afterthought.",
+        body: "Large text, high contrast, screen reader, voice input, one-handed layout. Dictate is a first-class way in, not an afterthought.",
       },
     ],
   },
@@ -221,7 +221,7 @@ export const features: Feature[] = [
     sections: [
       {
         title: "Active, then Steady, then Graduated",
-        body: "Quiet mode keeps essential renewal reminders only. It is not blind. Any warning sign turns full monitoring back on immediately, in an encouraging tone — not a punishment.",
+        body: "Quiet mode keeps essential renewal reminders only. It is not blind. Any warning sign turns full monitoring back on immediately, in an encouraging tone, not a punishment.",
       },
       {
         title: "What you can take with you",

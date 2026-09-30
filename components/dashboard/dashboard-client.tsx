@@ -26,7 +26,11 @@ import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from "cn"
-import { assessRisk, buildOccurrences, type RiskLevel } from "@/lib/obligations/schedule"
+import {
+  assessRisk,
+  buildOccurrences,
+  type RiskLevel,
+} from "@/lib/obligations/schedule"
 import {
   addPayment,
   loadCompletedOccurrenceIds,
@@ -35,17 +39,24 @@ import {
   toggleOccurrenceCompleted,
   updateProfile,
 } from "@/lib/obligations/storage"
-import type { ObligationsProfile, Occurrence, Payment } from "@/lib/obligations/types"
+import type {
+  ObligationsProfile,
+  Occurrence,
+  Payment,
+} from "@/lib/obligations/types"
 
-const riskCopy: Record<RiskLevel, { label: string; tone: string; helper: string }> = {
+const riskCopy: Record<
+  RiskLevel,
+  { label: string; tone: string; helper: string }
+> = {
   steady: {
     label: "Steady",
-    tone: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+    tone: "bg-success/10 text-success-text",
     helper: "Nothing is overdue and nothing is due in the next week.",
   },
   watch: {
     label: "Watch",
-    tone: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+    tone: "bg-warning/10 text-warning-text",
     helper: "Something is due soon. Pay it down or mark it handled below.",
   },
   act: {
@@ -104,8 +115,8 @@ export function DashboardClient() {
         <CardHeader>
           <CardTitle>Set up your plan first</CardTitle>
           <CardDescription className="text-base">
-            Answer a few questions about rent and programs, then your
-            dashboard will fill in here.
+            Answer a few questions about rent and programs, then your dashboard
+            will fill in here.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -123,7 +134,10 @@ export function DashboardClient() {
   const copy = riskCopy[risk.level]
   const cushionPct =
     profile.savingsGoal > 0
-      ? Math.min(100, Math.round((profile.savingsSaved / profile.savingsGoal) * 100))
+      ? Math.min(
+          100,
+          Math.round((profile.savingsSaved / profile.savingsGoal) * 100)
+        )
       : 0
 
   return (
@@ -217,7 +231,10 @@ function CalendarTab({
     return (
       <p className="text-sm text-muted-foreground">
         Nothing scheduled yet. Set up your plan in{" "}
-        <Link href="/get-started/financial-help" className="font-medium underline">
+        <Link
+          href="/get-started/financial-help"
+          className="font-medium underline"
+        >
           Financials setup
         </Link>
         .
@@ -287,13 +304,17 @@ function NotificationsTab({
               <Card
                 className={cn(
                   "flex-row items-start gap-2 px-4",
-                  risk.level === "act" ? "ring-destructive/30" : "ring-amber-500/30"
+                  risk.level === "act"
+                    ? "ring-destructive/30"
+                    : "ring-warning/30"
                 )}
               >
                 <IconAlertTriangle
                   className={cn(
                     "mt-0.5 size-4 shrink-0",
-                    risk.level === "act" ? "text-destructive" : "text-amber-500"
+                    risk.level === "act"
+                      ? "text-destructive"
+                      : "text-warning-text"
                   )}
                 />
                 <p className="text-sm">{reason}</p>
@@ -312,7 +333,10 @@ function NotificationsTab({
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-2">
-            <a href="tel:211" className={cn(buttonVariants({ variant: "outline" }))}>
+            <a
+              href="tel:211"
+              className={cn(buttonVariants({ variant: "outline" }))}
+            >
               <IconPhoneCall />
               Call 211
             </a>
@@ -398,13 +422,17 @@ function ScannerTab({
                 </Field>
               </Field>
               <Field>
-                <FieldLabel htmlFor="payment-photo">Photo (optional)</FieldLabel>
+                <FieldLabel htmlFor="payment-photo">
+                  Photo (optional)
+                </FieldLabel>
                 <Input
                   id="payment-photo"
                   type="file"
                   accept="image/*"
                   capture="environment"
-                  onChange={(e) => setFileName(e.target.files?.[0]?.name ?? null)}
+                  onChange={(e) =>
+                    setFileName(e.target.files?.[0]?.name ?? null)
+                  }
                 />
                 {fileName ? (
                   <p className="text-sm text-muted-foreground">{fileName}</p>

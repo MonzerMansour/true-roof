@@ -14,20 +14,9 @@ import {
   vehicleLabel,
   vehicleRegisteredLabel,
   vehicleSizeLabel,
+  type NeedsStepId,
   type SeekerNeeds,
 } from "@/lib/matching/needs"
-
-export type NeedsStepId =
-  | "household"
-  | "partnerRooms"
-  | "pet"
-  | "petWeight"
-  | "id"
-  | "vehicle"
-  | "vehicleDetails"
-  | "arrival"
-  | "curfew"
-  | "stay"
 
 export function NeedsSummary({
   needs,
@@ -60,7 +49,11 @@ export function NeedsSummary({
   rows.push(["Vehicle", vehicleLabel[needs.vehicle], "vehicle"])
 
   if (needs.vehicleSize) {
-    rows.push(["Vehicle size", vehicleSizeLabel[needs.vehicleSize], "vehicleDetails"])
+    rows.push([
+      "Vehicle size",
+      vehicleSizeLabel[needs.vehicleSize],
+      "vehicleDetails",
+    ])
   }
   if (needs.vehicleRegistered) {
     rows.push([

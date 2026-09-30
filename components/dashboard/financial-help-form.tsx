@@ -18,7 +18,10 @@ import {
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { programCadenceNote, suggestRecertDate } from "@/lib/obligations/program-rules"
+import {
+  programCadenceNote,
+  suggestRecertDate,
+} from "@/lib/obligations/program-rules"
 import { loadProfile, saveProfile } from "@/lib/obligations/storage"
 import {
   billFrequencyLabel,
@@ -37,7 +40,11 @@ type UtilityFormState = {
   frequency: BillFrequency
 }
 
-const BILL_FREQUENCIES: BillFrequency[] = ["monthly", "every_2_months", "quarterly"]
+const BILL_FREQUENCIES: BillFrequency[] = [
+  "monthly",
+  "every_2_months",
+  "quarterly",
+]
 
 const PROGRAM_ORDER: ProgramKind[] = [
   "calfresh",
@@ -115,7 +122,9 @@ export function FinancialHelpForm() {
         ...prev,
         [kind]: {
           checked,
-          date: shouldSuggest ? suggestRecertDate(kind, moveInDate) : current.date,
+          date: shouldSuggest
+            ? suggestRecertDate(kind, moveInDate)
+            : current.date,
         },
       }
     })
@@ -182,7 +191,8 @@ export function FinancialHelpForm() {
       programs: PROGRAM_ORDER.filter((kind) => programs[kind].checked).map(
         (kind) => ({
           kind,
-          label: kind === "other" && otherLabel ? otherLabel : programLabel[kind],
+          label:
+            kind === "other" && otherLabel ? otherLabel : programLabel[kind],
           nextRecertDate: programs[kind].date,
         })
       ),
@@ -241,7 +251,9 @@ export function FinancialHelpForm() {
                   />
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor="rent-due-day">Due day of month</FieldLabel>
+                  <FieldLabel htmlFor="rent-due-day">
+                    Due day of month
+                  </FieldLabel>
                   <Input
                     id="rent-due-day"
                     type="number"
@@ -264,7 +276,9 @@ export function FinancialHelpForm() {
                   value={leaseEndDate}
                   onChange={(e) => setLeaseEndDate(e.target.value)}
                 />
-                <FieldDescription>Optional. From your lease agreement.</FieldDescription>
+                <FieldDescription>
+                  Optional. From your lease agreement.
+                </FieldDescription>
               </Field>
               <Field>
                 <FieldLabel htmlFor="landlord-name">
@@ -276,7 +290,9 @@ export function FinancialHelpForm() {
                   value={landlordName}
                   onChange={(e) => setLandlordName(e.target.value)}
                 />
-                <FieldDescription>Optional. Shows up on your rent reminders.</FieldDescription>
+                <FieldDescription>
+                  Optional. Shows up on your rent reminders.
+                </FieldDescription>
               </Field>
             </FieldGroup>
           </CardContent>
@@ -290,7 +306,7 @@ export function FinancialHelpForm() {
             <FieldSet>
               <FieldLegend variant="label">
                 Check the ones that apply. True Roof suggests a recert/report
-                date from your move-in date — edit it if you already know the
+                date from your move-in date. Edit it if you already know the
                 real one from your award letter.
               </FieldLegend>
               {PROGRAM_ORDER.map((kind) => (
@@ -340,7 +356,9 @@ export function FinancialHelpForm() {
                         id="voucher-inspection-date"
                         type="date"
                         value={voucherInspectionDate}
-                        onChange={(e) => setVoucherInspectionDate(e.target.value)}
+                        onChange={(e) =>
+                          setVoucherInspectionDate(e.target.value)
+                        }
                       />
                       <FieldDescription>
                         Optional. Vouchers usually require a yearly inspection
@@ -377,7 +395,10 @@ export function FinancialHelpForm() {
                           }
                         />
                       </Field>
-                      <Field orientation="horizontal" className="w-fit items-end gap-2">
+                      <Field
+                        orientation="horizontal"
+                        className="w-fit items-end gap-2"
+                      >
                         <Field>
                           <FieldLabel htmlFor={`utility-amount-${utility.id}`}>
                             Amount ($)
@@ -391,7 +412,9 @@ export function FinancialHelpForm() {
                             className="w-24"
                             value={utility.amount}
                             onChange={(e) =>
-                              updateUtility(utility.id, { amount: e.target.value })
+                              updateUtility(utility.id, {
+                                amount: e.target.value,
+                              })
                             }
                           />
                         </Field>
@@ -407,7 +430,9 @@ export function FinancialHelpForm() {
                             className="w-20"
                             value={utility.dueDay}
                             onChange={(e) =>
-                              updateUtility(utility.id, { dueDay: e.target.value })
+                              updateUtility(utility.id, {
+                                dueDay: e.target.value,
+                              })
                             }
                           />
                         </Field>

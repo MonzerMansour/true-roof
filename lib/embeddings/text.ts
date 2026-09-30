@@ -1,7 +1,18 @@
+// Plain sentences embed better than JSON. Keep both sides in the same
+// vocabulary so a seeker and a site land near each other.
+//
+// scripts/embed-listings.mjs holds a hand-written copy of listingToText,
+// because it is a plain .mjs with no build step and cannot resolve the "@/"
+// alias this chain uses. That copy is guarded by a fixture test in
+// lib/embeddings/text.test.ts: change the output here and the test fails,
+// instead of the two quietly producing mismatched vectors.
+//
+// If you change listingToText, update scripts/embed-listings.mjs to match and
+// re-run `npm run embeddings:listings`.
 import {
+  formatTime,
   householdLabel,
   idLabel,
-  formatTime,
   latestEntryLabel,
   partnerRoomsLabel,
   petLabel,
@@ -11,10 +22,17 @@ import {
   vehicleSizeLabel,
   type SeekerNeeds,
 } from "@/lib/matching/needs"
-import { couplesLabel, petsLabel, type Listing } from "@/lib/listings/types"
-
-// Plain sentences embed better than JSON. Keep both builders in the same
-// vocabulary so a seeker and a site land near each other.
+import {
+  couplesLabel,
+  formatIntakeWindow,
+  idRequiredLabel,
+  maxStayLabel,
+  petsLabel,
+  registrationRequiredLabel,
+  vehicleAllowedLabel,
+  formatTime as formatSiteTime,
+  type Listing,
+} from "@/lib/listings/types"
 
 export function needsToText(needs: SeekerNeeds) {
   const lines = [
@@ -27,7 +45,9 @@ export function needsToText(needs: SeekerNeeds) {
     }.`,
     `Photo ID: ${idLabel[needs.idStatus]}.`,
     `Vehicle: ${vehicleLabel[needs.vehicle]}.`,
-    needs.vehicleSize ? `Vehicle size: ${vehicleSizeLabel[needs.vehicleSize]}.` : null,
+    needs.vehicleSize
+      ? `Vehicle size: ${vehicleSizeLabel[needs.vehicleSize]}.`
+      : null,
     needs.vehicleRegistered
       ? `Vehicle registered: ${vehicleRegisteredLabel[needs.vehicleRegistered]}.`
       : null,
@@ -39,13 +59,57 @@ export function needsToText(needs: SeekerNeeds) {
   return lines.filter(Boolean).join(" ")
 }
 
-export function listingToText(listing: Listing) {
+/** Accepts a Listing or the snake_case row the embedding script reads. */
+export type ListingTextInput = Pick<
+  Listing,
+  | "kind"
+  | "name"
+  | "orgName"
+  | "city"
+  | "pets"
+  | "couples"
+  | "parkingStatus"
+  | "vehicleNote"
+  | "idRequired"
+  | "curfewPolicy"
+  | "curfewTime"
+  | "intakeFrom"
+  | "intakeTo"
+  | "maxStay"
+  | "petWeightLimitLbs"
+  | "vehicleAllowed"
+  | "registrationRequired"
+>
+
+export function listingToText(listing: ListingTextInput) {
   const lines = [
     `${listing.kind === "shelter" ? "Shelter" : "Safe parking"}: ${listing.name}, run by ${listing.orgName}, in ${listing.city}.`,
-    listing.pets ? `${petsLabel[listing.pets]}.` : null,
+    listing.pets
+      ? `${petsLabel[listing.pets]}${
+          listing.petWeightLimitLbs
+            ? `, up to ${listing.petWeightLimitLbs} pounds`
+            : ""
+        }.`
+      : null,
     listing.couples ? `${couplesLabel[listing.couples]}.` : null,
+    listing.idRequired ? `${idRequiredLabel[listing.idRequired]}.` : null,
+    listing.curfewPolicy === "no_curfew"
+      ? "No curfew."
+      : listing.curfewPolicy === "fixed_time" && listing.curfewTime
+        ? `Doors lock at ${formatSiteTime(listing.curfewTime)}.`
+        : null,
+    listing.intakeFrom && listing.intakeTo
+      ? `Check in ${formatIntakeWindow(listing.intakeFrom, listing.intakeTo)}.`
+      : null,
+    listing.maxStay ? `${maxStayLabel[listing.maxStay]}.` : null,
     listing.parkingStatus ? `Parking status: ${listing.parkingStatus}.` : null,
-    listing.vehicleNote ? `Vehicles: ${listing.vehicleNote}.` : null,
+    listing.vehicleAllowed
+      ? `${vehicleAllowedLabel[listing.vehicleAllowed]}.`
+      : null,
+    listing.registrationRequired
+      ? `${registrationRequiredLabel[listing.registrationRequired]}.`
+      : null,
+    listing.vehicleNote ? `Lot notes: ${listing.vehicleNote}.` : null,
   ]
 
   return lines.filter(Boolean).join(" ")

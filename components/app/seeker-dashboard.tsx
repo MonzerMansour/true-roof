@@ -14,9 +14,7 @@ import {
 
 import { useSession } from "@/components/auth/session-provider"
 import { NeedChoices } from "@/components/app/need-choices"
-import {
-  MarketingPhoto,
-} from "@/components/marketing/marketing-photo"
+import { MarketingPhoto } from "@/components/marketing/marketing-photo"
 import { Badge } from "@/components/ui/badge"
 import { buttonVariants } from "@/components/ui/button"
 import { cn } from "cn"
@@ -42,13 +40,13 @@ import type { ObligationsProfile, Occurrence } from "@/lib/obligations/types"
 const riskCopy = {
   steady: {
     label: "Steady",
-    tone: "text-emerald-600 dark:text-emerald-400",
-    bar: "bg-emerald-500",
+    tone: "text-success-text",
+    bar: "bg-success",
   },
   watch: {
     label: "Due soon",
-    tone: "text-amber-600 dark:text-amber-400",
-    bar: "bg-amber-500",
+    tone: "text-warning-text",
+    bar: "bg-warning",
   },
   act: {
     label: "Needs action",
@@ -162,13 +160,13 @@ export function SeekerDashboard({ listings }: { listings: Listing[] }) {
         />
         <div
           aria-hidden
-          className="pointer-events-none absolute -right-16 -top-20 size-64 rounded-full bg-primary/20 blur-3xl"
+          className="pointer-events-none absolute -top-20 -right-16 size-64 rounded-full bg-primary/20 blur-3xl"
         />
 
         <div className="relative grid gap-8 p-6 sm:p-8 lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
           <div>
             <p className="text-sm font-medium text-primary">Dashboard</p>
-            <h1 className="font-heading mt-2 text-3xl font-semibold tracking-tight sm:text-5xl">
+            <h1 className="mt-2 font-heading text-3xl font-semibold tracking-tight sm:text-5xl">
               {name ? `Welcome back, ${name}` : "Welcome back"}
             </h1>
             <p className="mt-3 max-w-xl text-base text-muted-foreground sm:text-lg">
@@ -232,7 +230,9 @@ export function SeekerDashboard({ listings }: { listings: Listing[] }) {
             {riskUi ? (
               <div className="rounded-2xl border bg-background/60 px-4 py-3 backdrop-blur-sm">
                 <div className="flex items-center justify-between gap-2">
-                  <p className="text-xs text-muted-foreground">Housing status</p>
+                  <p className="text-xs text-muted-foreground">
+                    Housing status
+                  </p>
                   <p className={cn("text-sm font-semibold", riskUi.tone)}>
                     {riskUi.label}
                   </p>
@@ -292,7 +292,11 @@ export function SeekerDashboard({ listings }: { listings: Listing[] }) {
           icon={IconCalendarDue}
           label="Coming up"
           value={
-            nextDue ? formatShortDate(nextDue.date) : profile ? "Clear" : "Set up"
+            nextDue
+              ? formatShortDate(nextDue.date)
+              : profile
+                ? "Clear"
+                : "Set up"
           }
           detail={nextDue?.title ?? "Rent, bills, and recerts"}
         />
@@ -447,9 +451,7 @@ export function SeekerDashboard({ listings }: { listings: Listing[] }) {
                         <p className="text-muted-foreground">
                           {item.city}
                           {" · "}
-                          {item.kind === "parking"
-                            ? "Safe parking"
-                            : "Shelter"}
+                          {item.kind === "parking" ? "Safe parking" : "Shelter"}
                         </p>
                       </div>
                     </div>
@@ -512,10 +514,12 @@ function HeroMetric({
   return (
     <div className="rounded-2xl border bg-background/60 px-4 py-3 backdrop-blur-sm">
       <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="font-heading mt-1 text-2xl font-semibold tracking-tight">
+      <p className="mt-1 font-heading text-2xl font-semibold tracking-tight">
         {value}
       </p>
-      <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{detail}</p>
+      <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
+        {detail}
+      </p>
       {accent ? (
         <div className="mt-3 h-1 overflow-hidden rounded-full bg-muted">
           <div className={cn("h-full w-2/3 rounded-full", accent)} />
@@ -545,11 +549,11 @@ function StatTile({
     >
       <div className="flex items-center gap-2 text-muted-foreground">
         <Icon className="size-4" />
-        <span className="text-xs font-medium uppercase tracking-wide">
+        <span className="text-xs font-medium tracking-wide uppercase">
           {label}
         </span>
       </div>
-      <p className="font-heading mt-3 text-xl font-semibold tracking-tight">
+      <p className="mt-3 font-heading text-xl font-semibold tracking-tight">
         {value}
       </p>
       <p className="mt-1 text-sm text-muted-foreground">{detail}</p>

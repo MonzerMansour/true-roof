@@ -61,10 +61,12 @@ export function CreateSiteForm() {
         </Field>
 
         <Field>
-          <FieldLabel htmlFor="description">Short note (optional)</FieldLabel>
+          <FieldLabel htmlFor="orgDescription">
+            Short note (optional)
+          </FieldLabel>
           <Textarea
-            id="description"
-            name="description"
+            id="orgDescription"
+            name="orgDescription"
             rows={3}
             placeholder="Who runs this site, or how intake works. Not a category label."
           />

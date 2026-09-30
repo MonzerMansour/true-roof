@@ -63,31 +63,47 @@ export default async function HomePage() {
           className="absolute inset-0"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/65 to-black/30" />
-        <Container className="relative flex min-h-[calc(100svh-3.5rem)] flex-col justify-end gap-8 pb-12 pt-24 text-white lg:justify-center">
+        <Container className="relative flex min-h-[calc(100svh-3.5rem)] flex-col justify-end gap-8 pt-24 pb-12 text-white lg:justify-center">
           <div>
             <p className="text-sm font-medium tracking-wide text-white/80">
               For people looking for a place tonight
             </p>
-            <h1 className="font-heading mt-4 max-w-3xl text-5xl font-semibold tracking-tight text-balance sm:text-6xl lg:text-7xl">
+            <h1 className="mt-4 max-w-3xl font-heading text-5xl font-semibold tracking-tight text-balance sm:text-6xl lg:text-7xl">
               {site.tagline}
             </h1>
-            <p className="mt-5 max-w-xl text-lg text-white/85 text-pretty">
+            <p className="mt-5 max-w-xl text-lg text-pretty text-white/85">
               First we match you to a shelter or a safe parking lot using real
               constraints. Then we help you keep the rent, the paperwork, and
               the cushion that keep the keys.
             </p>
-            <div className="mt-8 flex flex-col gap-2 sm:flex-row sm:items-center">
-              <SignInButton>Find a place</SignInButton>
+            {/* The primary action goes straight to the list. It used to open
+                the sign-in dialog, which put a login wall between somebody
+                looking for a bed tonight and the first shelter they could see.
+                No account is needed to browse, call, or get directions. */}
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
               <Link
-                href="/for-providers"
+                href="/places"
+                className={cn(buttonVariants({ size: "touch" }), "sm:w-auto")}
+              >
+                See places near you
+              </Link>
+              <Link
+                href="/get-started/find-a-place"
                 className={cn(
-                  buttonVariants({ variant: "outline", size: "lg" }),
+                  buttonVariants({ variant: "outline", size: "touch" }),
                   "border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white"
                 )}
               >
-                I run a shelter or lot
+                Answer a few questions first
               </Link>
             </div>
+            <p className="mt-3 text-sm text-white/75">
+              No account needed. Run a shelter or lot?{" "}
+              <Link href="/for-providers" className="font-medium underline">
+                Go to the provider side
+              </Link>
+              .
+            </p>
           </div>
 
           {heroListings.length > 0 ? (
@@ -108,7 +124,7 @@ export default async function HomePage() {
       <section className="py-20">
         <Container>
           <p className="text-sm font-medium text-primary">Two jobs. One app.</p>
-          <h2 className="font-heading mt-2 max-w-3xl text-3xl font-semibold tracking-tight sm:text-4xl">
+          <h2 className="mt-2 max-w-3xl font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
             Get through tonight. Then stay housed.
           </h2>
           <p className="mt-3 max-w-2xl text-muted-foreground">
@@ -139,9 +155,13 @@ export default async function HomePage() {
                   <Link
                     key={feature.slug}
                     href={`/features/${feature.slug}`}
-                    className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+                    className={cn(
+                      buttonVariants({ variant: "outline", size: "sm" })
+                    )}
                   >
-                    {feature.slug === "parking" ? "Safe parking" : "Find a place"}
+                    {feature.slug === "parking"
+                      ? "Safe parking"
+                      : "Find a place"}
                   </Link>
                 ))}
               </CardContent>
@@ -161,28 +181,34 @@ export default async function HomePage() {
                   The year of bills that keeps the housing
                 </CardTitle>
                 <CardDescription className="text-base">
-                  Rent, CalFresh, Medi-Cal, a photographed letter, a cushion
-                  the size of a month of rent, and a warning before a 3-day
-                  notice becomes a lockout. This is financial stability — not
-                  another search.
+                  Rent, CalFresh, Medi-Cal, a photographed letter, a cushion the
+                  size of a month of rent, and a warning before a 3-day notice
+                  becomes a lockout. This is financial stability. Not another
+                  search.
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex flex-wrap gap-2 pb-6">
                 <Link
                   href="/features/deadlines"
-                  className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+                  className={cn(
+                    buttonVariants({ variant: "outline", size: "sm" })
+                  )}
                 >
                   Deadlines
                 </Link>
                 <Link
                   href="/features/savings"
-                  className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+                  className={cn(
+                    buttonVariants({ variant: "outline", size: "sm" })
+                  )}
                 >
                   Rent cushion
                 </Link>
                 <Link
                   href="/features/income"
-                  className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+                  className={cn(
+                    buttonVariants({ variant: "outline", size: "sm" })
+                  )}
                 >
                   Job & benefits
                 </Link>
@@ -235,19 +261,21 @@ export default async function HomePage() {
         <Container className="grid items-center gap-10 lg:grid-cols-2">
           <div>
             <Badge variant="outline">After you get housed</Badge>
-            <h2 className="font-heading mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
+            <h2 className="mt-4 font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
               Maria typed rent once. True Roof wrote the year.
             </h2>
             <p className="mt-4 text-muted-foreground">
               Move-in on September 15. CalFresh, Medi-Cal, a voucher, $1,450 due
-              on the 1st. The rest — recerts, renewals, every rent date — is
+              on the 1st. The rest (recerts, renewals, every rent date) is
               already there. Photograph a letter and the list updates in plain
               language.
             </p>
             <ol className="mt-8 grid gap-4">
               {storyBeats.map((beat) => (
                 <li key={beat.when} className="rounded-xl border bg-card p-4">
-                  <p className="text-xs font-medium text-primary">{beat.when}</p>
+                  <p className="text-xs font-medium text-primary">
+                    {beat.when}
+                  </p>
                   <p className="mt-1 font-medium">{beat.title}</p>
                   <p className="mt-1 text-sm text-muted-foreground">
                     {beat.body}
@@ -293,7 +321,7 @@ export default async function HomePage() {
               "Large text, high contrast, screen reader, voice intake",
               "SMS when there is no data, including a borrowed phone",
               "PIN or biometric lock, auto-lock, export & delete",
-              "Quiet mode after about six steady months — not forever nagging",
+              "Quiet mode after about six steady months, not forever nagging",
             ].map((item) => (
               <li
                 key={item}
@@ -384,11 +412,7 @@ export default async function HomePage() {
   )
 }
 
-function FeatureTile({
-  feature,
-}: {
-  feature: (typeof features)[number]
-}) {
+function FeatureTile({ feature }: { feature: (typeof features)[number] }) {
   return (
     <Link href={`/features/${feature.slug}`}>
       <Card className="h-full overflow-hidden transition-colors hover:bg-muted/40">

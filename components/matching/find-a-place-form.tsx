@@ -24,6 +24,7 @@ import {
   householdLabel,
   idLabel,
   latestEntryOptions,
+  isNeedsStepId,
   partnerRoomsLabel,
   petLabel,
   stayOptions,
@@ -32,6 +33,7 @@ import {
   vehicleSizeLabel,
   type Household,
   type IdStatus,
+  type NeedsStepId,
   type PartnerRooms,
   type PetNeed,
   type SeekerNeeds,
@@ -78,21 +80,9 @@ const emptyDraft: Draft = {
   daysNeeded: null,
 }
 
-type StepId =
-  | "household"
-  | "partnerRooms"
-  | "pet"
-  | "petWeight"
-  | "id"
-  | "vehicle"
-  | "vehicleDetails"
-  | "arrival"
-  | "curfew"
-  | "stay"
-
 // Follow-up questions only appear when an earlier answer needs them.
-function visibleSteps(draft: Draft): StepId[] {
-  const steps: StepId[] = ["household"]
+function visibleSteps(draft: Draft): NeedsStepId[] {
+  const steps: NeedsStepId[] = ["household"]
   if (draft.household === "with_partner") steps.push("partnerRooms")
   steps.push("pet")
   if (draft.pet === "small_pet") steps.push("petWeight")
@@ -104,7 +94,7 @@ function visibleSteps(draft: Draft): StepId[] {
   return steps
 }
 
-function isAnswered(step: StepId, draft: Draft) {
+function isAnswered(step: NeedsStepId, draft: Draft) {
   switch (step) {
     case "household":
       return draft.household !== null
@@ -130,7 +120,7 @@ function isAnswered(step: StepId, draft: Draft) {
 }
 
 // A message when an answer is filled in but cannot be used. Null when fine.
-function stepError(step: StepId, draft: Draft): string | null {
+function stepError(step: NeedsStepId, draft: Draft): string | null {
   if (step === "petWeight" && draft.petWeightLbs.trim()) {
     const weight = Number(draft.petWeightLbs)
     if (!Number.isFinite(weight) || weight < 1 || weight > 200) {
@@ -170,10 +160,10 @@ function toNeeds(draft: Draft): SeekerNeeds | null {
 
   return {
     household: draft.household,
-    partnerRooms: draft.household === "with_partner" ? draft.partnerRooms : null,
+    partnerRooms:
+      draft.household === "with_partner" ? draft.partnerRooms : null,
     pet: draft.pet,
-    petWeightLbs:
-      draft.pet === "small_pet" && weight > 0 ? weight : null,
+    petWeightLbs: draft.pet === "small_pet" && weight > 0 ? weight : null,
     idStatus: draft.idStatus,
     vehicle: draft.vehicle,
     vehicleSize: hasVehicle ? draft.vehicleSize : null,
@@ -222,14 +212,19 @@ function ChoiceGroup({
       <FieldLegend className="font-heading font-semibold data-[variant=legend]:text-2xl">
         {legend}
       </FieldLegend>
-      {hint ? <FieldDescription className="text-base">{hint}</FieldDescription> : null}
+      {hint ? (
+        <FieldDescription className="text-base">{hint}</FieldDescription>
+      ) : null}
       <RadioGroup
         value={value ?? ""}
         onValueChange={(next) => onChange(String(next))}
       >
         {choices.map((choice) => (
           <FieldLabel key={choice.value} htmlFor={`${legend}-${choice.value}`}>
-            <Field orientation="horizontal" className="min-h-14 items-center has-[>[data-slot=field-content]]:items-center">
+            <Field
+              orientation="horizontal"
+              className="min-h-14 items-center has-[>[data-slot=field-content]]:items-center"
+            >
               <RadioGroupItem
                 id={`${legend}-${choice.value}`}
                 value={choice.value}
@@ -266,8 +261,8 @@ export function FindAPlaceForm() {
   const [ready, setReady] = React.useState(false)
   const [resumed, setResumed] = React.useState(false)
   const [editing, setEditing] = React.useState<{
-    stepId: StepId
-    before: StepId[]
+    stepId: NeedsStepId
+    before: NeedsStepId[]
     pos: number
   } | null>(null)
   const headingRef = React.useRef<HTMLDivElement>(null)
@@ -286,7 +281,8 @@ export function FindAPlaceForm() {
       setSaved(existing)
 
       if (editParam && editParam !== "all") {
-        const stepId = editParam as StepId
+        if (!isNeedsStepId(editParam)) return
+        const stepId = editParam
         setEditing({
           stepId,
           before: visibleSteps(nextDraft),
@@ -496,7 +492,9 @@ export function FindAPlaceForm() {
               />
               <span className="text-base">pounds</span>
             </div>
-            {error ? <FieldError id="pet-weight-error">{error}</FieldError> : null}
+            {error ? (
+              <FieldError id="pet-weight-error">{error}</FieldError>
+            ) : null}
           </Field>
         ) : null}
 
@@ -688,7 +686,10 @@ export function FindAPlaceForm() {
           )}
         </Button>
       </div>
-      <p className="mt-3 min-h-5 text-sm text-muted-foreground" aria-live="polite">
+      <p
+        className="mt-3 min-h-5 text-sm text-muted-foreground"
+        aria-live="polite"
+      >
         {answered ? "" : "Choose an answer to continue."}
       </p>
     </form>

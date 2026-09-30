@@ -1,12 +1,14 @@
 import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
 
-function isMarketingPath(pathname: string) {
-  return (
-    pathname === "/" ||
-    pathname === "/for-providers" ||
-    pathname.startsWith("/features")
-  )
+// Only the landing page bounces a signed-in person into the app.
+//
+// The rest of the marketing site stays browsable while signed in. Someone who
+// wants to read what a feature does, or a seeker who wants to see the provider
+// page, should not be thrown back to their dashboard with no way through. There
+// was no escape hatch: typing the URL redirected too.
+function isLandingPath(pathname: string) {
+  return pathname === "/"
 }
 
 export async function proxy(request: NextRequest) {
@@ -57,7 +59,7 @@ export async function proxy(request: NextRequest) {
         : "seeker"
   }
 
-  if (user && isMarketingPath(pathname)) {
+  if (user && isLandingPath(pathname)) {
     const redirectUrl = request.nextUrl.clone()
     redirectUrl.pathname = role === "provider" ? "/portal" : "/home"
     redirectUrl.search = ""
