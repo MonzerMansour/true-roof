@@ -27,6 +27,7 @@ import { listingFitsNeeds } from "@/lib/matching/hard-filters"
 import { loadNeeds } from "@/lib/matching/storage"
 import type { SeekerNeeds } from "@/lib/matching/needs"
 import type { RankSource } from "@/lib/matching/rank"
+import type { MatchDetail } from "@/lib/matching/score-blend"
 import {
   defaultOrigin,
   milesBetween,
@@ -62,9 +63,13 @@ type FilterTag = {
 export function PlacesFeed({
   listings,
   rankedBy,
+  similarity,
+  matchDetails,
 }: {
   listings: Listing[]
   rankedBy: RankSource
+  similarity?: Record<string, number>
+  matchDetails?: Record<string, MatchDetail>
 }) {
   const [needs, setNeeds] = React.useState<SeekerNeeds | null>(null)
   const [filters, setFilters] = React.useState<PlaceFilters>(defaultPlaceFilters)
@@ -128,6 +133,20 @@ export function PlacesFeed({
       return true
     })
     .sort((a, b) => {
+      // Sort by match score when the person has saved answers and the
+      // server was able to rank by them. Anything without a score (should
+      // not happen once ranked, but stay safe) sorts after everything
+      // that has one. Falls back to nearest-first otherwise.
+      if (rankedBy === "match_listings") {
+        const aScore = matchDetails?.[a.listing.id]?.score
+        const bScore = matchDetails?.[b.listing.id]?.score
+        if (aScore != null || bScore != null) {
+          if (aScore == null) return 1
+          if (bScore == null) return -1
+          return bScore - aScore
+        }
+      }
+
       if (a.miles == null && b.miles == null) return 0
       if (a.miles == null) return 1
       if (b.miles == null) return -1
@@ -260,7 +279,7 @@ export function PlacesFeed({
         <p className="text-sm text-muted-foreground">
           {visible.length} {visible.length === 1 ? "site" : "sites"}
           {" · "}
-          Nearest first
+          {rankedBy === "match_listings" ? "Best match first" : "Nearest first"}
         </p>
         {rankedBy === "match_listings" ? (
           <Badge variant="outline">Also ranked by your answers</Badge>
@@ -565,6 +584,16 @@ export function PlacesFeed({
               listing={listing}
               fit={needs ? fit : undefined}
               miles={miles}
+              matchPercent={
+                rankedBy === "match_listings"
+                  ? similarity?.[listing.id]
+                  : undefined
+              }
+              matchDetail={
+                rankedBy === "match_listings"
+                  ? matchDetails?.[listing.id]
+                  : undefined
+              }
             />
           ))}
         </div>

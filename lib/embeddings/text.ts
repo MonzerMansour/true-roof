@@ -34,9 +34,15 @@ export function needsToText(needs: SeekerNeeds) {
     `Can check in between ${formatTime(needs.arrivalFrom)} and ${formatTime(needs.arrivalTo)}.`,
     `Needs late entry: ${latestEntryLabel(needs.latestEntry)}.`,
     `Bed needed: ${stayLabel(needs.daysNeeded)}.`,
-    // Free text, one sentence, always last so the categorical fields above
-    // dominate the embedding and this only nudges the ranking.
-    needs.placeNote?.trim() ? `What they said in their own words: "${needs.placeNote.trim()}".` : null,
+    // Free text, one sentence, labeled clearly as location and community
+    // preference so the embedding model reads it as its own category
+    // (near a park, close to transit, a quiet block) rather than a loose
+    // trailing quote. The categorical fields above still get checked
+    // separately (lib/matching/categorical-score.ts); this is the part
+    // that carries a person's actual words into the text match.
+    needs.placeNote?.trim()
+      ? `Location and community preference, in their own words: "${needs.placeNote.trim()}".`
+      : null,
   ]
 
   return lines.filter(Boolean).join(" ")
@@ -49,9 +55,13 @@ export function listingToText(listing: Listing) {
     listing.couples ? `${couplesLabel[listing.couples]}.` : null,
     listing.parkingStatus ? `Parking status: ${listing.parkingStatus}.` : null,
     listing.vehicleNote ? `Vehicles: ${listing.vehicleNote}.` : null,
-    // Free text the provider wrote, one short note, always last for the
-    // same reason: categorical fields carry the match, this only nudges it.
-    listing.orgDescription?.trim() ? `What the site says about itself: "${listing.orgDescription.trim()}".` : null,
+    // Same "location and community" framing as needsToText(), so a
+    // seeker's "near a park" and a site's "next to a public park" land in
+    // the same part of the sentence rather than two differently shaped
+    // trailing quotes.
+    listing.orgDescription?.trim()
+      ? `Location and community, what the site says about itself: "${listing.orgDescription.trim()}".`
+      : null,
   ]
 
   return lines.filter(Boolean).join(" ")

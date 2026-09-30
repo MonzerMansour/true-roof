@@ -1,4 +1,4 @@
-import { categoricalAgreement, hybridScore } from "@/lib/eval/categorical-score"
+import { categoricalAgreement, hybridScore, type ScoreFactor } from "@/lib/eval/categorical-score"
 import type { SeekerNeeds } from "@/lib/matching/needs"
 import type { ShelterFixture } from "@/lib/eval/shelter-fixtures"
 
@@ -25,6 +25,7 @@ export type RankedShelter = {
   description: string
   cosine: number
   categorical: number
+  factors: ScoreFactor[]
   score: number
 }
 
@@ -42,7 +43,7 @@ export function rankSheltersForNeeds(
   return shelters
     .map((shelter) => {
       const cosine = cosineSimilarity(needsEmbedding, shelter.embedding)
-      const categorical = categoricalAgreement(needs, shelter.fixture)
+      const { score: categorical, factors } = categoricalAgreement(needs, shelter.fixture)
 
       return {
         id: shelter.id,
@@ -50,6 +51,7 @@ export function rankSheltersForNeeds(
         description: shelter.description,
         cosine,
         categorical,
+        factors,
         score: hybridScore(cosine, categorical),
       }
     })

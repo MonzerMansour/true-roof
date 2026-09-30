@@ -1,59 +1,89 @@
 import type { SeekerNeeds } from "@/lib/matching/needs"
 import type { ShelterFixture } from "@/lib/eval/shelter-fixtures"
 
+export type ScoreFactor = {
+  label: string
+  detail: string
+  score: number
+}
+
+export type CategoricalResult = {
+  score: number
+  factors: ScoreFactor[]
+}
+
 // A bias layer on top of the raw embedding. Cosine similarity reads
 // meaning from free text, but it has no way to know that "pets: any" and
 // "no pet" are a perfect fit while "pets: not_allowed" and "a larger pet"
 // are not. This scores that agreement directly from the structured fields,
 // the same fields lib/matching/hard-filters.ts already treats as ground
 // truth, so ranking stops depending only on how well the text happened to
-// read.
-//
-// Returns 0 to 1. 1 means every structured field that applies agrees.
-export function categoricalAgreement(needs: SeekerNeeds, shelter: ShelterFixture): number {
-  const scores: number[] = []
+// read. Every factor it checks is returned alongside the score, so a
+// person can see exactly which answers pulled the match up or down.
+export function categoricalAgreement(
+  needs: SeekerNeeds,
+  shelter: ShelterFixture
+): CategoricalResult {
+  const factors: ScoreFactor[] = []
 
   // Site type versus whether they have a vehicle. The strongest signal:
   // someone with no vehicle gets nothing from a parking lot, and someone
   // sleeping in an RV gets nothing from an indoor-only shelter.
   const needsVehicleSite = needs.vehicle !== "none"
   if (needsVehicleSite) {
-    scores.push(shelter.kind === "parking" ? 1 : 0.15)
+    factors.push(
+      shelter.kind === "parking"
+        ? { label: "Site type", detail: "They have a vehicle, this is safe parking.", score: 1 }
+        : { label: "Site type", detail: "They have a vehicle, but this is an indoor shelter.", score: 0.15 }
+    )
   } else {
-    scores.push(shelter.kind === "shelter" ? 1 : 0.2)
+    factors.push(
+      shelter.kind === "shelter"
+        ? { label: "Site type", detail: "No vehicle, this is an indoor shelter.", score: 1 }
+        : { label: "Site type", detail: "No vehicle, but this is a parking lot.", score: 0.2 }
+    )
   }
 
   // Pets, only meaningful for indoor shelters (parking fixtures carry pets: null).
   if (shelter.kind === "shelter") {
     if (shelter.pets === null) {
-      scores.push(0.5)
+      factors.push({ label: "Pets", detail: "This site's pet policy is not on file.", score: 0.5 })
     } else if (needs.pet === "none") {
-      scores.push(1)
+      factors.push({ label: "Pets", detail: "No pet to place, any pet policy works.", score: 1 })
     } else if (needs.pet === "service_animal") {
-      scores.push(shelter.pets === "not_allowed" ? 0.2 : 1)
+      factors.push(
+        shelter.pets === "not_allowed"
+          ? { label: "Pets", detail: "They have a service animal, this site does not allow pets.", score: 0.2 }
+          : { label: "Pets", detail: "They have a service animal, this site allows it.", score: 1 }
+      )
     } else if (needs.pet === "small_pet") {
-      scores.push(
+      const score =
         shelter.pets === "any" || shelter.pets === "small_pets"
           ? 1
           : shelter.pets === "service_only"
             ? 0.3
             : 0.1
-      )
+      factors.push({
+        label: "Pets",
+        detail: `They have a small pet, this site's policy is "${shelter.pets}".`,
+        score,
+      })
     } else {
-      // larger_pet
-      scores.push(shelter.pets === "any" ? 1 : 0.1)
+      factors.push(
+        shelter.pets === "any"
+          ? { label: "Pets", detail: "They have a larger pet, this site allows any pet.", score: 1 }
+          : { label: "Pets", detail: `They have a larger pet, this site's policy is "${shelter.pets}".`, score: 0.1 }
+      )
     }
 
     // Couples.
     if (needs.household === "with_partner" && shelter.couples) {
       if (shelter.couples === "not_allowed") {
-        scores.push(0.1)
-      } else if (needs.partnerRooms === "either") {
-        scores.push(1)
-      } else if (needs.partnerRooms === shelter.couples) {
-        scores.push(1)
+        factors.push({ label: "Couples", detail: "Traveling with a partner, this site does not take couples.", score: 0.1 })
+      } else if (needs.partnerRooms === "either" || needs.partnerRooms === shelter.couples) {
+        factors.push({ label: "Couples", detail: `Room setup matches: "${shelter.couples}".`, score: 1 })
       } else {
-        scores.push(0.4)
+        factors.push({ label: "Couples", detail: `They wanted "${needs.partnerRooms}", this site offers "${shelter.couples}".`, score: 0.4 })
       }
     }
   }
@@ -61,23 +91,23 @@ export function categoricalAgreement(needs: SeekerNeeds, shelter: ShelterFixture
   // Parking-specific: an open lot beats a full or waitlisted one for
   // someone who needs a spot now.
   if (shelter.kind === "parking" && needsVehicleSite) {
-    if (shelter.parkingStatus === "open") scores.push(1)
-    else if (shelter.parkingStatus === "waitlist") scores.push(0.5)
-    else if (shelter.parkingStatus === "full") scores.push(0.1)
-    else scores.push(0.5)
+    if (shelter.parkingStatus === "open") {
+      factors.push({ label: "Parking status", detail: "This lot is open.", score: 1 })
+    } else if (shelter.parkingStatus === "waitlist") {
+      factors.push({ label: "Parking status", detail: "This lot has a waitlist.", score: 0.5 })
+    } else if (shelter.parkingStatus === "full") {
+      factors.push({ label: "Parking status", detail: "This lot is full.", score: 0.1 })
+    } else {
+      factors.push({ label: "Parking status", detail: "This lot's status is not on file.", score: 0.5 })
+    }
   }
 
-  return scores.reduce((sum, s) => sum + s, 0) / scores.length
+  const score = factors.reduce((sum, f) => sum + f.score, 0) / factors.length
+
+  return { score, factors }
 }
 
-// Weight toward the categorical bonus: this is a matcher for hard-ish
-// constraints (pets, vehicle, couples) more than it is a free-text search
-// engine, so the structured agreement should carry more of the score than
-// the embedding does. Tunable; both stay visible on the eval page so the
-// blend is never hidden behind one final number.
-export const COSINE_WEIGHT = 0.35
-export const CATEGORICAL_WEIGHT = 0.65
-
-export function hybridScore(cosine: number, categorical: number): number {
-  return cosine * COSINE_WEIGHT + categorical * CATEGORICAL_WEIGHT
-}
+// The blend itself (whichever of text/fields is higher counts more) lives
+// in lib/matching/score-blend.ts, shared with the real app so both use the
+// same rule.
+export { hybridScore } from "@/lib/matching/score-blend"

@@ -1,8 +1,12 @@
-// Embeds every listing into public.listing_embeddings. Run after the
-// 20260921000000_vector_search migration, and again when listings change:
+// Embeds every published listing into public.listing_embeddings, using the
+// app's own listingToText() (lib/embeddings/text.ts) so the stored
+// embedding always matches what the app would generate. Run after the
+// 20260921000000_vector_search migration, and again whenever a listing's
+// fields or description change:
 //   npm run embeddings:listings
 // Needs NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, OPENAI_API_KEY.
-import { readFileSync } from "node:fs"
+import { readFileSync, writeFileSync, unlinkSync } from "node:fs"
+import { execSync } from "node:child_process"
 import { resolve } from "node:path"
 
 import { createClient } from "@supabase/supabase-js"
@@ -28,30 +32,62 @@ if (!NEXT_PUBLIC_SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !OPENAI_API_KEY) 
   process.exit(1)
 }
 
-// Keep in sync with listingToText in lib/embeddings/text.ts.
-const pets = {
-  not_allowed: "pets: not allowed",
-  service_only: "pets: service animals only",
-  small_pets: "pets: small pets under a weight limit",
-  any: "pets: any pet",
-}
-const couples = {
-  not_allowed: "couples: not allowed",
-  same_room: "couples: same room",
-  separate_rooms: "couples: separate rooms",
+const supabase = createClient(NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+
+const { data, error } = await supabase
+  .from("listings")
+  .select(
+    "id, name, kind, freshness, last_confirmed_at, pets, couples, parking_status, vehicle_note, city, intake_method, organizations(name, description)"
+  )
+
+if (error) {
+  console.error(error.message)
+  process.exit(1)
 }
 
-function toText(row) {
+const rows = data.map((row) => {
   const org = Array.isArray(row.organizations) ? row.organizations[0] : row.organizations
-  return [
-    `${row.kind === "shelter" ? "Shelter" : "Safe parking"}: ${row.name}, run by ${org?.name ?? row.name}, in ${row.city}.`,
-    row.pets ? `${pets[row.pets]}.` : null,
-    row.couples ? `${couples[row.couples]}.` : null,
-    row.parking_status ? `Parking status: ${row.parking_status}.` : null,
-    row.vehicle_note ? `Vehicles: ${row.vehicle_note}.` : null,
-  ]
-    .filter(Boolean)
-    .join(" ")
+  return {
+    id: row.id,
+    name: row.name,
+    kind: row.kind,
+    freshness: row.freshness,
+    lastConfirmedAt: row.last_confirmed_at,
+    pets: row.pets,
+    couples: row.couples,
+    parkingStatus: row.parking_status,
+    vehicleNote: row.vehicle_note,
+    city: row.city,
+    orgName: org?.name ?? row.name,
+    orgDescription: org?.description ?? null,
+    lat: null,
+    lng: null,
+    phone: null,
+    intakeMethod: row.intake_method,
+  }
+})
+
+// Run listingToText() through tsx so it gets the real TypeScript builder,
+// types stripped the same way the app does, instead of a hand-copied
+// duplicate that silently drifts out of sync with lib/embeddings/text.ts.
+const loaderPath = resolve(".tmp-embed-listings-loader.mjs")
+writeFileSync(
+  loaderPath,
+  `import { listingToText } from ${JSON.stringify(resolve("lib/embeddings/text.ts"))};\n` +
+    `const rows = ${JSON.stringify(rows)};\n` +
+    `process.stdout.write(JSON.stringify(rows.map((r) => listingToText(r))));\n`
+)
+let texts
+try {
+  texts = JSON.parse(
+    execSync(`npx tsx ${JSON.stringify(loaderPath)}`, {
+      cwd: resolve("."),
+      encoding: "utf8",
+      maxBuffer: 1024 * 1024 * 20,
+    })
+  )
+} finally {
+  unlinkSync(loaderPath)
 }
 
 async function embed(input) {
@@ -60,34 +96,23 @@ async function embed(input) {
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${OPENAI_API_KEY}` },
     body: JSON.stringify({ model, input }),
   })
-  if (!response.ok) throw new Error(`OpenAI ${response.status}`)
+  if (!response.ok) throw new Error(`OpenAI ${response.status}: ${await response.text()}`)
   return (await response.json()).data[0].embedding
 }
 
-const supabase = createClient(NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
-
-const { data, error } = await supabase
-  .from("listings")
-  .select("id, name, kind, pets, couples, parking_status, vehicle_note, city, organizations(name)")
-
-if (error) {
-  console.error(error.message)
-  process.exit(1)
-}
-
-for (const row of data) {
-  const content = toText(row)
+for (let i = 0; i < rows.length; i++) {
+  const content = texts[i]
   const embedding = await embed(content)
   const { error: upsertError } = await supabase.from("listing_embeddings").upsert({
-    listing_id: row.id,
+    listing_id: rows[i].id,
     content,
     embedding: JSON.stringify(embedding),
     model,
     updated_at: new Date().toISOString(),
   })
   if (upsertError) {
-    console.error(`${row.name}: ${upsertError.message}`)
+    console.error(`${rows[i].name}: ${upsertError.message}`)
     process.exit(1)
   }
-  console.log(`Embedded ${row.name}`)
+  console.log(`Embedded ${rows[i].name}`)
 }

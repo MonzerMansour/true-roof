@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { IconHeart, IconHeartFilled } from "@tabler/icons-react"
+import { IconCheck, IconChevronDown, IconHeart, IconHeartFilled } from "@tabler/icons-react"
 import { toast } from "sonner"
 
 import {
@@ -36,6 +36,8 @@ import {
   petsLabel,
   type Listing,
 } from "@/lib/listings/types"
+import type { MatchDetail } from "@/lib/matching/score-blend"
+import { formatPercent, lenientTextScore } from "@/lib/matching/score-blend"
 
 export function freshnessTone(listing: Listing) {
   if (listing.kind === "parking") {
@@ -53,10 +55,25 @@ export function PlaceCard({
   listing,
   fit,
   miles,
+  matchPercent,
+  matchDetail,
 }: {
   listing: Listing
   fit?: { fits: boolean; reasons: string[] }
   miles?: number | null
+  /**
+   * 0-1 cosine similarity from match_listings(), the same value used to
+   * order the feed. Shown as a rounded percentage, not a claim of fit,
+   * only how close the wording of their answers landed to this listing.
+   */
+  matchPercent?: number
+  /**
+   * Display-only breakdown behind the match badge: how the structured
+   * fields agree, how close the text is, and which answers drove each
+   * factor. Opening it never changes list order, match_listings' cosine
+   * score does that alone, this only explains the number.
+   */
+  matchDetail?: MatchDetail
 }) {
   const photo = photoForListing(listing)
   const contact = contactForListing(listing)
@@ -66,6 +83,7 @@ export function PlaceCard({
       ? parkingStatusLabel[listing.parkingStatus]
       : freshnessLabel[listing.freshness]
   const [saved, setSaved] = React.useState(false)
+  const [showBreakdown, setShowBreakdown] = React.useState(false)
 
   React.useEffect(() => {
     const sync = () => setSaved(isFavorite(listing.id))
@@ -86,6 +104,12 @@ export function PlaceCard({
     const next = toggleFavorite(listing.id)
     setSaved(next)
     toast.success(next ? "Saved to your dashboard." : "Removed from saved.")
+  }
+
+  function onToggleBreakdown(event: React.MouseEvent) {
+    event.preventDefault()
+    event.stopPropagation()
+    setShowBreakdown((prev) => !prev)
   }
 
   return (
@@ -133,6 +157,28 @@ export function PlaceCard({
             {fit?.fits ? (
               <Badge variant="secondary">Fits what you told us</Badge>
             ) : null}
+            {matchPercent != null && matchDetail ? (
+              <button
+                type="button"
+                onClick={onToggleBreakdown}
+                aria-expanded={showBreakdown}
+                className="inline-flex items-center gap-1 rounded-4xl border border-transparent px-2 py-0.5 text-xs font-medium outline-none transition-all hover:border-border focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+              >
+                <Badge variant="outline" className="border-none px-0">
+                  {formatPercent(matchDetail.score)} match to your answers
+                </Badge>
+                <IconChevronDown
+                  className={cn(
+                    "size-3 text-muted-foreground transition-transform",
+                    showBreakdown && "rotate-180"
+                  )}
+                />
+              </button>
+            ) : matchPercent != null ? (
+              <Badge variant="outline">
+                {formatPercent(matchPercent)} match to your answers
+              </Badge>
+            ) : null}
             <Badge variant="outline">{intakeLabel[listing.intakeMethod]}</Badge>
             {miles != null ? (
               <Badge variant="outline">{formatMiles(miles)}</Badge>
@@ -155,11 +201,54 @@ export function PlaceCard({
           {facts.length > 0 ? (
             <p className="text-sm text-muted-foreground">{facts.join(" · ")}</p>
           ) : null}
+          {listing.orgDescription ? (
+            <p className="text-sm">{listing.orgDescription}</p>
+          ) : null}
           {contact ? (
             <p className="text-sm font-medium">{contact.label}</p>
           ) : null}
           {fit && !fit.fits && fit.reasons[0] ? (
             <p className="text-sm text-destructive">{fit.reasons[0]}</p>
+          ) : null}
+          {showBreakdown && matchDetail ? (
+            <div
+              className="space-y-2 rounded-lg border p-3"
+              onClick={(event) => event.preventDefault()}
+            >
+              <div className="flex flex-wrap gap-2">
+                <Badge variant="outline">
+                  {formatPercent(matchDetail.categorical)} fields
+                </Badge>
+                <Badge variant="outline">
+                  {formatPercent(lenientTextScore(matchDetail.cosine))} text
+                </Badge>
+              </div>
+              <ul className="space-y-1.5">
+                {matchDetail.factors.map((factor) => (
+                  <li
+                    key={factor.label}
+                    className="flex items-start justify-between gap-3 text-sm"
+                  >
+                    <span className="text-muted-foreground">
+                      <span className="font-medium text-foreground">
+                        {factor.label}:
+                      </span>{" "}
+                      {factor.detail}
+                    </span>
+                    <Badge
+                      variant={factor.score >= 0.7 ? "default" : "outline"}
+                      className="shrink-0"
+                    >
+                      {factor.score >= 0.99 ? (
+                        <IconCheck className="size-3" aria-label="Matches" />
+                      ) : (
+                        formatPercent(factor.score)
+                      )}
+                    </Badge>
+                  </li>
+                ))}
+              </ul>
+            </div>
           ) : null}
           <PhotoCredit photo={photo} />
         </CardContent>
