@@ -1,4 +1,4 @@
-import { IconCheck } from "@tabler/icons-react"
+import { IconCheck, IconX } from "@tabler/icons-react"
 
 import {
   Accordion,
@@ -75,10 +75,10 @@ export function RankedResult({
                       variant={factor.score >= 0.7 ? "default" : "outline"}
                       className="shrink-0"
                     >
-                      {factor.score >= 0.99 ? (
+                      {factor.score >= 0.7 ? (
                         <IconCheck className="size-3" aria-label="Matches" />
                       ) : (
-                        formatPercent(factor.score)
+                        <IconX className="size-3" aria-label="Does not match" />
                       )}
                     </Badge>
                   </li>

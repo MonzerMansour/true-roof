@@ -2,7 +2,13 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { IconCheck, IconChevronDown, IconHeart, IconHeartFilled } from "@tabler/icons-react"
+import {
+  IconCheck,
+  IconChevronDown,
+  IconHeart,
+  IconHeartFilled,
+  IconX,
+} from "@tabler/icons-react"
 import { toast } from "sonner"
 
 import {
@@ -239,10 +245,10 @@ export function PlaceCard({
                       variant={factor.score >= 0.7 ? "default" : "outline"}
                       className="shrink-0"
                     >
-                      {factor.score >= 0.99 ? (
+                      {factor.score >= 0.7 ? (
                         <IconCheck className="size-3" aria-label="Matches" />
                       ) : (
-                        formatPercent(factor.score)
+                        <IconX className="size-3" aria-label="Does not match" />
                       )}
                     </Badge>
                   </li>
