@@ -4,6 +4,12 @@ import { notFound } from "next/navigation"
 import { Container } from "@/components/marketing/container"
 import { PlaceDetail } from "@/components/places/place-detail"
 import { getListingById, getPublishedListings } from "@/lib/listings/queries"
+import {
+  getOwnReviewForListing,
+  getPublishedReviewsForListing,
+  getReviewStatsForListing,
+} from "@/lib/listings/reviews"
+import { createServerSupabaseClient } from "@/lib/supabase/server"
 
 export const revalidate = 60
 
@@ -47,9 +53,31 @@ export default async function PlacePage({
     notFound()
   }
 
+  const [reviews, stats, ownReview, supabase] = await Promise.all([
+    getPublishedReviewsForListing(id),
+    getReviewStatsForListing(id),
+    getOwnReviewForListing(id),
+    createServerSupabaseClient(),
+  ])
+
+  let signedIn = false
+  if (supabase) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    signedIn = Boolean(user)
+  }
+
   return (
     <Container className="py-8 sm:py-10">
-      <PlaceDetail listing={result.listing} intent={intent ?? null} />
+      <PlaceDetail
+        listing={result.listing}
+        intent={intent ?? null}
+        reviews={reviews}
+        reviewStats={stats}
+        ownReview={ownReview}
+        signedIn={signedIn}
+      />
     </Container>
   )
 }

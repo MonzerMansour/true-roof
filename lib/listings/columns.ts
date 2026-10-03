@@ -43,6 +43,12 @@ export const listingColumns = {
   ],
   // 20261003000100_listing_details.sql
   details: ["description", "photo_url"],
+  // 20261004000000_listing_reviews.sql
+  reviews: [
+    "external_rating",
+    "external_rating_count",
+    "external_rating_source",
+  ],
 } as const
 
 export type ColumnTier = keyof typeof listingColumns
@@ -56,7 +62,9 @@ function join(tiers: ColumnTier[], extra: string[] = []) {
 // Widest first. queries.ts walks this in order and stops at the first select
 // the database accepts, so a partially migrated project still serves rows.
 export const listingSelectTiers = [
+  join(["core", "intake", "policies", "details", "reviews"], [orgJoin]),
   join(["core", "intake", "policies", "details"], [orgJoin]),
+  join(["core", "intake", "policies", "reviews"], [orgJoin]),
   join(["core", "intake", "policies"], [orgJoin]),
   join(["core", "intake"], [orgJoin]),
   join(["core"], [orgJoin]),
@@ -67,7 +75,9 @@ export const listingSelectTiers = [
 const portalExtra = ["organization_id", "published", "sort_order"]
 
 export const portalListingSelectTiers = [
+  join(["core", "intake", "policies", "details", "reviews"], portalExtra),
   join(["core", "intake", "policies", "details"], portalExtra),
+  join(["core", "intake", "policies", "reviews"], portalExtra),
   join(["core", "intake", "policies"], portalExtra),
   join(["core", "intake"], portalExtra),
   join(["core"], portalExtra),

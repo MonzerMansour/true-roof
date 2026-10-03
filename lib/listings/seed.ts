@@ -86,6 +86,9 @@ const shelters: Listing[] = hicFacilities
     dataSource: "hud_hic_2025" as const,
     sourceUrl: hudHic2025.url,
     sourceAsOf: hudHic2025.asOf,
+    externalRating: null,
+    externalRatingCount: null,
+    externalRatingSource: null,
   }))
 
 const parking: Listing[] = safeParkingSites.map((site) => ({
@@ -123,6 +126,9 @@ const parking: Listing[] = safeParkingSites.map((site) => ({
   dataSource: "city_program" as const,
   sourceUrl: site.sourceUrl,
   sourceAsOf: site.checkedOn,
+  externalRating: null,
+  externalRatingCount: null,
+  externalRatingSource: null,
 }))
 
 /** Most completely sourced first. The safe parking rows carry real addresses,

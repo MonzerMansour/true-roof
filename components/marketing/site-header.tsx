@@ -9,7 +9,6 @@ import { SignInDialog } from "@/components/auth/sign-in-dialog"
 import { useSignIn } from "@/components/auth/sign-in-provider"
 import { Container } from "@/components/marketing/container"
 import { Logo } from "@/components/marketing/logo"
-import { ThemeToggle } from "@/components/theme-toggle"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Button, buttonVariants } from "@/components/ui/button"
 import {
@@ -66,7 +65,7 @@ export function SiteHeader() {
   const showMarketingFeatures = !session
 
   return (
-    <header className="sticky top-0 z-40 border-b border-foreground/5 bg-background/70 backdrop-blur-xl backdrop-saturate-150">
+    <header className="sticky top-0 z-40 border-b border-border/60 bg-background/85 shadow-sm backdrop-blur-md backdrop-saturate-150">
       <Container className="flex h-14 items-center gap-3 pl-3 sm:pl-4">
         <Link
           href={homeHref}
@@ -130,7 +129,6 @@ export function SiteHeader() {
         </nav>
 
         <div className="ml-auto flex items-center gap-1">
-          <ThemeToggle />
           {session ? (
             <AccountMenu
               email={session.email}

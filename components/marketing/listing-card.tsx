@@ -1,6 +1,7 @@
 import Image from "next/image"
 import Link from "next/link"
 
+import { StarRating } from "@/components/places/star-rating"
 import { Badge } from "@/components/ui/badge"
 import {
   Card,
@@ -47,9 +48,9 @@ export function ListingCard({
     <Link href={`/places/${listing.id}`} className="block h-full">
       <Card
         className={cn(
-          "min-w-[16rem] flex-1",
+          "min-w-[16rem] flex-1 ring-1 ring-primary/10 transition-colors hover:bg-muted/30",
           onDark &&
-            "border-white/15 bg-black/40 text-white ring-white/15 backdrop-blur-md"
+            "border-white/15 bg-black/40 text-white ring-white/15 backdrop-blur-md hover:bg-black/50"
         )}
       >
         {/* Only a photo the site's staff uploaded. No stock photo here: the

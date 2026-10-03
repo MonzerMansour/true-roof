@@ -57,6 +57,9 @@ export type ListingRow = {
   // Present only once 20261003000100_listing_details.sql has run.
   description?: string | null
   photo_url?: string | null
+  external_rating?: number | null
+  external_rating_count?: number | null
+  external_rating_source?: string | null
   organizations:
     | { name: string; description: string | null }
     | { name: string; description: string | null }[]
@@ -110,6 +113,13 @@ export function mapListingRow(row: ListingRow): Listing {
     sourceAsOf: row.source_as_of ?? null,
     description: row.description?.trim() || null,
     photoUrl: row.photo_url ?? null,
+    externalRating:
+      typeof row.external_rating === "number" ? row.external_rating : null,
+    externalRatingCount:
+      typeof row.external_rating_count === "number"
+        ? row.external_rating_count
+        : null,
+    externalRatingSource: row.external_rating_source ?? null,
   }
 }
 

@@ -5,7 +5,6 @@ import Link from "next/link"
 import { useSignIn } from "@/components/auth/sign-in-provider"
 import { Container } from "@/components/marketing/container"
 import { LogoLockup } from "@/components/marketing/logo"
-import { ThemeToggle } from "@/components/theme-toggle"
 import { buttonVariants } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { cn } from "cn"
@@ -15,7 +14,7 @@ export function SiteFooter() {
   const { openSignIn } = useSignIn()
 
   return (
-    <footer className="border-t bg-muted/30">
+    <footer className="border-t border-border/60 bg-primary/[0.03]">
       <Container className="grid gap-10 py-12 sm:grid-cols-2 lg:grid-cols-4">
         <div className="lg:col-span-1">
           <LogoLockup className="w-36" />
@@ -67,10 +66,6 @@ export function SiteFooter() {
           >
             Get started
           </button>
-          <div className="pt-4">
-            <p className="mb-2 text-xs text-muted-foreground">Display</p>
-            <ThemeToggle />
-          </div>
         </div>
       </Container>
 

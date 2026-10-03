@@ -328,15 +328,26 @@ export function PlacesFeed({
       ) : null}
 
       {!needs ? (
-        <p className="mt-3 text-sm text-muted-foreground">
-          <Link
-            href="/get-started/find-a-place"
-            className="font-medium underline"
-          >
-            Answer a few questions
-          </Link>{" "}
-          to filter by what fits you.
-        </p>
+        <Card className="mt-4 ring-1 ring-primary/10">
+          <CardHeader>
+            <CardTitle className="text-lg">
+              Show only places that can take you
+            </CardTitle>
+            <CardDescription className="text-base">
+              Ten quick questions about pets, ID, a partner, a car, and what
+              time you can get there. No account needed, and your answers stay
+              on this phone.
+            </CardDescription>
+            <div className="mt-3">
+              <Link
+                href="/get-started/find-a-place"
+                className={cn(buttonVariants({ size: "touch" }))}
+              >
+                Answer the questions
+              </Link>
+            </div>
+          </CardHeader>
+        </Card>
       ) : null}
 
       <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
@@ -552,7 +563,7 @@ export function PlacesFeed({
       </Sheet>
 
       {visible.length === 0 ? (
-        <Card className="mt-8">
+        <Card className="mt-8 ring-1 ring-primary/10">
           <CardHeader>
             <CardTitle>Nothing on this list fits</CardTitle>
             <CardDescription className="text-base">
@@ -595,6 +606,70 @@ export function PlacesFeed({
           ))}
         </div>
       )}
+
+      {hidden.length > 0 ? (
+        <div className="mt-8">
+          <Button
+            type="button"
+            size="touch"
+            variant="outline"
+            aria-expanded={showHidden}
+            onClick={() => setShowHidden((open) => !open)}
+          >
+            {showHidden ? "Hide" : "Show"} {hidden.length}{" "}
+            {hidden.length === 1 ? "place" : "places"} hidden by your answers
+          </Button>
+          {showHidden ? (
+            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {hidden.map(({ listing, fit, rank }) => (
+                <PlaceCard
+                  key={listing.id}
+                  listing={listing}
+                  fit={fit}
+                  miles={rank.miles}
+                  basis={rank.basis}
+                />
+              ))}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
+      {unplaceable.length > 0 ? (
+        <div className="mt-8 rounded-2xl border bg-card p-4 ring-1 ring-primary/10">
+          <h2 className="font-heading text-base font-semibold">
+            {unplaceable.length}{" "}
+            {unplaceable.length === 1 ? "place has" : "places have"} no address
+            on file
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            The county bed count these came from does not publish addresses, so
+            they cannot be measured against a distance. Clear the distance
+            filter to see them, or call {here4You.name} at{" "}
+            <a className="font-medium underline" href={`tel:${here4You.phone}`}>
+              {here4You.display}
+            </a>
+            .
+          </p>
+        </div>
+      ) : null}
+
+      <div className="sticky bottom-0 z-20 -mx-4 mt-6 border-t bg-background/95 px-4 py-3 backdrop-blur sm:hidden">
+        <Button
+          type="button"
+          size="touch"
+          className="w-full"
+          onClick={() => setFiltersOpen(true)}
+        >
+          <IconFilter />
+          Filters
+          {activeCount > 0 ? (
+            <Badge variant="secondary" className="ml-0.5">
+              {activeCount}
+            </Badge>
+          ) : null}
+        </Button>
+      </div>
     </div>
   )
 }

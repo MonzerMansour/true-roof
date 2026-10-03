@@ -15,21 +15,23 @@ export const metadata: Metadata = {
 // ever sees them.
 export default function FinancialsPage() {
   return (
-    <Container className="py-8 sm:py-10">
-      <p className="text-sm font-medium text-primary">After you get housed</p>
-      <h1 className="mt-2 font-heading text-4xl font-semibold tracking-tight sm:text-5xl">
-        Financials
-      </h1>
-      <p className="mt-3 max-w-2xl text-muted-foreground">
-        Rent, bills, and program deadlines. This is not another place search.
-      </p>
+    <div className="bg-primary/[0.02]">
+      <Container className="py-8 sm:py-10">
+        <p className="text-sm font-medium text-primary">After you get housed</p>
+        <h1 className="mt-2 font-heading text-4xl font-semibold tracking-tight sm:text-5xl">
+          Financials
+        </h1>
+        <p className="mt-3 max-w-2xl text-muted-foreground">
+          Rent, bills, and program deadlines. This is not another place search.
+        </p>
 
-      <LocalOnlyNotice className="mt-4 max-w-2xl rounded-lg border p-3 text-sm" />
+        <LocalOnlyNotice className="mt-4 max-w-2xl rounded-xl border bg-card p-3 text-sm ring-1 ring-primary/10" />
 
-      <div className="mt-8 grid gap-8">
-        <DashboardClient />
-        <FinancialStubs />
-      </div>
-    </Container>
+        <div className="mt-8 grid gap-8">
+          <DashboardClient />
+          <FinancialStubs />
+        </div>
+      </Container>
+    </div>
   )
 }

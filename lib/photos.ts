@@ -6,6 +6,11 @@ export type Photo = {
 }
 
 export const photos = {
+  heroPath: {
+    src: "/images/hero-path.png",
+    alt: "A person holding a phone on the path to a shelter, with find shelters, manage finances, and build a brighter future",
+    credit: "True Roof",
+  },
   keys: {
     src: "/images/keys.jpg",
     alt: "A house key lying on a printed floor plan",
@@ -94,6 +99,41 @@ export const photos = {
   work: {
     src: "/images/work.jpg",
     alt: "People at a table with laptops and notes",
+    credit: "Unsplash",
+  },
+  letterForm: {
+    src: "/images/letter-form.jpg",
+    alt: "Hands filling out a form at a desk",
+    credit: "Scott Graham / Unsplash",
+  },
+  lotDusk: {
+    src: "/images/lot-dusk.jpg",
+    alt: "Cars in a parking lot at dusk",
+    credit: "Unsplash",
+  },
+  rentCushion: {
+    src: "/images/rent-cushion.jpg",
+    alt: "Hands counting cash for rent",
+    credit: "Pexels",
+  },
+  planner: {
+    src: "/images/planner.jpg",
+    alt: "An open goal planner with coffee on a desk",
+    credit: "Pexels",
+  },
+  hallway: {
+    src: "/images/hallway.jpg",
+    alt: "A small furnished apartment living space",
+    credit: "Unsplash",
+  },
+  checklist: {
+    src: "/images/checklist.jpg",
+    alt: "A notebook checklist with a pen",
+    credit: "Unsplash",
+  },
+  paystub: {
+    src: "/images/paystub.jpg",
+    alt: "A calculator and financial papers on a desk",
     credit: "Unsplash",
   },
 } as const satisfies Record<string, Photo>

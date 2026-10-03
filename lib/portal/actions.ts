@@ -498,3 +498,82 @@ export async function fetchAccessCode(orgId: string) {
   if (error) return null
   return data as string
 }
+
+export async function moderateListingReview(
+  formData: FormData
+): Promise<ActionResult> {
+  const { supabase } = await requireProviderSession()
+  const reviewId = String(formData.get("reviewId") ?? "").trim()
+  const listingId = String(formData.get("listingId") ?? "").trim()
+  const status = String(formData.get("status") ?? "").trim()
+
+  if (!reviewId || !listingId) {
+    return { ok: false, error: "Missing review." }
+  }
+  if (status !== "hidden" && status !== "rejected" && status !== "published") {
+    return { ok: false, error: "Pick hide, reject, or publish." }
+  }
+
+  const { error } = await supabase
+    .from("listing_reviews")
+    .update({
+      status,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", reviewId)
+    .eq("listing_id", listingId)
+
+  if (error) return { ok: false, error: error.message }
+
+  revalidatePath(`/portal/sites/${listingId}/settings`)
+  revalidatePath(`/places/${listingId}`)
+  return { ok: true }
+}
+
+export async function updateExternalRating(
+  formData: FormData
+): Promise<ActionResult> {
+  const { supabase } = await requireProviderSession()
+  const listingId = String(formData.get("listingId") ?? "").trim()
+  if (!listingId) return { ok: false, error: "Missing listing." }
+
+  const ratingRaw = String(formData.get("externalRating") ?? "").trim()
+  const countRaw = String(formData.get("externalRatingCount") ?? "").trim()
+  const source = String(formData.get("externalRatingSource") ?? "")
+    .trim()
+    .slice(0, 80)
+
+  let externalRating: number | null = null
+  if (ratingRaw) {
+    const value = Number(ratingRaw)
+    if (!Number.isFinite(value) || value < 1 || value > 5) {
+      return { ok: false, error: "External rating must be between 1.0 and 5.0." }
+    }
+    externalRating = Math.round(value * 10) / 10
+  }
+
+  let externalRatingCount: number | null = null
+  if (countRaw) {
+    const value = Number(countRaw)
+    if (!Number.isInteger(value) || value < 0) {
+      return { ok: false, error: "External count must be a whole number." }
+    }
+    externalRatingCount = value
+  }
+
+  const { error } = await supabase
+    .from("listings")
+    .update({
+      external_rating: externalRating,
+      external_rating_count: externalRatingCount,
+      external_rating_source: source || (externalRating !== null ? "staff" : null),
+    })
+    .eq("id", listingId)
+
+  if (error) return { ok: false, error: error.message }
+
+  revalidatePath(`/portal/sites/${listingId}/settings`)
+  revalidatePath(`/places/${listingId}`)
+  revalidatePath("/")
+  return { ok: true }
+}

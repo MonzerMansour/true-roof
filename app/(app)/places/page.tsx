@@ -1,11 +1,15 @@
 import type { Metadata } from "next"
 
 import { Container } from "@/components/marketing/container"
+import { MarketingPhoto } from "@/components/marketing/marketing-photo"
+import { Reveal } from "@/components/marketing/reveal"
 import { PlacesFeed } from "@/components/places/places-feed"
 import { getPublishedListings } from "@/lib/listings/queries"
+import { withReviewStats } from "@/lib/listings/reviews"
 import { categoricalAgreement } from "@/lib/matching/categorical-score"
 import { rankPublishedListings } from "@/lib/matching/rank"
 import { hybridScore } from "@/lib/matching/score-blend"
+import { photos } from "@/lib/photos"
 
 // This page is personalized per signed-in user (their own saved answers,
 // their own similarity scores), so it is not time-cached. A cached
@@ -23,6 +27,7 @@ export const metadata: Metadata = {
 export default async function PlacesPage() {
   const { listings, source } = await getPublishedListings()
   const ranked = await rankPublishedListings(listings)
+  const withStats = await withReviewStats(ranked.listings)
 
   // Display-only breakdown per listing. The list order above is already
   // fixed by rankPublishedListings() using match_listings' cosine score
@@ -48,29 +53,45 @@ export default async function PlacesPage() {
   )
 
   return (
-    <Container className="py-8 sm:py-10">
-      <p className="text-sm font-medium text-primary">Places</p>
-      <h1 className="mt-2 max-w-3xl font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
-        Shelters and safe parking, side by side
-      </h1>
-      <p className="mt-3 max-w-2xl text-muted-foreground">
-        Closest and most recently confirmed first. Tap Near me to use your
-        location. Calling and directions need no account.
-      </p>
-      {source === "seed" ? (
-        <p className="mt-3 text-sm text-muted-foreground">
-          Showing sample sites because the listings table was not reachable.
-        </p>
-      ) : null}
-
-      <div className="mt-8">
-        <PlacesFeed
-          listings={ranked.listings}
-          rankedBy={ranked.rankedBy}
-          similarity={Object.fromEntries(ranked.similarity)}
-          matchDetails={matchDetails}
+    <>
+      <section className="relative isolate overflow-hidden">
+        <MarketingPhoto
+          photo={photos.parking}
+          priority
+          sizes="100vw"
+          className="absolute inset-0 opacity-40"
         />
-      </div>
-    </Container>
+        <div className="absolute inset-0 bg-gradient-to-b from-background/50 via-background/88 to-background" />
+        <Container className="relative pt-6 pb-12 sm:pt-8">
+          <Reveal>
+            <p className="text-sm font-medium text-primary">Places</p>
+            <h1 className="mt-2 max-w-3xl font-heading text-3xl font-semibold tracking-tight sm:text-5xl">
+              Shelters and safe parking, side by side
+            </h1>
+            <p className="mt-3 max-w-2xl text-lg text-muted-foreground">
+              Closest and most recently confirmed first. Tap Near me to use your
+              location. Calling and directions need no account.
+            </p>
+            {source === "seed" ? (
+              <p className="mt-3 text-sm text-muted-foreground">
+                Showing sample sites because the listings table was not
+                reachable.
+              </p>
+            ) : null}
+          </Reveal>
+        </Container>
+      </section>
+
+      <section className="border-t bg-primary/[0.03] py-10 sm:py-12">
+        <Container>
+          <PlacesFeed
+            listings={withStats}
+            rankedBy={ranked.rankedBy}
+            similarity={Object.fromEntries(ranked.similarity)}
+            matchDetails={matchDetails}
+          />
+        </Container>
+      </section>
+    </>
   )
 }

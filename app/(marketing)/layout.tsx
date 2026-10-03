@@ -1,9 +1,9 @@
 import type { ReactNode } from "react"
 import { Suspense } from "react"
 
+import { MarketingChrome } from "@/components/marketing/marketing-chrome"
 import { MarketingSignInHandler } from "@/components/marketing/marketing-sign-in-handler"
 import { SiteFooter } from "@/components/marketing/site-footer"
-import { SiteHeader } from "@/components/marketing/site-header"
 
 export default function MarketingLayout({ children }: { children: ReactNode }) {
   return (
@@ -11,7 +11,7 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
       <Suspense fallback={null}>
         <MarketingSignInHandler />
       </Suspense>
-      <SiteHeader />
+      <MarketingChrome />
       <main id="main">{children}</main>
       <SiteFooter />
     </>

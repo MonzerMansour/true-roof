@@ -74,6 +74,9 @@ export type PortalListing = {
   sourceAsOf: string | null
   description: string | null
   photoUrl: string | null
+  externalRating: number | null
+  externalRatingCount: number | null
+  externalRatingSource: string | null
 }
 
 export type PortalOrganization = {

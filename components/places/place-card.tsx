@@ -33,6 +33,7 @@ import {
 import { contactForListing } from "@/lib/listings/contacts"
 import { formatMiles } from "@/lib/listings/geo"
 import { photoForListing } from "@/lib/listings/photos"
+import { StarRating } from "@/components/places/star-rating"
 import {
   couplesLabel,
   formatConfirmedAt,
@@ -123,7 +124,7 @@ export function PlaceCard({
 
   return (
     <Link href={`/places/${listing.id}`} className="block h-full">
-      <Card className="relative h-full overflow-hidden transition-colors hover:bg-muted/40">
+      <Card className="relative h-full overflow-hidden ring-1 ring-primary/10 transition-colors hover:bg-muted/40">
         <div className="relative">
           <MarketingPhoto
             photo={photo}
@@ -205,6 +206,13 @@ export function PlaceCard({
             {" · "}
             {formatConfirmedAt(listing.lastConfirmedAt)}
           </CardDescription>
+          {listing.reviewCount != null && listing.reviewCount > 0 && listing.averageStars != null ? (
+            <StarRating
+              value={listing.averageStars}
+              count={listing.reviewCount}
+              className="mt-2"
+            />
+          ) : null}
         </CardHeader>
         <CardContent className="space-y-2 pb-6">
           {facts.length > 0 ? (
