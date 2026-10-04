@@ -111,13 +111,16 @@ describe("suggestHouseholdSplit", () => {
       id: "ok",
       couples: "not_allowed",
     })
-    const noId = shelter({
-      id: "no-id",
+    const noPets = shelter({
+      id: "no-pets",
       couples: "not_allowed",
-      idRequired: "required",
+      pets: "not_allowed",
     })
     expect(
-      suggestHouseholdSplit([ok, noId], needs({ idStatus: "no_id" }))
+      suggestHouseholdSplit(
+        [ok, noPets],
+        needs({ pet: "larger_pet" })
+      )
     ).toBeNull()
   })
 

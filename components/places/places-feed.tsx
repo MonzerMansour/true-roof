@@ -158,7 +158,7 @@ export function PlacesFeed({
   const householdSplit =
     visible.length === 0
       ? suggestHouseholdSplit(
-          withinDistance.map(({ listing }) => listing),
+          withMeta.map(({ listing }) => listing),
           needs
         )
       : null
