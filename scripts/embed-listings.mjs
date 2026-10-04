@@ -1,8 +1,8 @@
 // Embeds every published listing into public.listing_embeddings, using the
 // app's own listingToText() (lib/embeddings/text.ts) so the stored
 // embedding always matches what the app would generate. Run after the
-// 20260921000000_vector_search migration, and again whenever a listing's
-// fields or description change:
+// 20260921000000_vector_search migration, and after `npm run inventory:sql`.
+// The portal re-embeds a site on its own when staff create or save it.
 //   npm run embeddings:listings
 // Needs NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, OPENAI_API_KEY.
 import { readFileSync, writeFileSync, unlinkSync } from "node:fs"
@@ -34,11 +34,13 @@ if (!NEXT_PUBLIC_SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !OPENAI_API_KEY) 
 
 const supabase = createClient(NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
-const { data, error } = await supabase
-  .from("listings")
-  .select(
-    "id, name, kind, freshness, last_confirmed_at, pets, couples, parking_status, vehicle_note, city, intake_method, organizations(name, description)"
-  )
+const baseColumns =
+  "id, name, kind, freshness, last_confirmed_at, pets, couples, parking_status, vehicle_note, city, intake_method, organizations(name, description)"
+
+// Site descriptions arrive with 20261003000100_listing_details.sql. Until
+// that is applied, embed without them rather than failing.
+let { data, error } = await supabase.from("listings").select(`${baseColumns}, description`)
+if (error) ({ data, error } = await supabase.from("listings").select(baseColumns))
 
 if (error) {
   console.error(error.message)
@@ -60,6 +62,7 @@ const rows = data.map((row) => {
     city: row.city,
     orgName: org?.name ?? row.name,
     orgDescription: org?.description ?? null,
+    description: row.description ?? null,
     lat: null,
     lng: null,
     phone: null,
@@ -100,8 +103,27 @@ async function embed(input) {
   return (await response.json()).data[0].embedding
 }
 
+// Skip rows whose text and model have not changed, so this is cheap to re-run
+// (after `npm run inventory:sql`, or any time something looks missing).
+const { data: existingRows, error: existingError } = await supabase
+  .from("listing_embeddings")
+  .select("listing_id, content, model")
+if (existingError) {
+  console.error(existingError.message)
+  process.exit(1)
+}
+const existing = new Map(existingRows.map((row) => [row.listing_id, row]))
+
+let embedded = 0
+let unchanged = 0
 for (let i = 0; i < rows.length; i++) {
   const content = texts[i]
+  const current = existing.get(rows[i].id)
+  if (current?.content === content && current?.model === model) {
+    unchanged += 1
+    continue
+  }
+
   const embedding = await embed(content)
   const { error: upsertError } = await supabase.from("listing_embeddings").upsert({
     listing_id: rows[i].id,
@@ -114,5 +136,8 @@ for (let i = 0; i < rows.length; i++) {
     console.error(`${rows[i].name}: ${upsertError.message}`)
     process.exit(1)
   }
+  embedded += 1
   console.log(`Embedded ${rows[i].name}`)
 }
+
+console.log(`Done. ${embedded} embedded, ${unchanged} already up to date.`)

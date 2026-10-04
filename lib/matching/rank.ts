@@ -56,10 +56,9 @@ export async function rankPublishedListings(listings: Listing[]): Promise<{
     "match_listings",
     {
       query_embedding: need.embedding,
-      // Ask for exactly as many as exist, capped at match_listings()'s own
-      // limit of 50 (see the migration). No need for an arbitrary floor
-      // like 10, this app has a handful of real sites, not thousands.
-      match_count: Math.min(listings.length, 50),
+      // Every published site. match_listings() caps this at 500 once
+      // 20261003000000_match_listings_all_sites.sql is applied (50 before).
+      match_count: listings.length,
     }
   )
 

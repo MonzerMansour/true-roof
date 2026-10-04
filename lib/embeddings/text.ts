@@ -59,8 +59,11 @@ export function listingToText(listing: Listing) {
     // seeker's "near a park" and a site's "next to a public park" land in
     // the same part of the sentence rather than two differently shaped
     // trailing quotes.
+    listing.description?.trim()
+      ? `Location and community, what the site says about itself: "${listing.description.trim()}".`
+      : null,
     listing.orgDescription?.trim()
-      ? `Location and community, what the site says about itself: "${listing.orgDescription.trim()}".`
+      ? `Location and community, what the organization says about itself: "${listing.orgDescription.trim()}".`
       : null,
   ]
 

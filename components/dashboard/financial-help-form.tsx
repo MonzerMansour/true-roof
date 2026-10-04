@@ -313,6 +313,7 @@ export function FinancialHelpForm() {
       lastShutoffNoticeAt: existing?.lastShutoffNoticeAt ?? null,
       lastCheckInAt: existing?.lastCheckInAt ?? null,
       lastCheckInFlaggedAt: existing?.lastCheckInFlaggedAt ?? null,
+      deadlines: existing?.deadlines ?? [],
     }
 
     saveProfile(profile)

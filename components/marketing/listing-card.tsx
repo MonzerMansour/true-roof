@@ -1,3 +1,4 @@
+import Image from "next/image"
 import Link from "next/link"
 
 import { Badge } from "@/components/ui/badge"
@@ -51,6 +52,19 @@ export function ListingCard({
             "border-white/15 bg-black/40 text-white ring-white/15 backdrop-blur-md"
         )}
       >
+        {/* Only a photo the site's staff uploaded. No stock photo here: the
+          homepage hero already has one behind these cards. */}
+        {listing.photoUrl ? (
+          <div className="relative h-28 overflow-hidden">
+            <Image
+              src={listing.photoUrl}
+              alt={`Photo of ${listing.name}`}
+              fill
+              sizes="(min-width: 1024px) 20rem, 80vw"
+              className="object-cover"
+            />
+          </div>
+        ) : null}
         <CardHeader>
           <div className="flex items-center gap-2">
             {/* Theme tokens, measured for contrast in both themes. These were
@@ -83,7 +97,9 @@ export function ListingCard({
             onDark ? "text-white/80" : "text-muted-foreground"
           )}
         >
-          {isParking
+          {listing.description ? (
+            <span className="line-clamp-2">{listing.description}</span>
+          ) : isParking
             ? "Parking reads as open, full, or waitlist. Not a bed-style freshness badge."
             : "One freshness badge for the whole listing. Hard filters already applied."}
         </CardContent>

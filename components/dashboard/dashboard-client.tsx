@@ -7,11 +7,6 @@ import {
   IconBell,
   IconCalendar,
   IconCamera,
-  IconCheck,
-  IconChevronLeft,
-  IconChevronRight,
-  IconLayoutGrid,
-  IconLayoutList,
   IconPhoneCall,
 } from "@tabler/icons-react"
 import { toast } from "sonner"
@@ -26,14 +21,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
+import { DeadlinesCard } from "@/components/dashboard/deadlines-card"
+import { CalendarTab } from "@/components/dashboard/calendar-tab"
+import { ScannerTab } from "@/components/dashboard/scanner-tab"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from "cn"
 import {
   assessRisk,
-  buildOccurrences,
+  buildSchedule,
   type RiskLevel,
 } from "@/lib/obligations/schedule"
 import {
@@ -41,10 +37,11 @@ import {
   loadCompletedOccurrenceIds,
   loadPayments,
   loadProfile,
-  toggleOccurrenceCompleted,
+  setOccurrenceCompleted,
   updateProfile,
 } from "@/lib/obligations/storage"
 import type {
+  Deadline,
   ObligationsProfile,
   Occurrence,
   Payment,
@@ -76,18 +73,25 @@ export function DashboardClient() {
   const [completedIds, setCompletedIds] = React.useState<string[]>([])
   const [payments, setPayments] = React.useState<Payment[]>([])
   const [loaded, setLoaded] = React.useState(false)
+  const [initialTab, setInitialTab] = React.useState("calendar")
 
   React.useEffect(() => {
+    const tab = new URLSearchParams(window.location.search).get("tab")
+    if (tab === "notifications" || tab === "scanner") setInitialTab(tab)
     setProfile(loadProfile())
     setCompletedIds(loadCompletedOccurrenceIds())
     setPayments(loadPayments())
     setLoaded(true)
   }, [])
 
-  const occurrences = React.useMemo(
-    () => (profile ? buildOccurrences(profile) : []),
-    [profile]
+  const schedule = React.useMemo(
+    () =>
+      profile
+        ? buildSchedule(profile, completedIds)
+        : { upcoming: [], done: [] },
+    [profile, completedIds]
   )
+  const occurrences = schedule.upcoming
 
   const risk = React.useMemo(
     () =>
@@ -102,9 +106,21 @@ export function DashboardClient() {
     [occurrences, completedIds, profile]
   )
 
-  function handleToggle(id: string) {
-    toggleOccurrenceCompleted(id)
+  function setDone(id: string, done: boolean) {
+    setOccurrenceCompleted(id, done)
     setCompletedIds(loadCompletedOccurrenceIds())
+  }
+
+  function handleMarkDone(occurrence: Occurrence) {
+    setDone(occurrence.id, true)
+    toast.success(`Marked done: ${occurrence.title}`, {
+      action: { label: "Undo", onClick: () => setDone(occurrence.id, false) },
+    })
+  }
+
+  function handleUndo(occurrence: Occurrence) {
+    setDone(occurrence.id, false)
+    toast.success(`Moved back to your list: ${occurrence.title}`)
   }
 
   function handleLogPayment(payment: Payment) {
@@ -142,6 +158,73 @@ export function DashboardClient() {
     })
     if (next) setProfile(next)
     toast.success("Income updated.")
+  }
+
+  function handleAddDeadline(deadline: Deadline) {
+    const next = updateProfile({
+      deadlines: [...(profile?.deadlines ?? []), deadline],
+    })
+    if (next) setProfile(next)
+  }
+
+  // Removes the deadline and every date it repeats on. Undo puts it back.
+  function handleRemoveDeadline(id: string) {
+    const removed = (profile?.deadlines ?? []).find((d) => d.id === id)
+    if (!removed) return
+
+    const next = updateProfile({
+      deadlines: (profile?.deadlines ?? []).filter((d) => d.id !== id),
+    })
+    if (next) setProfile(next)
+
+    toast.success(
+      removed.repeat
+        ? `Removed ${removed.title} and all its repeats.`
+        : `Removed ${removed.title}.`,
+      {
+        action: {
+          label: "Undo",
+          onClick: () => {
+            const current = loadProfile()
+            if (!current || current.deadlines?.some((d) => d.id === id)) return
+            const restored = updateProfile({
+              deadlines: [...(current.deadlines ?? []), removed],
+            })
+            if (restored) setProfile(restored)
+          },
+        },
+      }
+    )
+  }
+
+  // Deletes one date of a typed deadline. A one-time deadline has only one
+  // date, so that removes it entirely. Undo puts the date back.
+  function handleDeleteOne(occurrence: Occurrence) {
+    const id = occurrence.deadlineId
+    if (!id) return
+    if (!occurrence.repeats) {
+      handleRemoveDeadline(id)
+      return
+    }
+
+    const setSkipped = (change: (dates: string[]) => string[]) => {
+      const current = loadProfile()
+      if (!current) return
+      const next = updateProfile({
+        deadlines: (current.deadlines ?? []).map((d) =>
+          d.id === id ? { ...d, skippedDates: change(d.skippedDates ?? []) } : d
+        ),
+      })
+      if (next) setProfile(next)
+    }
+
+    setSkipped((dates) => [...new Set([...dates, occurrence.date])])
+    toast.success(`Deleted ${occurrence.title} on ${occurrence.date}. Other dates stay.`, {
+      action: {
+        label: "Undo",
+        onClick: () => setSkipped((dates) => dates.filter((d) => d !== occurrence.date)),
+      },
+    })
   }
 
   function handleLogShutoffNotice() {
@@ -233,7 +316,14 @@ export function DashboardClient() {
         />
       </div>
 
-      <Tabs defaultValue="calendar">
+      <DeadlinesCard
+        deadlines={profile.deadlines ?? []}
+        completedIds={completedIds}
+        onAdd={handleAddDeadline}
+        onRemove={handleRemoveDeadline}
+      />
+
+      <Tabs defaultValue={initialTab}>
         <TabsList>
           <TabsTrigger value="calendar">
             <IconCalendar />
@@ -252,8 +342,12 @@ export function DashboardClient() {
         <TabsContent value="calendar" className="pt-4">
           <CalendarTab
             occurrences={occurrences}
-            completedIds={completedIds}
-            onToggle={handleToggle}
+            done={schedule.done}
+            onMarkDone={handleMarkDone}
+            onUndo={handleUndo}
+            onRemoveDeadline={handleRemoveDeadline}
+            onDeleteOne={handleDeleteOne}
+            onAddDeadline={handleAddDeadline}
           />
         </TabsContent>
 
@@ -266,50 +360,11 @@ export function DashboardClient() {
             payments={payments}
             onLog={handleLogPayment}
             onLogShutoffNotice={handleLogShutoffNotice}
+            onAddDeadline={handleAddDeadline}
           />
         </TabsContent>
       </Tabs>
     </div>
-  )
-}
-
-function OccurrenceRow({
-  occurrence,
-  isDone,
-  onToggle,
-  showDate = true,
-}: {
-  occurrence: Occurrence
-  isDone: boolean
-  onToggle: (id: string) => void
-  showDate?: boolean
-}) {
-  return (
-    <Card
-      className={cn(
-        "flex-row items-center justify-between gap-3 px-4",
-        isDone && "opacity-50"
-      )}
-    >
-      <div>
-        {showDate ? (
-          <p className="text-xs font-medium text-primary">{occurrence.date}</p>
-        ) : null}
-        <p className={cn("font-medium", isDone && "line-through")}>
-          {occurrence.title}
-        </p>
-        <p className="text-sm text-muted-foreground">{occurrence.detail}</p>
-      </div>
-      <Button
-        type="button"
-        variant={isDone ? "secondary" : "outline"}
-        size="sm"
-        onClick={() => onToggle(occurrence.id)}
-      >
-        <IconCheck />
-        {isDone ? "Done" : "Mark done"}
-      </Button>
-    </Card>
   )
 }
 
@@ -441,254 +496,6 @@ function IncomeCard({
   )
 }
 
-const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
-
-function MonthCalendar({
-  occurrences,
-  completedIds,
-  onToggle,
-}: {
-  occurrences: Occurrence[]
-  completedIds: string[]
-  onToggle: (id: string) => void
-}) {
-  const today = new Date()
-  const [cursor, setCursor] = React.useState(
-    () => new Date(today.getFullYear(), today.getMonth(), 1)
-  )
-  const [selected, setSelected] = React.useState(() => isoDate(today))
-
-  const byDate = React.useMemo(() => {
-    const map = new Map<string, Occurrence[]>()
-    for (const occurrence of occurrences) {
-      const list = map.get(occurrence.date) ?? []
-      list.push(occurrence)
-      map.set(occurrence.date, list)
-    }
-    return map
-  }, [occurrences])
-
-  const cells = React.useMemo(() => {
-    const firstOfMonth = new Date(cursor.getFullYear(), cursor.getMonth(), 1)
-    const start = new Date(firstOfMonth)
-    start.setDate(start.getDate() - firstOfMonth.getDay())
-
-    const daysInMonth = new Date(
-      cursor.getFullYear(),
-      cursor.getMonth() + 1,
-      0
-    ).getDate()
-    // Only as many weeks as this month actually needs (5 most months, 6 when
-    // a long month starts late in the week), not a fixed 6.
-    const weeksNeeded = Math.ceil((firstOfMonth.getDay() + daysInMonth) / 7)
-
-    return Array.from({ length: weeksNeeded * 7 }, (_, i) => {
-      const date = new Date(start)
-      date.setDate(start.getDate() + i)
-      return {
-        date,
-        iso: isoDate(date),
-        inMonth: date.getMonth() === cursor.getMonth(),
-      }
-    })
-  }, [cursor])
-
-  const todayIso = isoDate(today)
-  const completed = new Set(completedIds)
-  const selectedItems = byDate.get(selected) ?? []
-
-  return (
-    <div className="grid gap-4">
-      <div className="flex items-center justify-between">
-        <p className="font-heading text-lg font-medium">
-          {cursor.toLocaleDateString(undefined, {
-            month: "long",
-            year: "numeric",
-          })}
-        </p>
-        <div className="flex gap-1">
-          <Button
-            type="button"
-            variant="outline"
-            size="icon-sm"
-            aria-label="Previous month"
-            onClick={() =>
-              setCursor((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))
-            }
-          >
-            <IconChevronLeft />
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              setCursor(new Date(today.getFullYear(), today.getMonth(), 1))
-              setSelected(todayIso)
-            }}
-          >
-            Today
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="icon-sm"
-            aria-label="Next month"
-            onClick={() =>
-              setCursor((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))
-            }
-          >
-            <IconChevronRight />
-          </Button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-7 gap-1 text-center text-xs font-medium text-muted-foreground">
-        {WEEKDAY_LABELS.map((label) => (
-          <div key={label}>{label}</div>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-7 gap-1">
-        {cells.map(({ date, iso, inMonth }) => {
-          const items = byDate.get(iso) ?? []
-          const hasUndone = items.some((item) => !completed.has(item.id))
-          const isSelected = iso === selected
-
-          return (
-            <button
-              key={iso}
-              type="button"
-              onClick={() => setSelected(iso)}
-              aria-label={
-                date.toLocaleDateString(undefined, {
-                  weekday: "long",
-                  month: "long",
-                  day: "numeric",
-                }) + (items.length > 0 ? `, ${items.length} due` : "")
-              }
-              aria-pressed={isSelected}
-              className={cn(
-                "flex aspect-square flex-col items-center justify-start gap-1 rounded-lg border p-1 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50 sm:p-2",
-                inMonth ? "bg-card" : "bg-muted text-muted-foreground/60",
-                isSelected && "border-primary ring-2 ring-primary/40",
-                iso === todayIso && "font-semibold text-primary"
-              )}
-            >
-              <span>{date.getDate()}</span>
-              {items.length > 0 ? (
-                <span
-                  className={cn(
-                    "size-1.5 rounded-full",
-                    hasUndone ? "bg-primary" : "bg-muted-foreground/40"
-                  )}
-                />
-              ) : null}
-            </button>
-          )
-        })}
-      </div>
-
-      <div className="grid gap-2">
-        <p className="text-sm font-medium text-muted-foreground">
-          {parseLocalDate(selected).toLocaleDateString(undefined, {
-            weekday: "long",
-            month: "long",
-            day: "numeric",
-          })}
-        </p>
-        {selectedItems.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Nothing due this day.</p>
-        ) : (
-          selectedItems.map((occurrence) => (
-            <OccurrenceRow
-              key={occurrence.id}
-              occurrence={occurrence}
-              isDone={completed.has(occurrence.id)}
-              onToggle={onToggle}
-              showDate={false}
-            />
-          ))
-        )}
-      </div>
-    </div>
-  )
-}
-
-function CalendarTab({
-  occurrences,
-  completedIds,
-  onToggle,
-}: {
-  occurrences: Occurrence[]
-  completedIds: string[]
-  onToggle: (id: string) => void
-}) {
-  const [view, setView] = React.useState<"list" | "month">("list")
-
-  if (occurrences.length === 0) {
-    return (
-      <p className="text-sm text-muted-foreground">
-        Nothing scheduled yet. Set up your plan in{" "}
-        <Link
-          href="/get-started/financial-help"
-          className="font-medium underline"
-        >
-          Financials setup
-        </Link>
-        .
-      </p>
-    )
-  }
-
-  const completed = new Set(completedIds)
-
-  return (
-    <div className="grid gap-4">
-      <div className="flex w-fit gap-1 rounded-lg bg-muted p-[3px]">
-        <Button
-          type="button"
-          variant={view === "list" ? "default" : "ghost"}
-          size="sm"
-          onClick={() => setView("list")}
-        >
-          <IconLayoutList />
-          List
-        </Button>
-        <Button
-          type="button"
-          variant={view === "month" ? "default" : "ghost"}
-          size="sm"
-          onClick={() => setView("month")}
-        >
-          <IconLayoutGrid />
-          Month
-        </Button>
-      </div>
-
-      {view === "list" ? (
-        <ol className="grid gap-2">
-          {occurrences.map((occurrence) => (
-            <li key={occurrence.id}>
-              <OccurrenceRow
-                occurrence={occurrence}
-                isDone={completed.has(occurrence.id)}
-                onToggle={onToggle}
-              />
-            </li>
-          ))}
-        </ol>
-      ) : (
-        <MonthCalendar
-          occurrences={occurrences}
-          completedIds={completedIds}
-          onToggle={onToggle}
-        />
-      )}
-    </div>
-  )
-}
-
 function NotificationsTab({
   risk,
   profile,
@@ -756,155 +563,6 @@ function NotificationsTab({
             ) : null}
           </CardContent>
         </Card>
-      ) : null}
-    </div>
-  )
-}
-
-function ScannerTab({
-  payments,
-  onLog,
-  onLogShutoffNotice,
-}: {
-  payments: Payment[]
-  onLog: (payment: Payment) => void
-  onLogShutoffNotice: () => void
-}) {
-  const [amount, setAmount] = React.useState("")
-  const [paidTo, setPaidTo] = React.useState("")
-  const [note, setNote] = React.useState("")
-  const [fileName, setFileName] = React.useState<string | null>(null)
-  const [isShutoffNotice, setIsShutoffNotice] = React.useState(false)
-
-  function onSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-
-    onLog({
-      id: crypto.randomUUID(),
-      loggedAt: new Date().toISOString(),
-      amount: Number(amount) || 0,
-      paidTo,
-      note,
-    })
-
-    if (isShutoffNotice) {
-      onLogShutoffNotice()
-      toast.warning("Flagged as a shutoff notice. Get Help will show it as a warning.")
-    }
-
-    setAmount("")
-    setPaidTo("")
-    setNote("")
-    setFileName(null)
-    setIsShutoffNotice(false)
-  }
-
-  return (
-    <div className="grid gap-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Log a payment or receipt</CardTitle>
-          <CardDescription className="text-base">
-            Attach a photo if you have one. The photo stays on this device and
-            is not stored after you log the payment.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={onSubmit}>
-            <FieldGroup>
-              <Field orientation="responsive">
-                <Field>
-                  <FieldLabel htmlFor="payment-amount">Amount</FieldLabel>
-                  <Input
-                    id="payment-amount"
-                    type="number"
-                    inputMode="decimal"
-                    min={0}
-                    required={!isShutoffNotice}
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="payment-paid-to">Paid to</FieldLabel>
-                  <Input
-                    id="payment-paid-to"
-                    placeholder="Westgate Property Management"
-                    value={paidTo}
-                    onChange={(e) => setPaidTo(e.target.value)}
-                  />
-                </Field>
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="payment-photo">
-                  Photo (optional)
-                </FieldLabel>
-                <Input
-                  id="payment-photo"
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  onChange={(e) =>
-                    setFileName(e.target.files?.[0]?.name ?? null)
-                  }
-                />
-                {fileName ? (
-                  <p className="text-sm text-muted-foreground">{fileName}</p>
-                ) : null}
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="payment-note">Note</FieldLabel>
-                <Input
-                  id="payment-note"
-                  placeholder="October rent"
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                />
-              </Field>
-              <FieldLabel htmlFor="payment-shutoff" className="w-fit">
-                <Checkbox
-                  id="payment-shutoff"
-                  checked={isShutoffNotice}
-                  onCheckedChange={(checked) =>
-                    setIsShutoffNotice(Boolean(checked))
-                  }
-                />
-                This is a shutoff or disconnection notice
-              </FieldLabel>
-              <Button type="submit" className="w-fit">
-                Log it
-              </Button>
-            </FieldGroup>
-          </form>
-        </CardContent>
-      </Card>
-
-      {payments.length > 0 ? (
-        <div>
-          <p className="mb-2 text-sm font-medium text-muted-foreground">
-            Recent
-          </p>
-          <ul className="grid gap-2">
-            {payments.map((payment) => (
-              <li key={payment.id}>
-                <Card className="flex-row items-center justify-between px-4">
-                  <div>
-                    <p className="font-medium">
-                      ${payment.amount.toLocaleString()}
-                      {payment.paidTo ? ` to ${payment.paidTo}` : ""}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {payment.note || "No note"}
-                    </p>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {new Date(payment.loggedAt).toLocaleDateString()}
-                  </p>
-                </Card>
-              </li>
-            ))}
-          </ul>
-        </div>
       ) : null}
     </div>
   )

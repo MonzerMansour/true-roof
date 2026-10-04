@@ -16,12 +16,19 @@ Marketing phase plus the seeker Places feed and staff portal. Do not add matcher
 - `lib/listings/types.ts`: enums. Never free-text categories.
 - `lib/listings/queries.ts`: server fetch of featured and published listings. Falls back to `lib/listings/seed.ts` if the table is missing. Keep seed IDs in lockstep with the SQL.
 - `app/(app)/places`: seeker feed and `/places/[id]` detail pages. Testers are the sample sites. Staff publish more from `/portal`.
+- `lib/embeddings/listings.ts`: keeps `listing_embeddings` in step. The portal calls it with `after()` when staff create or save a site (every site in the org, since org text is part of each). Unchanged text is skipped. `npm run embeddings:listings` backfills the whole table and is safe to re-run; run it after `npm run inventory:sql`.
+- `app/api/needs/embed`: re-embeds a signed-in person's answers, at most 5 times per hour (`lib/matching/embed-limit.ts`). Times live in the user's `app_metadata`, which only the service role can write. Unchanged answers do not count.
+- Developer mode (Settings, `lib/dev-mode.ts`, per device): Places cards show raw cosine, the lenient text %, and on demand phrase-by-phrase cosine scores (`app/api/match/phrases`, `lib/matching/phrase-similarity.ts`). Display only. Normal users see percentages, never phrase analytics.
+- `lib/supabase/admin.ts`: service role client for those two writes only.
 - `lib/matching/rank.ts`: calls `match_listings` when a seeker embedding exists. Otherwise keeps `sort_order`.
 - `lib/matching/hard-filters.ts`: the ONLY place a listing is removed. Reads all twelve questionnaire answers. Returns a three-value verdict, fits / unknown / excluded. A null policy on a listing NEVER excludes: it means "not published", not "no". Does not score.
 - `lib/matching/score.ts`: the ONLY place order is decided. Distance plus freshness, pure, injectable clock. Does not exclude.
 - `lib/matching/vocabulary.ts`: the ONLY place the seeker and site vocabularies meet. Lookup tables, no logic.
 - `lib/matching/time.ts`: HH:MM helpers. A window whose end is before its start wraps past midnight, which is a real shelter pattern.
 - Those four plus `rank.ts` ARE the matcher. Do not add a fifth.
+- `lib/obligations/recurrence.ts`: pure date math for repeating deadlines. Each date is counted from the first one, so the 31st goes Feb 28 then Mar 31.
+- `lib/obligations/deadline-rules.ts`: the referee for typed deadlines. Program cycles (from `program-rules.ts`) override the reader, and a date the person did not say is blanked, never guessed.
+- `lib/obligations/read-deadline.ts` + `app/api/deadlines/read`: the AI only fills the add-deadline form. Nothing is saved server side; deadlines live in the local obligations profile.
 - `lib/supabase/client.ts`: browser client. Returns `null` when env is missing.
 - `lib/supabase/server.ts`: cookie session for Route Handlers.
 - `proxy.ts`: Next.js 16 session refresh (this is middleware).

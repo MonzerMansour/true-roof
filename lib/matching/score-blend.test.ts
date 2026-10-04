@@ -39,8 +39,19 @@ describe("lenientTextScore", () => {
   it("stretches the observed cosine band to the full range", () => {
     expect(lenientTextScore(TEXT_LENIENCY_FLOOR)).toBeCloseTo(0, 6)
     expect(lenientTextScore(TEXT_LENIENCY_CEILING)).toBeCloseTo(1, 6)
+  })
+
+  it("lifts the middle of the band above a straight line", () => {
     const mid = (TEXT_LENIENCY_FLOOR + TEXT_LENIENCY_CEILING) / 2
-    expect(lenientTextScore(mid)).toBeCloseTo(0.5, 6)
+    expect(lenientTextScore(mid)).toBeGreaterThan(0.5)
+  })
+
+  it("reads the measured real scores leniently", () => {
+    // Median and best of the 93 real sites against a real person's answers.
+    expect(lenientTextScore(0.311)).toBeGreaterThan(0.6)
+    expect(lenientTextScore(0.476)).toBe(1)
+    // The weakest real site still reads as a partial match, not zero.
+    expect(lenientTextScore(0.291)).toBeGreaterThan(0.5)
   })
 
   it("clamps outside the band rather than going negative or above 1", () => {

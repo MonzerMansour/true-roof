@@ -44,6 +44,8 @@ import {
 } from "@/lib/listings/types"
 import type { MatchDetail } from "@/lib/matching/score-blend"
 import { formatPercent, lenientTextScore } from "@/lib/matching/score-blend"
+import { MatchAnalytics } from "@/components/places/match-analytics"
+import { useDeveloperMode } from "@/lib/dev-mode"
 
 export function freshnessTone(listing: Listing) {
   if (listing.kind === "parking") {
@@ -90,6 +92,7 @@ export function PlaceCard({
       : freshnessLabel[listing.freshness]
   const [saved, setSaved] = React.useState(false)
   const [showBreakdown, setShowBreakdown] = React.useState(false)
+  const developerMode = useDeveloperMode()
 
   React.useEffect(() => {
     const sync = () => setSaved(isFavorite(listing.id))
@@ -207,8 +210,10 @@ export function PlaceCard({
           {facts.length > 0 ? (
             <p className="text-sm text-muted-foreground">{facts.join(" · ")}</p>
           ) : null}
-          {listing.orgDescription ? (
-            <p className="text-sm">{listing.orgDescription}</p>
+          {listing.description || listing.orgDescription ? (
+            <p className="line-clamp-3 text-sm">
+              {listing.description || listing.orgDescription}
+            </p>
           ) : null}
           {contact ? (
             <p className="text-sm font-medium">{contact.label}</p>
@@ -254,6 +259,14 @@ export function PlaceCard({
                   </li>
                 ))}
               </ul>
+              {developerMode ? (
+                <MatchAnalytics
+                  listingId={listing.id}
+                  cosine={matchDetail.cosine}
+                  categorical={matchDetail.categorical}
+                  score={matchDetail.score}
+                />
+              ) : null}
             </div>
           ) : null}
           <PhotoCredit photo={photo} />

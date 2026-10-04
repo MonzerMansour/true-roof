@@ -13,6 +13,43 @@ export type Program = {
   nextRecertDate: string
 }
 
+export type RepeatUnit = "week" | "month" | "year"
+
+// "Every 6 months" is { every: 6, unit: "month" }. Null means it happens once.
+export type Repeat = { every: number; unit: RepeatUnit }
+
+export type DeadlineCategory =
+  | "rent"
+  | "bill"
+  | "benefit_paperwork"
+  | "appointment"
+  | "other"
+
+export const deadlineCategoryLabel: Record<DeadlineCategory, string> = {
+  rent: "Rent",
+  bill: "Bill",
+  benefit_paperwork: "Benefit paperwork",
+  appointment: "Appointment",
+  other: "Other",
+}
+
+// Entered once. Every later due date is calculated from `firstDueDate` and
+// `repeat`, so nothing past the first date is ever stored.
+export type Deadline = {
+  id: string
+  title: string
+  category: DeadlineCategory
+  program: ProgramKind | null
+  firstDueDate: string
+  // "HH:MM", 24 hour. Optional, and missing on deadlines saved before it existed.
+  dueTime?: string | null
+  repeat: Repeat | null
+  whatToBring: string
+  createdAt: string
+  // Single dates deleted from a repeating deadline. The rest still repeat.
+  skippedDates?: string[]
+}
+
 export type BillFrequency = "monthly" | "every_2_months" | "quarterly"
 
 export const billFrequencyLabel: Record<BillFrequency, string> = {
@@ -54,6 +91,9 @@ export type ObligationsProfile = {
   lastShutoffNoticeAt: string | null
   lastCheckInAt: string | null
   lastCheckInFlaggedAt: string | null
+  // Deadlines the person typed in once. Profiles saved before this field
+  // existed do not have it, so read it as `profile.deadlines ?? []`.
+  deadlines?: Deadline[]
 }
 
 export type Payment = {
@@ -69,8 +109,14 @@ export type Occurrence = {
   date: string
   title: string
   detail: string
-  kind: "rent" | "utility" | "recert" | "lease" | "voucher_inspection"
+  kind: "rent" | "utility" | "recert" | "lease" | "voucher_inspection" | "deadline"
   amount: number | null
+  // "HH:MM" when the deadline has a time of day.
+  time?: string | null
+  // Set on items from a typed deadline, so the whole series can be removed.
+  deadlineId?: string
+  // True when that deadline repeats, so "delete all" means something.
+  repeats?: boolean
 }
 
 export const emptyProfile: ObligationsProfile = {
@@ -92,4 +138,5 @@ export const emptyProfile: ObligationsProfile = {
   lastShutoffNoticeAt: null,
   lastCheckInAt: null,
   lastCheckInFlaggedAt: null,
+  deadlines: [],
 }

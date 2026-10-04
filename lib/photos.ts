@@ -1,5 +1,6 @@
 export type Photo = {
-  src: `/${string}`
+  // A file in /public, or an uploaded site photo in Supabase Storage.
+  src: string
   alt: string
   credit: string
 }

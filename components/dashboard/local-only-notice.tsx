@@ -11,13 +11,17 @@ import Link from "next/link"
  *
  * The real tradeoff is worth stating plainly instead, because it cuts both
  * ways: nothing leaves the phone, and nothing survives clearing the browser.
+ *
+ * The one exception is the reader: tapping "Fill in for me" or "Read it"
+ * sends that one sentence or photo to be read. Nothing is kept from it.
  */
 export function LocalOnlyNotice({ className }: { className?: string }) {
   return (
     <p className={className}>
-      Saved on this phone only. None of this is sent anywhere, and you do not
-      need an account. Clearing your browser erases it, and you can delete it
-      yourself any time in{" "}
+      Saved on this phone only, and you do not need an account. Nothing is sent
+      anywhere unless you tap Fill in for me or Read it, which sends just that
+      sentence or photo to be read and keeps nothing. Clearing your browser
+      erases it, and you can delete it yourself any time in{" "}
       <Link href="/settings" className="font-medium underline">
         Settings
       </Link>

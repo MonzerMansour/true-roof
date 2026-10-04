@@ -9,11 +9,6 @@ import {
 
 const stubs = [
   {
-    href: "/financials/letters",
-    title: "Photo a letter",
-    body: "Take a picture of a county or landlord letter. We turn it into one plain-language task, then discard the photo. Not built yet.",
-  },
-  {
     href: "/financials/quiet",
     title: "Quiet mode",
     body: "After about six steady months, reminders step back to renewals only. Any warning sign turns full monitoring back on. Not built yet.",

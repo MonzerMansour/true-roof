@@ -115,6 +115,11 @@ export type Listing = {
   city: string
   orgName: string
   orgDescription?: string | null
+  // The site's own description from the portal. Null until staff write one,
+  // or until 20261003000100_listing_details.sql is applied.
+  description?: string | null
+  // A photo staff uploaded in the portal. Null means use a stock photo.
+  photoUrl?: string | null
   address: string | null
   lat: number | null
   lng: number | null

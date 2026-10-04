@@ -15,6 +15,14 @@ function hashId(id: string) {
 }
 
 export function photoForListing(listing: Listing): Photo {
+  // A photo the site's own staff uploaded beats any stock photo.
+  if (listing.photoUrl) {
+    return {
+      src: listing.photoUrl,
+      alt: `Photo of ${listing.name}`,
+      credit: listing.orgName ?? listing.name,
+    }
+  }
   const pool = listing.kind === "parking" ? parkingPhotos : shelterPhotos
   return pool[hashId(listing.id) % pool.length]
 }

@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 
 import { ListingInterestPanel } from "@/components/portal/listing-interest-panel"
 import { ListingSettingsForm } from "@/components/portal/listing-settings-form"
+import { SitePhotoField } from "@/components/portal/site-photo-field"
 import { getInterestForListing } from "@/lib/listings/interest"
 import { getListingForPortal } from "@/lib/portal/queries"
 
@@ -28,6 +29,7 @@ export default async function SiteSettingsPage({
         </p>
       </div>
       <ListingInterestPanel rows={interest} />
+      <SitePhotoField listingId={listing.id} photoUrl={listing.photoUrl} />
       <ListingSettingsForm
         listing={listing}
         organization={organization}

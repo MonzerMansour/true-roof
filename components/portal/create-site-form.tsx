@@ -3,7 +3,10 @@
 import * as React from "react"
 import { toast } from "sonner"
 
-import { createOrganizationWithSite } from "@/lib/portal/actions"
+import {
+  addSiteToOrganization,
+  createOrganizationWithSite,
+} from "@/lib/portal/actions"
 import type { SiteKind } from "@/lib/listings/types"
 import { Button } from "@/components/ui/button"
 import {
@@ -22,7 +25,13 @@ import {
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 
-export function CreateSiteForm() {
+// "new-org" creates an organization and its first site. "add-site" adds
+// another site to the organization the person already manages.
+export function CreateSiteForm({
+  mode = "new-org",
+}: {
+  mode?: "new-org" | "add-site"
+}) {
   const [pending, setPending] = React.useState(false)
   const [kind, setKind] = React.useState<SiteKind>("shelter")
 
@@ -34,7 +43,10 @@ export function CreateSiteForm() {
       const formData = new FormData(event.currentTarget)
       // On success the action redirects to the new site settings, so control
       // only returns here when something went wrong.
-      const result = await createOrganizationWithSite(formData)
+      const result =
+        mode === "add-site"
+          ? await addSiteToOrganization(formData)
+          : await createOrganizationWithSite(formData)
       if (result && !result.ok) {
         toast.error(result.error)
       }
@@ -46,35 +58,39 @@ export function CreateSiteForm() {
   return (
     <form onSubmit={onSubmit} className="max-w-2xl">
       <FieldGroup className="gap-6">
-        <Field>
-          <FieldLabel htmlFor="orgName">Organization name</FieldLabel>
-          <Input
-            id="orgName"
-            name="orgName"
-            placeholder="Downtown Streets Team"
-            required
-          />
-          <FieldDescription>
-            The group that runs the site. Staff join this org later with an
-            access code.
-          </FieldDescription>
-        </Field>
+        {mode === "new-org" ? (
+          <>
+            <Field>
+              <FieldLabel htmlFor="orgName">Organization name</FieldLabel>
+              <Input
+                id="orgName"
+                name="orgName"
+                placeholder="Downtown Streets Team"
+                required
+              />
+              <FieldDescription>
+                The group that runs the site. Staff join this org later with an
+                access code.
+              </FieldDescription>
+            </Field>
 
-        <Field>
-          <FieldLabel htmlFor="orgDescription">
-            Short note (optional)
-          </FieldLabel>
-          <Textarea
-            id="orgDescription"
-            name="orgDescription"
-            rows={3}
-            placeholder="Who runs this site, or how intake works. Not a category label."
-          />
-          <FieldDescription>
-            Keep it brief. Seekers still see enums on the listing, not a
-            free-text category.
-          </FieldDescription>
-        </Field>
+            <Field>
+              <FieldLabel htmlFor="orgDescription">
+                Short note (optional)
+              </FieldLabel>
+              <Textarea
+                id="orgDescription"
+                name="orgDescription"
+                rows={3}
+                placeholder="Who runs this site, or how intake works. Not a category label."
+              />
+              <FieldDescription>
+                Keep it brief. Seekers still see enums on the listing, not a
+                free-text category.
+              </FieldDescription>
+            </Field>
+          </>
+        ) : null}
 
         <Field>
           <FieldLabel htmlFor="siteName">Site name</FieldLabel>
@@ -85,6 +101,24 @@ export function CreateSiteForm() {
             required
           />
           <FieldDescription>One row per physical address.</FieldDescription>
+        </Field>
+
+        <Field>
+          <FieldLabel htmlFor="siteDescription">
+            About this site (optional)
+          </FieldLabel>
+          <Textarea
+            id="siteDescription"
+            name="siteDescription"
+            rows={4}
+            maxLength={1000}
+            placeholder="What it is like to stay here, what is nearby, and what to expect at intake."
+          />
+          <FieldDescription>
+            Shown on this site&apos;s page. People looking for a place read it,
+            and it helps match them to sites like this one. Up to 1,000
+            characters.
+          </FieldDescription>
         </Field>
 
         <Field>
@@ -111,7 +145,7 @@ export function CreateSiteForm() {
 
         <div className="flex flex-wrap items-center gap-3">
           <Button type="submit" disabled={pending}>
-            {pending ? "Creating…" : "Create site"}
+            {pending ? "Creating…" : mode === "add-site" ? "Add site" : "Create site"}
           </Button>
           <p className="text-sm text-muted-foreground">
             Your site starts as a draft. It stays off the homepage until you

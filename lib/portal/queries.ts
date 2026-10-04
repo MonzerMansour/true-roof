@@ -69,6 +69,8 @@ type ListingRow = {
   data_source?: DataSource | null
   source_url?: string | null
   source_as_of?: string | null
+  description?: string | null
+  photo_url?: string | null
 }
 
 /** Try the widest select first and fall back, so a project that has not run
@@ -133,6 +135,8 @@ function mapListing(row: ListingRow): PortalListing {
     dataSource: row.data_source ?? null,
     sourceUrl: row.source_url ?? null,
     sourceAsOf: row.source_as_of ?? null,
+    description: row.description ?? null,
+    photoUrl: row.photo_url ?? null,
   }
 }
 

@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   description: "Turn a county or landlord letter into one task.",
 }
 
-export default function LettersStubPage() {
+export default function LettersPage() {
   return (
     <Container className="py-8 sm:py-10">
       <p className="text-sm font-medium text-primary">Financials</p>
@@ -18,13 +18,14 @@ export default function LettersStubPage() {
         Photo a letter
       </h1>
       <p className="mt-3 max-w-2xl text-muted-foreground">
-        Not built yet. When it is live, you will photograph a letter, see one
-        plain-language task (due date, who to call, what to bring), and the
-        photo will be discarded. No document archive.
+        Open Financials and tap the Scanner tab. Take a photo of a letter, bill,
+        or receipt with your camera, or upload one. You get one plain task (due
+        date, what to send or bring), and the photo is thrown away. No document
+        archive.
       </p>
       <div className="mt-8 flex flex-wrap gap-2">
-        <Link href="/financials" className={cn(buttonVariants({ variant: "outline" }))}>
-          Back to Financials
+        <Link href="/financials?tab=scanner" className={cn(buttonVariants({ variant: "outline" }))}>
+          Go to the Scanner
         </Link>
       </div>
     </Container>

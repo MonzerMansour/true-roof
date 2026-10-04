@@ -29,7 +29,7 @@ import type { InterestRow } from "@/lib/listings/interest"
 import { photoForListing } from "@/lib/listings/photos"
 import { interestLabel, type Listing } from "@/lib/listings/types"
 import { loadNeeds } from "@/lib/matching/storage"
-import { assessRisk, buildOccurrences } from "@/lib/obligations/schedule"
+import { assessRisk, buildSchedule } from "@/lib/obligations/schedule"
 import {
   loadCompletedOccurrenceIds,
   loadProfile,
@@ -93,9 +93,7 @@ export function SeekerDashboard({ listings }: { listings: Listing[] }) {
     setCompletedIds(completed)
     if (plan) {
       setUpcoming(
-        buildOccurrences(plan)
-          .filter((item) => !completed.includes(item.id))
-          .slice(0, 6)
+        buildSchedule(plan, completed).upcoming.slice(0, 6)
       )
     } else {
       setUpcoming([])
@@ -119,7 +117,7 @@ export function SeekerDashboard({ listings }: { listings: Listing[] }) {
     .filter((item): item is Listing => Boolean(item))
 
   const risk = profile
-    ? assessRisk(buildOccurrences(profile), completedIds, profile)
+    ? assessRisk(buildSchedule(profile, completedIds).upcoming, completedIds, profile)
     : null
   const riskUi = risk ? riskCopy[risk.level] : null
   const nextDue = upcoming[0] ?? null

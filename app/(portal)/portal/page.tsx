@@ -64,6 +64,27 @@ export default async function PortalHomePage() {
           </Card>
         ))}
 
+        {listings.length > 0 && context.canManage ? (
+          <Card className="border-dashed">
+            <CardHeader>
+              <CardTitle>Run another site?</CardTitle>
+              <CardDescription>
+                Add each physical address as its own site. It starts as a
+                draft, and you publish it when its details are in.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link
+                href="/portal/sites/new"
+                className={cn(buttonVariants({ variant: "outline" }))}
+              >
+                <IconPlus />
+                Add another site
+              </Link>
+            </CardContent>
+          </Card>
+        ) : null}
+
         {listings.length === 0 ? (
           <Card>
             <CardHeader>
@@ -74,7 +95,7 @@ export default async function PortalHomePage() {
             </CardHeader>
             <CardContent>
               <Link
-                href="/portal/create"
+                href="/portal/sites/new"
                 className={cn(buttonVariants())}
               >
                 <IconPlus />

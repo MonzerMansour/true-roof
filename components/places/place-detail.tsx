@@ -232,6 +232,11 @@ export function PlaceDetail({
           <p className="mt-1 text-sm text-muted-foreground">
             {formatConfirmedAt(listing.lastConfirmedAt)}
           </p>
+          {listing.description ? (
+            <p className="mt-4 max-w-2xl whitespace-pre-line">
+              {listing.description}
+            </p>
+          ) : null}
 
           {fit ? (
             // FitResult is the two-value shape again: { fits, reasons }. The

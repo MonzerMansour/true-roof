@@ -2,6 +2,12 @@
 
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
+import { after } from "next/server"
+
+import {
+  syncListingEmbedding,
+  syncOrganizationEmbeddings,
+} from "@/lib/embeddings/listings"
 
 import { defaultCity } from "@/lib/listings/geo"
 import {
@@ -19,7 +25,7 @@ import {
   type Freshness,
   type SiteKind,
 } from "@/lib/listings/types"
-import { requireProviderSession } from "@/lib/portal/queries"
+import { getPortalContext, requireProviderSession } from "@/lib/portal/queries"
 import { createServerSupabaseClient } from "@/lib/supabase/server"
 
 export type ActionResult = { ok: true } | { ok: false; error: string }
@@ -69,12 +75,33 @@ function readInt(
   return value >= min && value <= max ? value : null
 }
 
+/** A site description: trimmed, at most 1,000 characters, or null. */
+function readDescription(formData: FormData): string | null {
+  const raw = String(formData.get("siteDescription") ?? "").trim()
+  return raw ? raw.slice(0, 1000) : null
+}
+
+/** True when Postgres or PostgREST rejected a write because `column` does not
+ * exist yet, meaning its migration has not been applied to this project. */
+function isMissingColumn(error: { message?: string; code?: string } | null, column: string) {
+  if (!error) return false
+  const message = error.message ?? ""
+  return (
+    (error.code === "PGRST204" || error.code === "42703" || /column/i.test(message)) &&
+    message.includes(column)
+  )
+}
+
+const DESCRIPTION_NOT_READY =
+  "Saved, except the site description. The database needs the listing_details migration first. Ask the project owner to apply it."
+
 export async function createOrganizationWithSite(formData: FormData) {
   const orgName = String(formData.get("orgName") ?? "")
   // Named orgDescription, matching the settings form. Both write the same
   // organizations.description column and used to disagree about the field name.
   const description = String(formData.get("orgDescription") ?? "")
   const siteName = String(formData.get("siteName") ?? "")
+  const siteDescription = readDescription(formData)
   const kind = readEnum(formData, "kind", siteKindValues) ?? "shelter"
   const city = String(formData.get("city") ?? defaultCity)
 
@@ -95,6 +122,28 @@ export async function createOrganizationWithSite(formData: FormData) {
   const row = Array.isArray(data) ? data[0] : data
   const listingId = row?.listing_id as string | undefined
 
+  // The create RPC predates site descriptions, so the description is a second
+  // write. The site already exists, so a failure here is logged, not fatal:
+  // staff can add it again from the settings page.
+  if (listingId && siteDescription) {
+    const { error: descriptionError } = await supabase
+      .from("listings")
+      .update({ description: siteDescription })
+      .eq("id", listingId)
+    if (descriptionError) {
+      console.warn(
+        "[portal] site description not saved:",
+        isMissingColumn(descriptionError, "description")
+          ? "listing_details migration not applied"
+          : descriptionError.message
+      )
+    }
+  }
+
+  // Embed the new site once the redirect is sent, so it can rank on Places
+  // as soon as it is published. Never blocks or fails the create.
+  if (listingId) after(() => syncListingEmbedding(listingId))
+
   revalidatePath("/portal")
 
   if (listingId) {
@@ -102,6 +151,59 @@ export async function createOrganizationWithSite(formData: FormData) {
   }
 
   redirect("/portal")
+}
+
+/** Adds another physical site to the organization the person already
+ * manages. Starts as a draft, like the first site: staff fill in the rules and
+ * publish it from its settings page. The database allows this only for an
+ * active director or manager (the "managers insert listings" policy). */
+export async function addSiteToOrganization(formData: FormData) {
+  const siteName = String(formData.get("siteName") ?? "").trim()
+  const siteDescription = readDescription(formData)
+  const kind = readEnum(formData, "kind", siteKindValues) ?? "shelter"
+  const city = String(formData.get("city") ?? "").trim() || defaultCity
+
+  const { supabase } = await requireProviderSession()
+  const context = await getPortalContext()
+
+  if (!context?.organization || !context.canManage) {
+    return { ok: false as const, error: "Only a director or manager can add a site." }
+  }
+  if (!siteName) {
+    return { ok: false as const, error: "Add the site name." }
+  }
+
+  // listings.id has no database default; the create RPC makes its own too.
+  const row = {
+    id: crypto.randomUUID(),
+    organization_id: context.organization.id,
+    name: siteName,
+    kind,
+    city,
+    freshness: "call_first",
+    published: false,
+    data_source: "provider_portal",
+  }
+
+  let { data, error } = await supabase
+    .from("listings")
+    .insert({ ...row, description: siteDescription })
+    .select("id")
+    .single()
+
+  if (isMissingColumn(error, "description")) {
+    ;({ data, error } = await supabase.from("listings").insert(row).select("id").single())
+  }
+
+  if (error || !data) {
+    return { ok: false as const, error: error?.message ?? "Could not add the site." }
+  }
+
+  const listingId = data.id as string
+  after(() => syncListingEmbedding(listingId))
+
+  revalidatePath("/portal")
+  redirect(`/portal/sites/${listingId}/settings`)
 }
 
 export async function requestJoinOrganization(
@@ -161,6 +263,7 @@ export async function updateListingSettings(
   const orgName = String(formData.get("orgName") ?? "")
   const orgDescription = String(formData.get("orgDescription") ?? "")
   const siteName = String(formData.get("siteName") ?? "")
+  const siteDescription = readDescription(formData)
   const city = String(formData.get("city") ?? "")
   const address = String(formData.get("address") ?? "")
   const vehicleNote = String(formData.get("vehicleNote") ?? "")
@@ -265,9 +368,7 @@ export async function updateListingSettings(
   const lat = latRaw.trim() ? Number(latRaw) : null
   const lng = lngRaw.trim() ? Number(lngRaw) : null
 
-  const { error } = await supabase
-    .from("listings")
-    .update({
+  const update = {
       name: siteName.trim(),
       city: city.trim() || defaultCity,
       address: address.trim() || null,
@@ -299,16 +400,33 @@ export async function updateListingSettings(
       data_source: "provider_portal",
       source_as_of: new Date().toISOString().slice(0, 10),
       last_confirmed_at: new Date().toISOString(),
-    })
+  }
+
+  let { error } = await supabase
+    .from("listings")
+    .update({ ...update, description: siteDescription })
     .eq("id", listingId)
+
+  // Before the listing_details migration, save everything else and say
+  // plainly that the description did not go through.
+  let descriptionSkipped = false
+  if (isMissingColumn(error, "description")) {
+    ;({ error } = await supabase.from("listings").update(update).eq("id", listingId))
+    descriptionSkipped = Boolean(siteDescription)
+  }
 
   if (error) {
     return { ok: false, error: error.message }
   }
 
+  // Re-embed after the response. Every site in the org, because the org name
+  // and description are part of each site's text. Unchanged text is skipped.
+  after(() => syncOrganizationEmbeddings(listing.organization_id))
+
   revalidatePath(`/portal/sites/${listingId}/settings`)
   revalidatePath("/portal")
   revalidatePath("/")
+  if (descriptionSkipped) return { ok: false, error: DESCRIPTION_NOT_READY }
   return { ok: true }
 }
 

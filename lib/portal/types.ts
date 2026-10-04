@@ -72,6 +72,8 @@ export type PortalListing = {
   dataSource: DataSource | null
   sourceUrl: string | null
   sourceAsOf: string | null
+  description: string | null
+  photoUrl: string | null
 }
 
 export type PortalOrganization = {

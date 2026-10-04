@@ -21,7 +21,7 @@ import {
   type VehicleAllowed,
 } from "@/lib/listings/types"
 
-type ListingRow = {
+export type ListingRow = {
   id: string
   name: string
   kind: SiteKind
@@ -54,13 +54,16 @@ type ListingRow = {
   data_source?: DataSource | null
   source_url?: string | null
   source_as_of?: string | null
+  // Present only once 20261003000100_listing_details.sql has run.
+  description?: string | null
+  photo_url?: string | null
   organizations:
     | { name: string; description: string | null }
     | { name: string; description: string | null }[]
     | null
 }
 
-function mapRow(row: ListingRow): Listing {
+export function mapListingRow(row: ListingRow): Listing {
   const org = Array.isArray(row.organizations)
     ? row.organizations[0]
     : row.organizations
@@ -105,6 +108,8 @@ function mapRow(row: ListingRow): Listing {
     dataSource: row.data_source ?? null,
     sourceUrl: row.source_url ?? null,
     sourceAsOf: row.source_as_of ?? null,
+    description: row.description?.trim() || null,
+    photoUrl: row.photo_url ?? null,
   }
 }
 
@@ -171,7 +176,7 @@ export async function getFeaturedListings(): Promise<{
   }
 
   return {
-    listings: data.map(mapRow),
+    listings: data.map(mapListingRow),
     source: "supabase",
   }
 }
@@ -199,7 +204,7 @@ export async function getPublishedListings(): Promise<{
   }
 
   return {
-    listings: data.map(mapRow),
+    listings: data.map(mapListingRow),
     source: "supabase",
   }
 }
@@ -226,7 +231,7 @@ export async function getListingById(
   // maybeSingle returns an object, not an array.
   const row = Array.isArray(data) ? data[0] : (data as ListingRow | null)
   if (row) {
-    return { listing: mapRow(row), source: "supabase" }
+    return { listing: mapListingRow(row), source: "supabase" }
   }
 
   const listing = seedListings.find((item) => item.id === id)

@@ -43,3 +43,38 @@ export async function embedText(input: string): Promise<number[]> {
 
   return embedding
 }
+
+// Several texts in one request. Results come back in the same order.
+export async function embedTexts(inputs: string[]): Promise<number[][]> {
+  const apiKey = process.env.OPENAI_API_KEY
+
+  if (!apiKey) {
+    throw new Error("OPENAI_API_KEY is not set.")
+  }
+  if (inputs.length === 0) return []
+
+  const response = await fetch("https://api.openai.com/v1/embeddings", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({ model: embeddingModel(), input: inputs }),
+  })
+
+  if (!response.ok) {
+    const body = await response.text().catch(() => "")
+    throw new Error(`Embeddings request failed (${response.status}). ${body}`)
+  }
+
+  const json = (await response.json()) as {
+    data?: { embedding: number[]; index: number }[]
+  }
+  const data = [...(json.data ?? [])].sort((a, b) => a.index - b.index)
+
+  if (data.length !== inputs.length) {
+    throw new Error("Embeddings response had an unexpected shape.")
+  }
+
+  return data.map((item) => item.embedding)
+}

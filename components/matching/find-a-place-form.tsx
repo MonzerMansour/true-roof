@@ -370,15 +370,26 @@ export function FindAPlaceForm() {
     setEditing(null)
     toast.success("Saved on this phone.")
 
+    // Wait for the account copy before opening Places, so the list is ranked
+    // by these answers and not the previous ones. The phone copy is enough
+    // if it fails.
     fetch("/api/needs/embed", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(needs),
-    }).catch(() => {
-      // Phone copy is enough if the account copy fails.
     })
-
-    router.push(fromSettings ? "/settings" : "/places")
+      .then(async (response) => {
+        if (response.status !== 429) return
+        const body = (await response.json().catch(() => null)) as {
+          retryAfterSeconds?: number
+        } | null
+        const minutes = Math.max(1, Math.ceil((body?.retryAfterSeconds ?? 3600) / 60))
+        toast.message(
+          `You have changed your answers a lot this hour. Places will use your new answers if you save again in about ${minutes} minute${minutes === 1 ? "" : "s"}.`
+        )
+      })
+      .catch(() => {})
+      .finally(() => router.push(fromSettings ? "/settings" : "/places"))
   }
 
   function startOver() {
