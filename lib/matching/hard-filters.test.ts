@@ -41,6 +41,9 @@ function shelter(over: Partial<Listing> = {}): Listing {
     dataSource: null,
     sourceUrl: null,
     sourceAsOf: null,
+    externalRating: null,
+    externalRatingCount: null,
+    externalRatingSource: null,
     ...over,
   }
 }

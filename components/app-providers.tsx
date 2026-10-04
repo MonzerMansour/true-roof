@@ -4,6 +4,7 @@ import type { ReactNode } from "react"
 
 import { SessionProvider } from "@/components/auth/session-provider"
 import { SignInProvider } from "@/components/auth/sign-in-provider"
+import { ThemeCorner } from "@/components/theme-corner"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
@@ -22,6 +23,7 @@ export function AppProviders({
         <SessionProvider initial={session}>
           <SignInProvider>
             {children}
+            <ThemeCorner />
             <Toaster />
           </SignInProvider>
         </SessionProvider>

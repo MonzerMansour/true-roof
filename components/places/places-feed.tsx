@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/card"
 import { cn } from "cn"
 import { listingFitsNeeds } from "@/lib/matching/hard-filters"
+import { suggestHouseholdSplit } from "@/lib/matching/household-split"
 import { loadNeeds } from "@/lib/matching/storage"
 import type { SeekerNeeds } from "@/lib/matching/needs"
 import type { RankSource } from "@/lib/matching/rank"
@@ -43,6 +44,7 @@ import {
   type PlaceFilters,
 } from "@/lib/listings/place-filters"
 import { freshnessLabel, intakeLabel, type Listing } from "@/lib/listings/types"
+import { here4You } from "@/lib/listings/sources"
 
 const distanceOptions: { value: DistanceMiles | null; label: string }[] = [
   { value: null, label: "Any distance" },
@@ -152,6 +154,14 @@ export function PlacesFeed({
       if (b.miles == null) return -1
       return a.miles - b.miles
     })
+
+  const householdSplit =
+    visible.length === 0
+      ? suggestHouseholdSplit(
+          withMeta.map(({ listing }) => listing),
+          needs
+        )
+      : null
 
   function patch(next: Partial<PlaceFilters>) {
     setFilters((prev) => ({ ...prev, ...next }))
@@ -328,15 +338,26 @@ export function PlacesFeed({
       ) : null}
 
       {!needs ? (
-        <p className="mt-3 text-sm text-muted-foreground">
-          <Link
-            href="/get-started/find-a-place"
-            className="font-medium underline"
-          >
-            Answer a few questions
-          </Link>{" "}
-          to filter by what fits you.
-        </p>
+        <Card className="mt-4 ring-1 ring-primary/10">
+          <CardHeader>
+            <CardTitle className="text-lg">
+              Show only places that can take you
+            </CardTitle>
+            <CardDescription className="text-base">
+              Ten quick questions about pets, ID, a partner, a car, and what
+              time you can get there. No account needed, and your answers stay
+              on this phone.
+            </CardDescription>
+            <div className="mt-3">
+              <Link
+                href="/get-started/find-a-place"
+                className={cn(buttonVariants({ size: "touch" }))}
+              >
+                Answer the questions
+              </Link>
+            </div>
+          </CardHeader>
+        </Card>
       ) : null}
 
       <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
@@ -552,12 +573,43 @@ export function PlacesFeed({
       </Sheet>
 
       {visible.length === 0 ? (
-        <Card className="mt-8">
+        <Card className="mt-8 ring-1 ring-primary/10">
           <CardHeader>
-            <CardTitle>Nothing on this list fits</CardTitle>
+            <CardTitle>
+              {householdSplit
+                ? "No one site takes you both tonight"
+                : "Nothing on this list can take you tonight"}
+            </CardTitle>
             <CardDescription className="text-base">
-              Open Filters and widen the distance, or clear a tag above. Crisis
-              lines stay separate:{" "}
+              {householdSplit ? (
+                <>
+                  Two sites below can each take one person. If that will not
+                  work, call {here4You.name} at{" "}
+                  <a
+                    className="font-medium underline"
+                    href={`tel:${here4You.phone}`}
+                  >
+                    {here4You.display}
+                  </a>
+                  .
+                </>
+              ) : (
+                <>
+                  Call {here4You.name} at{" "}
+                  <a
+                    className="font-medium underline"
+                    href={`tel:${here4You.phone}`}
+                  >
+                    {here4You.display}
+                  </a>
+                  . They place people into shelter across the county and can look
+                  beyond this list. You can also open Filters and widen the
+                  distance.
+                </>
+              )}
+              <br />
+              <br />
+              Crisis lines stay separate:{" "}
               <a className="font-medium underline" href="tel:911">
                 911
               </a>
@@ -595,6 +647,58 @@ export function PlacesFeed({
           ))}
         </div>
       )}
+
+      {householdSplit && visible.length === 0 ? (
+        <div className="mt-8 space-y-4">
+          <div>
+            <p className="text-sm font-medium text-primary">Two places</p>
+            <h2 className="mt-1 font-heading text-xl font-semibold tracking-tight">
+              Stay on two sites instead of one compromise
+            </h2>
+            <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+              Each site can take one of you. Call both before you go. This is
+              not a handoff.
+            </p>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                For you
+              </p>
+              <PlaceCard
+                listing={householdSplit.yours}
+                fit={householdSplit.yoursFit}
+              />
+            </div>
+            <div className="space-y-2">
+              <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                For your partner
+              </p>
+              <PlaceCard
+                listing={householdSplit.partner}
+                fit={householdSplit.partnerFit}
+              />
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      <div className="sticky bottom-0 z-20 -mx-4 mt-6 border-t bg-background/95 px-4 py-3 backdrop-blur sm:hidden">
+        <Button
+          type="button"
+          size="touch"
+          className="w-full"
+          onClick={() => setFiltersOpen(true)}
+        >
+          <IconFilter />
+          Filters
+          {activeCount > 0 ? (
+            <Badge variant="secondary" className="ml-0.5">
+              {activeCount}
+            </Badge>
+          ) : null}
+        </Button>
+      </div>
     </div>
   )
 }

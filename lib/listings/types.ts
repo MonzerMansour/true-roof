@@ -144,6 +144,51 @@ export type Listing = {
   sourceUrl: string | null
   /** ISO date. When the source last published or a human last checked it. */
   sourceAsOf: string | null
+  /** Staff-entered external average (estimate). Not a live Google sync. */
+  externalRating: number | null
+  externalRatingCount: number | null
+  externalRatingSource: string | null
+  /** True Roof published average, filled when review stats are joined. */
+  averageStars?: number | null
+  reviewCount?: number | null
+}
+
+export const reviewStatusValues = [
+  "pending",
+  "published",
+  "rejected",
+  "hidden",
+] as const
+export type ReviewStatus = (typeof reviewStatusValues)[number]
+
+export type ListingReview = {
+  id: string
+  listingId: string
+  userId: string
+  stars: number
+  body: string | null
+  status: ReviewStatus
+  verifiedStay: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export type ListingReviewStats = {
+  listingId: string
+  averageStars: number
+  reviewCount: number
+}
+
+export type CustomerReview = {
+  id: string
+  listingId: string
+  reviewerId: string
+  subjectUserId: string
+  stars: number
+  body: string | null
+  status: "published" | "hidden"
+  createdAt: string
+  updatedAt: string
 }
 
 // Sentence maps. These read as prose because they feed the embedding text in

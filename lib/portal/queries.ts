@@ -71,6 +71,9 @@ type ListingRow = {
   source_as_of?: string | null
   description?: string | null
   photo_url?: string | null
+  external_rating?: number | null
+  external_rating_count?: number | null
+  external_rating_source?: string | null
 }
 
 /** Try the widest select first and fall back, so a project that has not run
@@ -137,6 +140,13 @@ function mapListing(row: ListingRow): PortalListing {
     sourceAsOf: row.source_as_of ?? null,
     description: row.description ?? null,
     photoUrl: row.photo_url ?? null,
+    externalRating:
+      typeof row.external_rating === "number" ? row.external_rating : null,
+    externalRatingCount:
+      typeof row.external_rating_count === "number"
+        ? row.external_rating_count
+        : null,
+    externalRatingSource: row.external_rating_source ?? null,
   }
 }
 

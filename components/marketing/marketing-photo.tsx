@@ -9,12 +9,14 @@ export function MarketingPhoto({
   imageClassName,
   priority,
   sizes = "(min-width: 1024px) 50vw, 100vw",
+  quality = 80,
 }: {
   photo: Photo
   className?: string
   imageClassName?: string
   priority?: boolean
   sizes?: string
+  quality?: number
 }) {
   return (
     <div className={cn("relative overflow-hidden bg-muted", className)}>
@@ -24,6 +26,7 @@ export function MarketingPhoto({
         fill
         priority={priority}
         sizes={sizes}
+        quality={quality}
         className={cn("object-cover", imageClassName)}
       />
     </div>

@@ -32,7 +32,7 @@ export function PortalShell({
       {/* This had no id at all, so the root skip link pointed at nothing on
           every portal page. */}
       <SidebarInset id="main" tabIndex={-1} className="outline-none">
-        <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
+        <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b border-border/60 bg-background/85 px-4 shadow-sm backdrop-blur-md">
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="mr-2 h-4" />
           {title ? (

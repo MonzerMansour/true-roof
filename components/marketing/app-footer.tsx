@@ -15,7 +15,7 @@ export function AppFooter() {
     : "/"
 
   return (
-    <footer className="border-t bg-background">
+    <footer className="border-t border-border/60 bg-primary/[0.03]">
       <Container className="flex flex-col gap-2 py-4 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
         <p>
           <Link href={homeHref} className="font-medium text-foreground hover:underline">

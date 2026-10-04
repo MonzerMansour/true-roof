@@ -103,6 +103,9 @@ export async function loadRealListingsWithEmbeddings(): Promise<
         dataSource: null,
         sourceUrl: null,
         sourceAsOf: null,
+        externalRating: null,
+        externalRatingCount: null,
+        externalRatingSource: null,
       }
 
       return { listing, embedding: parseEmbedding(row.embedding) }

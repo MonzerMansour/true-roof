@@ -21,7 +21,7 @@ Marketing pages, sign-in, the seeker app (Dashboard `/home`, Places `/places`, F
 ## Product facts (do not invent others)
 
 - One listing row per **physical site**, linked to a shared org. Enums only. Never free-text categories.
-- Hard constraints (pets, cars, intake closed) **remove** a listing. Zero fits → Here4You. Household split can surface **two** listings.
+- Hard constraints (pets, cars, intake closed) **remove** a listing. Zero fits → Here4You. If a couple cannot stay together, `lib/matching/household-split.ts` can surface **two** listings that each take one person. It reuses `listingFitsNeeds`. It is not a fifth matcher.
 - Freshness is one badge for the whole listing: Live / Recent / Call first. Confidence decays on a curve; conflicting reports lower confidence, they do not overwrite.
 - Vehicle intake is first-class: car/RV questions, then shelters **and** safe parking side by side.
 - After housing: deadlines, letter-to-task, rent cushion, Get Help, income cliffs, quiet mode.

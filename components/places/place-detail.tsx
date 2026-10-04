@@ -10,6 +10,8 @@ import {
   PhotoCredit,
 } from "@/components/marketing/marketing-photo"
 import { PlaceIntake } from "@/components/places/place-intake"
+import { PlaceReviews } from "@/components/places/place-reviews"
+import { StarRating } from "@/components/places/star-rating"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { cn } from "cn"
@@ -40,6 +42,8 @@ import {
   registrationRequiredLabel,
   vehicleAllowedLabel,
   type Listing,
+  type ListingReview,
+  type ListingReviewStats,
 } from "@/lib/listings/types"
 import { listingFitsNeeds, type FitResult } from "@/lib/matching/hard-filters"
 import { loadNeeds } from "@/lib/matching/storage"
@@ -47,9 +51,17 @@ import { loadNeeds } from "@/lib/matching/storage"
 export function PlaceDetail({
   listing,
   intent,
+  reviews = [],
+  reviewStats = null,
+  ownReview = null,
+  signedIn = false,
 }: {
   listing: Listing
   intent?: string | null
+  reviews?: ListingReview[]
+  reviewStats?: ListingReviewStats | null
+  ownReview?: ListingReview | null
+  signedIn?: boolean
 }) {
   const photo = photoForListing(listing)
   const contact = contactForListing(listing)
@@ -203,7 +215,7 @@ export function PlaceDetail({
         <div>
           <MarketingPhoto
             photo={photo}
-            className="aspect-[16/10] rounded-xl"
+            className="aspect-[16/10] rounded-2xl ring-1 ring-primary/15"
             sizes="(min-width: 1024px) 55vw, 100vw"
             priority
           />
@@ -237,13 +249,22 @@ export function PlaceDetail({
               {listing.description}
             </p>
           ) : null}
+          {reviewStats && reviewStats.reviewCount > 0 ? (
+            <div className="mt-3">
+              <StarRating
+                value={reviewStats.averageStars}
+                count={reviewStats.reviewCount}
+                size="md"
+              />
+            </div>
+          ) : null}
 
           {fit ? (
             // FitResult is the two-value shape again: { fits, reasons }. The
             // three-value verdict belonged to the ranking approach that was
             // dropped in favour of the embeddings matcher.
             <div
-              className="mt-4 rounded-lg border bg-card p-3 text-sm"
+              className="mt-4 rounded-xl border bg-card p-3 text-sm ring-1 ring-primary/10"
               aria-live="polite"
             >
               {fit.fits ? (
@@ -338,6 +359,14 @@ export function PlaceDetail({
           ) : null}
         </div>
       </div>
+
+      <PlaceReviews
+        listing={listing}
+        reviews={reviews}
+        stats={reviewStats}
+        ownReview={ownReview}
+        signedIn={signedIn}
+      />
     </div>
   )
 }

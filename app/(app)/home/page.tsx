@@ -22,8 +22,10 @@ export default async function SeekerHomePage() {
   const { listings } = await getPublishedListings()
 
   return (
-    <Container className="max-w-6xl py-6 sm:py-8">
-      <SeekerDashboard listings={listings} />
-    </Container>
+    <div className="bg-primary/[0.02]">
+      <Container className="max-w-6xl py-6 sm:py-8">
+        <SeekerDashboard listings={listings} />
+      </Container>
+    </div>
   )
 }
