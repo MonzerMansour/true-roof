@@ -50,13 +50,12 @@ export default async function PlacesPage() {
   return (
     <Container className="py-8 sm:py-10">
       <p className="text-sm font-medium text-primary">Places</p>
-      <h1 className="font-heading mt-2 max-w-3xl text-3xl font-semibold tracking-tight sm:text-4xl">
+      <h1 className="mt-2 max-w-3xl font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
         Shelters and safe parking, side by side
       </h1>
       <p className="mt-3 max-w-2xl text-muted-foreground">
-        Near me sorts by distance. Filter by how far, how you get in, or how
-        fresh the status is. Save a site to your dashboard. Call opens the
-        phone. Waitlist and ask for a bed need an account.
+        Closest and most recently confirmed first. Tap Near me to use your
+        location. Calling and directions need no account.
       </p>
       {source === "seed" ? (
         <p className="mt-3 text-sm text-muted-foreground">

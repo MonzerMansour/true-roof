@@ -18,7 +18,12 @@ export function SeekerAppShell({ children }: { children: ReactNode }) {
   return (
     <SidebarProvider defaultOpen>
       <SeekerSidebar />
-      <SidebarInset className="min-h-svh">
+      {/* id="main" belongs on the real <main> that SidebarInset renders. It
+          used to sit on the inner div below, so the skip link landed on a div
+          nested inside the main landmark. tabIndex={-1} because several browsers
+          move scroll but not focus when a skip link targets a non focusable
+          element. */}
+      <SidebarInset id="main" tabIndex={-1} className="min-h-svh outline-none">
         <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b bg-background/80 px-4 backdrop-blur-xl">
           <SidebarTrigger aria-label="Close or open sidebar" />
           <Separator orientation="vertical" className="mx-1 h-4" />
@@ -27,7 +32,7 @@ export function SeekerAppShell({ children }: { children: ReactNode }) {
             <SeekerAccountMenu />
           </div>
         </header>
-        <div id="main" className="flex flex-1 flex-col">
+        <div className="flex flex-1 flex-col">
           <div className="flex-1">{children}</div>
           <AppFooter />
         </div>

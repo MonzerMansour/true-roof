@@ -9,12 +9,19 @@ Marketing phase plus the seeker Places feed and staff portal. Do not add matcher
 
 ## Layout
 
-- `supabase/migrations/20260918000000_listings.sql`: canonical schema + sample sites. Same contents as `supabase/seed.sql`.
+- `supabase/migrations/20260918000000_listings.sql`: canonical schema. Its six sample sites were invented and are deleted by the CA-500 inventory migration.
+- `supabase/migrations/20260928000000_listing_policies.sql`: ID, curfew, check-in window, max stay, pet weight limit, structured vehicle columns, and provenance.
+- `supabase/migrations/20260928000100_ca500_inventory.sql`: GENERATED. Run `npm run inventory:sql` after editing either source file in `lib/listings/sources/`.
+- `supabase/seed.sql` is NOT a mirror of the migrations. It reflects migrations 1 and 2 only and is already two migrations behind. Apply `supabase/migrations/` with `npm run db:setup`.
 - `lib/listings/types.ts`: enums. Never free-text categories.
 - `lib/listings/queries.ts`: server fetch of featured and published listings. Falls back to `lib/listings/seed.ts` if the table is missing. Keep seed IDs in lockstep with the SQL.
 - `app/(app)/places`: seeker feed and `/places/[id]` detail pages. Testers are the sample sites. Staff publish more from `/portal`.
 - `lib/matching/rank.ts`: calls `match_listings` when a seeker embedding exists. Otherwise keeps `sort_order`.
-- `lib/matching/hard-filters.ts`: pets, couples, vehicle, full lot. Removes a listing. Does not score.
+- `lib/matching/hard-filters.ts`: the ONLY place a listing is removed. Reads all twelve questionnaire answers. Returns a three-value verdict, fits / unknown / excluded. A null policy on a listing NEVER excludes: it means "not published", not "no". Does not score.
+- `lib/matching/score.ts`: the ONLY place order is decided. Distance plus freshness, pure, injectable clock. Does not exclude.
+- `lib/matching/vocabulary.ts`: the ONLY place the seeker and site vocabularies meet. Lookup tables, no logic.
+- `lib/matching/time.ts`: HH:MM helpers. A window whose end is before its start wraps past midnight, which is a real shelter pattern.
+- Those four plus `rank.ts` ARE the matcher. Do not add a fifth.
 - `lib/supabase/client.ts`: browser client. Returns `null` when env is missing.
 - `lib/supabase/server.ts`: cookie session for Route Handlers.
 - `proxy.ts`: Next.js 16 session refresh (this is middleware).
@@ -27,6 +34,7 @@ Marketing phase plus the seeker Places feed and staff portal. Do not add matcher
 One listing row per **physical site**, linked to an organization.
 
 - `organizations`: `id`, `name`, `description`, `access_code`
+- `listings` policy columns, all nullable, null means "not published": `id_required` `required` | `not_required` | `case_by_case`; `curfew_policy` `no_curfew` | `fixed_time` plus `curfew_time`; `intake_from` / `intake_to` times; `max_stay` tiers; `pet_weight_limit_lbs`; `vehicle_allowed` `car_only` | `car_van` | `car_van_rv`; `vehicle_max_length_ft`; `registration_required`. Provenance: `data_source`, `source_url`, `source_as_of`.
 - `listings`: `kind` `shelter` | `parking`; `freshness` `live` | `recent` | `call_first`; `pets` / `couples` enums or null; parking uses `parking_status` `open` | `full` | `waitlist` plus `vehicle_note`. `lat` / `lng` for near-me distance. `phone` for call intake. `intake_method` `call` | `waitlist` | `register` | `walk_up`. `featured` + `sort_order` drive the homepage hero (first three). `published` puts a row on `/places`.
 - `listing_interest`: seeker waitlist / register / on-the-way rows. Not matcher scoring. Own-row write. Org staff can read.
 - Places feed day-of filters (distance, intake, freshness, hide full lots) live in `lib/listings/place-filters.ts`. Hard filters still remove listings. Distance sorts client-side. It is not a second matcher.

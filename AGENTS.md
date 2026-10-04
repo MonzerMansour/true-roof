@@ -20,9 +20,15 @@ Project rules live in `.cursor/rules/`. They always apply for product, language,
 
 Canonical SQL is `supabase/migrations/`. Apply with `npm run db:setup` or `npx supabase db query --linked --project-ref`. Homepage cards and `/places` come from `public.listings` via `lib/listings/queries.ts`, with `lib/listings/seed.ts` as fallback. One row per physical site; enums only.
 
+Real Santa Clara County data lives in `lib/listings/sources/`: shelters from the HUD 2025 Housing Inventory Count for CoC CA-500, safe parking from each city's own program page. Both the SQL and the seed array derive from those two files, so edit a source file and run `npm run inventory:sql`, never the generated migration. HUD publishes no pets, ID, couples, curfew, check-in or max-stay rules, so those columns are null on imported rows. Null means "not published", never "no". Do not guess a policy to fill a gap.
+
+Column names live once in `lib/listings/columns.ts`. Adding a column is one edit there, not six select strings.
+
 ## Places feed
 
-`/places` is the seeker list (shelters and safe parking together). `/places/[id]` is the site page. Staff publish rows from `/portal`. Ranking uses `match_listings` when embeddings exist; otherwise `sort_order`. Hard filters are in `lib/matching/hard-filters.ts`. Do not build a second matcher.
+`/places` is the seeker list (shelters and safe parking together). `/places/[id]` is the site page. Staff publish rows from `/portal`.
+
+The matcher is four files and no more: `hard-filters.ts` removes, `score.ts` orders by distance plus freshness, `vocabulary.ts` translates between the seeker and site vocabularies, `time.ts` does clock arithmetic. `rank.ts` still calls `match_listings` for an embedding order, which now breaks ties inside the score rather than being discarded. Do not build a second matcher.
 
 ## Auth
 

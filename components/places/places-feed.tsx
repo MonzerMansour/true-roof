@@ -32,19 +32,17 @@ import {
   defaultOrigin,
   milesBetween,
   cityCenters,
+  usableCoordinate,
 } from "@/lib/listings/geo"
 import {
   defaultPlaceFilters,
+  isDefaultFilters,
   loadPlaceFilters,
   savePlaceFilters,
   type DistanceMiles,
   type PlaceFilters,
 } from "@/lib/listings/place-filters"
-import {
-  freshnessLabel,
-  intakeLabel,
-  type Listing,
-} from "@/lib/listings/types"
+import { freshnessLabel, intakeLabel, type Listing } from "@/lib/listings/types"
 
 const distanceOptions: { value: DistanceMiles | null; label: string }[] = [
   { value: null, label: "Any distance" },
@@ -72,7 +70,8 @@ export function PlacesFeed({
   matchDetails?: Record<string, MatchDetail>
 }) {
   const [needs, setNeeds] = React.useState<SeekerNeeds | null>(null)
-  const [filters, setFilters] = React.useState<PlaceFilters>(defaultPlaceFilters)
+  const [filters, setFilters] =
+    React.useState<PlaceFilters>(defaultPlaceFilters)
   const [geoError, setGeoError] = React.useState<string | null>(null)
   const [ready, setReady] = React.useState(false)
   const [filtersOpen, setFiltersOpen] = React.useState(false)
@@ -96,10 +95,11 @@ export function PlacesFeed({
   const origin = filters.origin ?? defaultOrigin
 
   const withMeta = listings.map((listing) => {
-    const miles =
-      listing.lat != null && listing.lng != null
-        ? milesBetween(origin, { lat: listing.lat, lng: listing.lng })
-        : null
+    // usableCoordinate, not a null check: (0, 0) is a real point in the Gulf
+    // of Guinea and is what an unset column looks like, so a null check
+    // rendered a shelter "7934 mi" away.
+    const point = usableCoordinate(listing.lat, listing.lng)
+    const miles = point ? milesBetween(origin, point) : null
     return {
       listing,
       fit: listingFitsNeeds(listing, needs),
@@ -233,11 +233,14 @@ export function PlacesFeed({
     })
   }
 
-  if (filters.hideFull) {
+  // Only when it is OFF. Hiding full lots is the default, so advertising it as
+  // a filter the person applied put a chip and a badge on an untouched page,
+  // and made Clear all look broken when the same default came back.
+  if (!filters.hideFull) {
     tags.push({
       id: "hideFull",
-      label: "Hide full lots",
-      clear: () => patch({ hideFull: false }),
+      label: "Including full lots",
+      clear: () => patch({ hideFull: true }),
     })
   }
 
@@ -250,6 +253,13 @@ export function PlacesFeed({
   }
 
   const activeCount = tags.length
+  const nothingToClear = isDefaultFilters(filters)
+
+  // One function for both controls, which used to be two inline calls under
+  // two different labels.
+  function clearAll() {
+    setFilters(defaultPlaceFilters)
+  }
 
   return (
     <div>
@@ -309,12 +319,8 @@ export function PlacesFeed({
             size="sm"
             variant="ghost"
             className="h-7 px-2 text-xs"
-            onClick={() =>
-              setFilters({
-                ...defaultPlaceFilters,
-                onlyFits: false,
-              })
-            }
+            disabled={nothingToClear}
+            onClick={clearAll}
           >
             Clear all
           </Button>
@@ -353,9 +359,7 @@ export function PlacesFeed({
                 <Button
                   type="button"
                   size="sm"
-                  variant={
-                    origin.label === "Near me" ? "default" : "outline"
-                  }
+                  variant={origin.label === "Near me" ? "default" : "outline"}
                   onClick={useMyLocation}
                 >
                   Near me
@@ -495,9 +499,7 @@ export function PlacesFeed({
                   <span>Hide full lots</span>
                   <Switch
                     checked={filters.hideFull}
-                    onCheckedChange={(checked) =>
-                      patch({ hideFull: checked })
-                    }
+                    onCheckedChange={(checked) => patch({ hideFull: checked })}
                     aria-label="Hide full lots"
                   />
                 </label>
@@ -533,22 +535,17 @@ export function PlacesFeed({
               type="button"
               variant="outline"
               className="flex-1"
-              onClick={() =>
-                setFilters({
-                  ...defaultPlaceFilters,
-                  onlyFits: false,
-                })
-              }
+              disabled={nothingToClear}
+              onClick={clearAll}
             >
-              Reset
+              Clear all
             </Button>
             <Button
               type="button"
               className="flex-1"
               onClick={() => setFiltersOpen(false)}
             >
-              See {visible.length}{" "}
-              {visible.length === 1 ? "site" : "sites"}
+              See {visible.length} {visible.length === 1 ? "site" : "sites"}
             </Button>
           </SheetFooter>
         </SheetContent>

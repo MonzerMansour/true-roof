@@ -6,17 +6,29 @@ import { toast } from "sonner"
 
 import { updateListingSettings } from "@/lib/portal/actions"
 import {
-  couplesLabel,
+  couplesOption,
+  curfewPolicyOption,
   freshnessLabel,
+  idRequiredOption,
+  intakeLabel,
+  maxStayOption,
   parkingStatusLabel,
-  petsLabel,
+  petsOption,
+  registrationRequiredOption,
+  vehicleAllowedOption,
 } from "@/lib/listings/types"
 import type {
   CouplesPolicy,
+  CurfewPolicy,
   Freshness,
+  IdRequired,
+  IntakeMethod,
+  MaxStay,
   ParkingStatus,
   PetsPolicy,
+  RegistrationRequired,
   SiteKind,
+  VehicleAllowed,
 } from "@/lib/listings/types"
 import type { PortalListing, PortalOrganization } from "@/lib/portal/types"
 import { Badge } from "@/components/ui/badge"
@@ -44,6 +56,16 @@ type ListingSettingsFormProps = {
   canManage: boolean
 }
 
+/** Renders the options for an enum from its option map, so a value can never
+ * exist in the database with no way for staff to pick it. */
+function optionsFrom<T extends string>(map: Record<T, string>) {
+  return (Object.keys(map) as T[]).map((key) => (
+    <SelectItem key={key} value={key}>
+      {map[key]}
+    </SelectItem>
+  ))
+}
+
 export function ListingSettingsForm({
   listing,
   organization,
@@ -52,8 +74,11 @@ export function ListingSettingsForm({
   const router = useRouter()
   const [pending, setPending] = React.useState(false)
   const [kind, setKind] = React.useState<SiteKind>(listing.kind)
-  const [intakeMethod, setIntakeMethod] = React.useState(
+  const [intakeMethod, setIntakeMethod] = React.useState<IntakeMethod>(
     listing.intakeMethod ?? "call"
+  )
+  const [curfewPolicy, setCurfewPolicy] = React.useState<CurfewPolicy | "">(
+    listing.curfewPolicy ?? ""
   )
   const [published, setPublished] = React.useState(listing.published)
 
@@ -97,6 +122,14 @@ export function ListingSettingsForm({
           ) : null}
         </div>
 
+        {listing.dataSource && listing.dataSource !== "provider_portal" ? (
+          <p className="rounded-lg border bg-muted/40 p-4 text-sm">
+            This site was imported from a public list, so most of its rules are
+            blank. Anything you fill in below replaces the imported record and
+            people stop being told to call the county to ask.
+          </p>
+        ) : null}
+
         {canManage ? (
           <>
             <Field>
@@ -109,7 +142,9 @@ export function ListingSettingsForm({
               />
             </Field>
             <Field>
-              <FieldLabel htmlFor="orgDescription">Short note (optional)</FieldLabel>
+              <FieldLabel htmlFor="orgDescription">
+                Short note (optional)
+              </FieldLabel>
               <Textarea
                 id="orgDescription"
                 name="orgDescription"
@@ -118,8 +153,8 @@ export function ListingSettingsForm({
                 placeholder="Who runs this site, or how intake works. Not a category label."
               />
               <FieldDescription>
-                Keep it brief. Seekers still see enums on the listing, not a
-                free-text category.
+                Keep it brief. Seekers still see set options on the listing, not
+                a free-text category.
               </FieldDescription>
             </Field>
           </>
@@ -139,6 +174,19 @@ export function ListingSettingsForm({
         <Field>
           <FieldLabel htmlFor="city">City</FieldLabel>
           <Input id="city" name="city" defaultValue={listing.city} required />
+        </Field>
+
+        <Field>
+          <FieldLabel htmlFor="address">Street address (optional)</FieldLabel>
+          <Input
+            id="address"
+            name="address"
+            defaultValue={listing.address ?? ""}
+            placeholder="2000 Geng Road, Palo Alto, CA"
+          />
+          <FieldDescription>
+            Leave this empty for a site whose location should not be public.
+          </FieldDescription>
         </Field>
 
         <div className="grid gap-4 sm:grid-cols-2">
@@ -166,7 +214,8 @@ export function ListingSettingsForm({
           </Field>
         </div>
         <FieldDescription>
-          Used to sort nearby sites. Leave empty if you do not know it yet.
+          Used to sort nearby sites. Without these, people only see the distance
+          to your city, not to your door.
         </FieldDescription>
 
         <Field>
@@ -187,18 +236,13 @@ export function ListingSettingsForm({
           <Select
             value={intakeMethod}
             onValueChange={(value) => {
-              if (value) setIntakeMethod(value)
+              if (value) setIntakeMethod(value as IntakeMethod)
             }}
           >
             <SelectTrigger id="intakeMethod">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="call">Call first</SelectItem>
-              <SelectItem value="waitlist">Join waitlist</SelectItem>
-              <SelectItem value="register">Ask for a bed</SelectItem>
-              <SelectItem value="walk_up">Walk up</SelectItem>
-            </SelectContent>
+            <SelectContent>{optionsFrom(intakeLabel)}</SelectContent>
           </Select>
           <input type="hidden" name="intakeMethod" value={intakeMethod} />
           <FieldDescription>
@@ -209,10 +253,14 @@ export function ListingSettingsForm({
 
         <Field>
           <FieldLabel htmlFor="kind">Site type</FieldLabel>
+          {/* No name on the Select. The hidden input below is the single
+              authoritative entry. Having both put two "kind" values in one
+              FormData, and formData.get returned whichever came first. */}
           <Select
-            name="kind"
             value={kind}
-            onValueChange={(value) => setKind(value as SiteKind)}
+            onValueChange={(value) => {
+              if (value) setKind(value as SiteKind)
+            }}
           >
             <SelectTrigger id="kind">
               <SelectValue placeholder="Pick a type" />
@@ -232,13 +280,102 @@ export function ListingSettingsForm({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {(Object.keys(freshnessLabel) as Freshness[]).map((key) => (
-                <SelectItem key={key} value={key}>
-                  {freshnessLabel[key]}
-                </SelectItem>
-              ))}
+              {optionsFrom<Freshness>(freshnessLabel)}
             </SelectContent>
           </Select>
+        </Field>
+
+        {/* The rules a person is asked about in the questionnaire. Leaving one
+            blank is fine and honest: the site page says it is not published and
+            tells them to call, and the matcher never excludes on a blank. */}
+        <Field>
+          <FieldLabel htmlFor="idRequired">Photo ID</FieldLabel>
+          <Select
+            name="idRequired"
+            defaultValue={listing.idRequired ?? undefined}
+          >
+            <SelectTrigger id="idRequired">
+              <SelectValue placeholder="Not published yet" />
+            </SelectTrigger>
+            <SelectContent>
+              {optionsFrom<IdRequired>(idRequiredOption)}
+            </SelectContent>
+          </Select>
+          <FieldDescription>
+            Case by case means you will work with someone who has no ID. It
+            keeps your site in their results.
+          </FieldDescription>
+        </Field>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field>
+            <FieldLabel htmlFor="intakeFrom">Check-in starts</FieldLabel>
+            <Input
+              id="intakeFrom"
+              name="intakeFrom"
+              type="time"
+              defaultValue={listing.intakeFrom ?? ""}
+            />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="intakeTo">Check-in ends</FieldLabel>
+            <Input
+              id="intakeTo"
+              name="intakeTo"
+              type="time"
+              defaultValue={listing.intakeTo ?? ""}
+            />
+          </Field>
+        </div>
+        <FieldDescription>
+          Set both or neither. An end time earlier than the start means the
+          window runs past midnight, which is fine.
+        </FieldDescription>
+
+        <Field>
+          <FieldLabel htmlFor="curfewPolicy">Curfew</FieldLabel>
+          <Select
+            value={curfewPolicy}
+            onValueChange={(value) => setCurfewPolicy(value as CurfewPolicy)}
+          >
+            <SelectTrigger id="curfewPolicy">
+              <SelectValue placeholder="Not published yet" />
+            </SelectTrigger>
+            <SelectContent>
+              {optionsFrom<CurfewPolicy>(curfewPolicyOption)}
+            </SelectContent>
+          </Select>
+          <input type="hidden" name="curfewPolicy" value={curfewPolicy} />
+        </Field>
+
+        {curfewPolicy === "fixed_time" ? (
+          <Field>
+            <FieldLabel htmlFor="curfewTime">Doors lock at</FieldLabel>
+            <Input
+              id="curfewTime"
+              name="curfewTime"
+              type="time"
+              defaultValue={listing.curfewTime ?? ""}
+              required
+            />
+            <FieldDescription>
+              Someone who cannot get there by this time will not see your site.
+            </FieldDescription>
+          </Field>
+        ) : null}
+
+        <Field>
+          <FieldLabel htmlFor="maxStay">Longest stay</FieldLabel>
+          <Select name="maxStay" defaultValue={listing.maxStay ?? undefined}>
+            <SelectTrigger id="maxStay">
+              <SelectValue placeholder="Not published yet" />
+            </SelectTrigger>
+            <SelectContent>{optionsFrom<MaxStay>(maxStayOption)}</SelectContent>
+          </Select>
+          <FieldDescription>
+            This never hides your site. Someone who needs longer still needs
+            tonight.
+          </FieldDescription>
         </Field>
 
         {kind === "shelter" ? (
@@ -247,31 +384,53 @@ export function ListingSettingsForm({
               <FieldLabel htmlFor="pets">Pets</FieldLabel>
               <Select name="pets" defaultValue={listing.pets ?? undefined}>
                 <SelectTrigger id="pets">
-                  <SelectValue placeholder="Select policy" />
+                  <SelectValue placeholder="Not published yet" />
                 </SelectTrigger>
                 <SelectContent>
-                  {(Object.keys(petsLabel) as PetsPolicy[]).map((key) => (
-                    <SelectItem key={key} value={key}>
-                      {petsLabel[key]}
-                    </SelectItem>
-                  ))}
+                  {optionsFrom<PetsPolicy>(petsOption)}
                 </SelectContent>
               </Select>
             </Field>
             <Field>
+              <FieldLabel htmlFor="petWeightLimitLbs">
+                Pet weight limit in pounds (optional)
+              </FieldLabel>
+              <Input
+                id="petWeightLimitLbs"
+                name="petWeightLimitLbs"
+                type="number"
+                min={1}
+                max={200}
+                defaultValue={listing.petWeightLimitLbs ?? ""}
+                placeholder="25"
+              />
+              <FieldDescription>
+                Only used when pets is set to small pets.
+              </FieldDescription>
+            </Field>
+            <Field>
               <FieldLabel htmlFor="couples">Couples</FieldLabel>
-              <Select name="couples" defaultValue={listing.couples ?? undefined}>
+              <Select
+                name="couples"
+                defaultValue={listing.couples ?? undefined}
+              >
                 <SelectTrigger id="couples">
-                  <SelectValue placeholder="Select policy" />
+                  <SelectValue placeholder="Not published yet" />
                 </SelectTrigger>
                 <SelectContent>
-                  {(Object.keys(couplesLabel) as CouplesPolicy[]).map((key) => (
-                    <SelectItem key={key} value={key}>
-                      {couplesLabel[key]}
-                    </SelectItem>
-                  ))}
+                  {optionsFrom<CouplesPolicy>(couplesOption)}
                 </SelectContent>
               </Select>
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="totalBeds">Total beds (optional)</FieldLabel>
+              <Input
+                id="totalBeds"
+                name="totalBeds"
+                type="number"
+                min={0}
+                defaultValue={listing.totalBeds ?? ""}
+              />
             </Field>
           </>
         ) : (
@@ -283,15 +442,55 @@ export function ListingSettingsForm({
                 defaultValue={listing.parkingStatus ?? undefined}
               >
                 <SelectTrigger id="parkingStatus">
-                  <SelectValue placeholder="Select status" />
+                  <SelectValue placeholder="Not published yet" />
                 </SelectTrigger>
                 <SelectContent>
-                  {(Object.keys(parkingStatusLabel) as ParkingStatus[]).map(
-                    (key) => (
-                      <SelectItem key={key} value={key}>
-                        {parkingStatusLabel[key]}
-                      </SelectItem>
-                    )
+                  {optionsFrom<ParkingStatus>(parkingStatusLabel)}
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="vehicleAllowed">Vehicles allowed</FieldLabel>
+              <Select
+                name="vehicleAllowed"
+                defaultValue={listing.vehicleAllowed ?? undefined}
+              >
+                <SelectTrigger id="vehicleAllowed">
+                  <SelectValue placeholder="Not published yet" />
+                </SelectTrigger>
+                <SelectContent>
+                  {optionsFrom<VehicleAllowed>(vehicleAllowedOption)}
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="vehicleMaxLengthFt">
+                Longest vehicle in feet (optional)
+              </FieldLabel>
+              <Input
+                id="vehicleMaxLengthFt"
+                name="vehicleMaxLengthFt"
+                type="number"
+                min={8}
+                max={60}
+                defaultValue={listing.vehicleMaxLengthFt ?? ""}
+                placeholder="22"
+              />
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="registrationRequired">
+                Registration and plates
+              </FieldLabel>
+              <Select
+                name="registrationRequired"
+                defaultValue={listing.registrationRequired ?? undefined}
+              >
+                <SelectTrigger id="registrationRequired">
+                  <SelectValue placeholder="Not published yet" />
+                </SelectTrigger>
+                <SelectContent>
+                  {optionsFrom<RegistrationRequired>(
+                    registrationRequiredOption
                   )}
                 </SelectContent>
               </Select>
@@ -302,8 +501,12 @@ export function ListingSettingsForm({
                 id="vehicleNote"
                 name="vehicleNote"
                 defaultValue={listing.vehicleNote ?? ""}
-                placeholder="Max length, RVs, overnight rules"
+                placeholder="Anything the options above do not cover"
               />
+              <FieldDescription>
+                Shown on the site page. The matcher uses the options above, not
+                this note.
+              </FieldDescription>
             </Field>
           </>
         )}
@@ -311,7 +514,9 @@ export function ListingSettingsForm({
         {canManage ? (
           <Field className="flex flex-row items-center justify-between rounded-lg border p-4">
             <div className="space-y-0.5">
-              <FieldLabel htmlFor="published">Publish on the Places list</FieldLabel>
+              <FieldLabel htmlFor="published">
+                Publish on the Places list
+              </FieldLabel>
               <FieldDescription>
                 Seekers see published sites on /places. Featured placement on
                 the homepage is still a separate flag.

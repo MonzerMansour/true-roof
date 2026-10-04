@@ -10,9 +10,12 @@
     "lint": "eslint",
     "format": "prettier --write \"**/*.{ts,tsx}\"",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "db:setup": "node scripts/run-sql.mjs",
     "embeddings:listings": "node scripts/embed-listings.mjs",
-    "embeddings:eval": "node scripts/embed-eval-fixtures.mjs"
+    "embeddings:eval": "node scripts/embed-eval-fixtures.mjs",
+    "inventory:sql": "node scripts/build-inventory-sql.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
@@ -41,6 +44,7 @@
     "supabase": "^2.117.0",
     "tailwindcss": "^4",
     "tsx": "^4.23.15",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.7"
   }
 }

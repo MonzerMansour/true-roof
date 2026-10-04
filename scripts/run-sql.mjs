@@ -48,20 +48,28 @@ const sqlPaths = [
   "supabase/migrations/20260920000000_provider_portal.sql",
   "supabase/migrations/20260921000000_vector_search.sql",
   "supabase/migrations/20260927000000_listing_intake.sql",
+  "supabase/migrations/20260928000000_listing_policies.sql",
+  "supabase/migrations/20260928000100_ca500_inventory.sql",
+  "supabase/migrations/20260929000000_listing_coordinates.sql",
 ]
 const query = sqlPaths
   .map((path) => readFileSync(resolve(path), "utf8"))
   .join("\n\n")
 
 if (!url || !anon) {
-  console.error("Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY")
+  console.error(
+    "Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY"
+  )
   process.exit(1)
 }
 
 async function listingsReadable() {
-  const listings = await fetch(`${url}/rest/v1/listings?select=id,name&limit=6`, {
-    headers: { apikey: anon, Authorization: `Bearer ${anon}` },
-  })
+  const listings = await fetch(
+    `${url}/rest/v1/listings?select=id,name&limit=6`,
+    {
+      headers: { apikey: anon, Authorization: `Bearer ${anon}` },
+    }
+  )
   const body = await listings.text()
   if (!listings.ok) return { ok: false, body }
   console.log("listings readable:", body)

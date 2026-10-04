@@ -13,7 +13,7 @@ import {
   loadMyInterest,
   submitInterest,
 } from "@/lib/listings/interest-actions"
-import { mapsUrl } from "@/lib/listings/geo"
+import { mapsUrl, usableCoordinate } from "@/lib/listings/geo"
 import { contactForListing } from "@/lib/listings/contacts"
 import {
   formatPhone,
@@ -48,7 +48,11 @@ export function PlaceIntake({
 
   React.useEffect(() => {
     if (!session || !intent) return
-    if (intent === "waitlist" || intent === "register" || intent === "on_the_way") {
+    if (
+      intent === "waitlist" ||
+      intent === "register" ||
+      intent === "on_the_way"
+    ) {
       void onAsk(intent)
     }
     // Run once after sign-in lands with ?intent=
@@ -101,10 +105,11 @@ export function PlaceIntake({
     }
   }
 
-  const maps =
-    listing.lat != null && listing.lng != null
-      ? mapsUrl({ lat: listing.lat, lng: listing.lng }, listing.name)
-      : null
+  // Guarded the same way as the feed. This one matters more: an unguarded
+  // (0, 0) does not just render a wrong number, it hands someone a Directions
+  // link pointing at the middle of the Atlantic.
+  const mapsPoint = usableCoordinate(listing.lat, listing.lng)
+  const maps = mapsPoint ? mapsUrl(mapsPoint, listing.name) : null
 
   return (
     <div className="mt-6 rounded-xl border bg-card p-4">
@@ -121,7 +126,10 @@ export function PlaceIntake({
 
       <div className="mt-4 flex flex-wrap gap-2">
         {listing.intakeMethod === "call" && contact ? (
-          <a href={`tel:${contact.tel}`} className={cn(buttonVariants({ size: "lg" }))}>
+          <a
+            href={`tel:${contact.tel}`}
+            className={cn(buttonVariants({ size: "lg" }))}
+          >
             Call {contact.label}
           </a>
         ) : null}

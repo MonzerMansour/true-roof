@@ -79,10 +79,30 @@ export async function loadRealListingsWithEmbeddings(): Promise<
         city: l.city,
         orgName: org?.name ?? l.name,
         orgDescription: org?.description ?? null,
+        address: null,
         lat: null,
         lng: null,
         phone: null,
         intakeMethod: l.intake_method,
+        // The policy columns added by 20260928000000_listing_policies.sql.
+        // The eval tool scores text and categorical similarity only, so it
+        // does not select them; null keeps this a valid Listing without
+        // implying the site published a policy it has not.
+        idRequired: null,
+        curfewPolicy: null,
+        curfewTime: null,
+        intakeFrom: null,
+        intakeTo: null,
+        maxStay: null,
+        petWeightLimitLbs: null,
+        vehicleAllowed: null,
+        vehicleMaxLengthFt: null,
+        registrationRequired: null,
+        projectType: null,
+        totalBeds: null,
+        dataSource: null,
+        sourceUrl: null,
+        sourceAsOf: null,
       }
 
       return { listing, embedding: parseEmbedding(row.embedding) }

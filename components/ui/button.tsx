@@ -24,11 +24,23 @@ const buttonVariants = cva(
         xs: "h-6 gap-1 rounded-[min(var(--radius-md),10px)] px-2 text-xs in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3",
         sm: "h-7 gap-1 rounded-[min(var(--radius-md),12px)] px-2.5 text-[0.8rem] in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3.5",
         lg: "h-9 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
-        icon: "size-8",
+        // 44px, the minimum comfortable target on a phone. Added rather than
+        // resizing `default`, which would silently move layout in the sidebar,
+        // sheet, dialog and marketing header across ~27 call sites with no
+        // visual review. Use this on anything a person taps on a seeker page.
+        touch:
+          "h-11 gap-2 px-4 text-[0.9375rem] has-data-[icon=inline-end]:pr-3 has-data-[icon=inline-start]:pl-3",
+        icon: "relative size-8 after:absolute after:-inset-1.5 after:content-['']",
+        "icon-touch": "size-11",
+        // The after: pseudo element extends the tappable area past the visible
+        // box without changing layout. 24px + 2*10px reaches 44px. Applied only
+        // to the icon sizes: doing it to `sm` would make adjacent chips in a
+        // gap-2 row steal each other's taps.
         "icon-xs":
-          "size-6 rounded-[min(var(--radius-md),10px)] in-data-[slot=button-group]:rounded-lg [&_svg:not([class*='size-'])]:size-3",
+          "relative size-6 rounded-[min(var(--radius-md),10px)] after:absolute after:-inset-2.5 after:content-[''] in-data-[slot=button-group]:rounded-lg [&_svg:not([class*='size-'])]:size-3",
+        // 28px + 2*8px reaches 44px.
         "icon-sm":
-          "size-7 rounded-[min(var(--radius-md),12px)] in-data-[slot=button-group]:rounded-lg",
+          "relative size-7 rounded-[min(var(--radius-md),12px)] after:absolute after:-inset-2 after:content-[''] in-data-[slot=button-group]:rounded-lg",
         "icon-lg": "size-9",
       },
     },

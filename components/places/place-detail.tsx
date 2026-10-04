@@ -2,7 +2,6 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import { IconArrowLeft, IconHeart, IconHeartFilled } from "@tabler/icons-react"
 import { toast } from "sonner"
 
@@ -10,7 +9,6 @@ import {
   MarketingPhoto,
   PhotoCredit,
 } from "@/components/marketing/marketing-photo"
-import { freshnessTone } from "@/components/places/place-card"
 import { PlaceIntake } from "@/components/places/place-intake"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -23,31 +21,28 @@ import {
 import { photoForListing } from "@/lib/listings/photos"
 import { contactForListing } from "@/lib/listings/contacts"
 import {
+  coverageNote,
+  sourceCitation,
+  type PolicyField,
+} from "@/lib/listings/sources"
+import {
   couplesLabel,
   formatConfirmedAt,
+  formatIntakeWindow,
+  formatTime,
   freshnessLabel,
+  freshnessTone,
+  idRequiredLabel,
   intakeLabel,
+  maxStayLabel,
   parkingStatusLabel,
   petsLabel,
+  registrationRequiredLabel,
+  vehicleAllowedLabel,
   type Listing,
 } from "@/lib/listings/types"
-import { listingFitsNeeds } from "@/lib/matching/hard-filters"
+import { listingFitsNeeds, type FitResult } from "@/lib/matching/hard-filters"
 import { loadNeeds } from "@/lib/matching/storage"
-
-const laterFields = [
-  {
-    label: "ID",
-    body: "Whether this site requires ID will show here when staff set it.",
-  },
-  {
-    label: "Intake hours",
-    body: "Check-in window and curfew will show here when staff set them.",
-  },
-  {
-    label: "Max stay",
-    body: "How many nights you can stay will show here when staff set it.",
-  },
-]
 
 export function PlaceDetail({
   listing,
@@ -56,15 +51,20 @@ export function PlaceDetail({
   listing: Listing
   intent?: string | null
 }) {
-  const router = useRouter()
   const photo = photoForListing(listing)
   const contact = contactForListing(listing)
-  const tone = freshnessTone(listing)
-  const status =
-    listing.kind === "parking" && listing.parkingStatus
-      ? parkingStatusLabel[listing.parkingStatus]
-      : freshnessLabel[listing.freshness]
-  const [fitMessage, setFitMessage] = React.useState<string | null>(null)
+  const isLot = listing.kind === "parking" && listing.parkingStatus
+  const status = isLot
+    ? parkingStatusLabel[listing.parkingStatus!]
+    : freshnessLabel[listing.freshness]
+  const tone = isLot
+    ? listing.parkingStatus === "open"
+      ? "success"
+      : listing.parkingStatus === "waitlist"
+        ? "warning"
+        : "secondary"
+    : freshnessTone(listing.freshness)
+  const [fit, setFit] = React.useState<FitResult | null>(null)
   const [saved, setSaved] = React.useState(false)
 
   React.useEffect(() => {
@@ -79,13 +79,7 @@ export function PlaceDetail({
 
   React.useEffect(() => {
     const needs = loadNeeds()
-    if (!needs) return
-    const fit = listingFitsNeeds(listing, needs)
-    if (fit.fits) {
-      setFitMessage("Fits what you told us.")
-    } else {
-      setFitMessage(fit.reasons.join(" "))
-    }
+    setFit(needs ? listingFitsNeeds(listing, needs) : null)
   }, [listing])
 
   function onToggleSave() {
@@ -94,144 +88,250 @@ export function PlaceDetail({
     toast.success(next ? "Saved to your dashboard." : "Removed from saved.")
   }
 
+  /** A value, or the reason there is no value. The reason names which kind of
+   * empty it is: a site that has not filled this in, or a source that does not
+   * publish it at all. Replaces a hardcoded "will show here when staff set it"
+   * placeholder that was the same sentence for both. */
+  function rowFor(field: PolicyField, value: string | null) {
+    if (value) return { value, pending: false }
+    return {
+      value: coverageNote(listing.dataSource, field),
+      pending: true,
+    }
+  }
+
+  const rows: { label: string; field: PolicyField; value: string | null }[] =
+    listing.kind === "parking"
+      ? [
+          {
+            label: "Vehicles",
+            field: "vehicleAllowed",
+            value: listing.vehicleAllowed
+              ? vehicleAllowedLabel[listing.vehicleAllowed]
+              : null,
+          },
+          {
+            label: "Registration",
+            field: "registrationRequired",
+            value: listing.registrationRequired
+              ? registrationRequiredLabel[listing.registrationRequired]
+              : null,
+          },
+          {
+            label: "Check-in hours",
+            field: "intakeWindow",
+            value:
+              listing.intakeFrom && listing.intakeTo
+                ? formatIntakeWindow(listing.intakeFrom, listing.intakeTo)
+                : null,
+          },
+          {
+            label: "Address",
+            field: "address",
+            value: listing.address,
+          },
+        ]
+      : [
+          {
+            label: "Pets",
+            field: "pets",
+            value: listing.pets
+              ? listing.pets === "small_pets" && listing.petWeightLimitLbs
+                ? `Small pets, up to ${listing.petWeightLimitLbs} lb`
+                : petsLabel[listing.pets]
+              : null,
+          },
+          {
+            label: "Couples",
+            field: "couples",
+            value: listing.couples ? couplesLabel[listing.couples] : null,
+          },
+          {
+            label: "ID",
+            field: "idRequired",
+            value: listing.idRequired
+              ? idRequiredLabel[listing.idRequired]
+              : null,
+          },
+          {
+            label: "Check-in hours",
+            field: "intakeWindow",
+            value:
+              listing.intakeFrom && listing.intakeTo
+                ? formatIntakeWindow(listing.intakeFrom, listing.intakeTo)
+                : null,
+          },
+          {
+            label: "Curfew",
+            field: "curfew",
+            value:
+              listing.curfewPolicy === "no_curfew"
+                ? "No curfew"
+                : listing.curfewPolicy === "fixed_time" && listing.curfewTime
+                  ? `Doors lock at ${formatTime(listing.curfewTime)}`
+                  : null,
+          },
+          {
+            label: "Longest stay",
+            field: "maxStay",
+            value: listing.maxStay ? maxStayLabel[listing.maxStay] : null,
+          },
+          {
+            label: "Address",
+            field: "address",
+            value: listing.address,
+          },
+        ]
+
+  const citation = sourceCitation(listing.dataSource, listing.sourceAsOf)
+
   return (
     <div>
+      {/* A real link, not router.push on a Button, so middle click and the
+          context menu work. */}
       <Button
-        type="button"
         variant="ghost"
-        size="icon-sm"
-        className="-ml-1 mb-4"
-        aria-label="Back to Places"
-        onClick={() => router.push("/places")}
+        size="touch"
+        className="mb-4 -ml-1"
+        render={<Link href="/places" />}
       >
         <IconArrowLeft />
+        All places
       </Button>
 
       <div className="grid gap-10 lg:grid-cols-[1.15fr_0.85fr]">
-      <div>
-        <MarketingPhoto
-          photo={photo}
-          className="aspect-[16/10] rounded-xl"
-          sizes="(min-width: 1024px) 55vw, 100vw"
-          priority
-        />
-        <div className="mt-2">
-          <PhotoCredit photo={photo} />
-        </div>
-      </div>
-
-      <div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge
-            className={cn(
-              tone === "live" && "bg-emerald-600 text-white",
-              tone === "recent" && "bg-amber-500 text-white",
-              tone === "call" && "bg-muted text-foreground"
-            )}
-          >
-            {status}
-          </Badge>
-          <Badge variant="outline">
-            {listing.kind === "parking" ? "Safe parking" : "Shelter"}
-          </Badge>
-          <Badge variant="outline">{intakeLabel[listing.intakeMethod]}</Badge>
+        <div>
+          <MarketingPhoto
+            photo={photo}
+            className="aspect-[16/10] rounded-xl"
+            sizes="(min-width: 1024px) 55vw, 100vw"
+            priority
+          />
+          <div className="mt-2">
+            <PhotoCredit photo={photo} />
+          </div>
         </div>
 
-        <h1 className="font-heading mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
-          {listing.name}
-        </h1>
-        <p className="mt-2 text-muted-foreground">
-          {listing.orgName}
-          {" · "}
-          {listing.city}
-        </p>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {formatConfirmedAt(listing.lastConfirmedAt)}. One freshness badge for
-          the whole listing.
-        </p>
+        <div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant={tone}>{status}</Badge>
+            <Badge variant="outline">
+              {listing.kind === "parking" ? "Safe parking" : "Shelter"}
+            </Badge>
+            <Badge variant="outline">{intakeLabel[listing.intakeMethod]}</Badge>
+          </div>
 
-        {fitMessage ? (
-          <p className="mt-4 rounded-lg border bg-card p-3 text-sm">{fitMessage}</p>
-        ) : (
-          <p className="mt-4 text-sm">
-            <Link
-              href="/get-started/find-a-place"
-              className="font-medium underline"
-            >
-              Answer a few questions
-            </Link>{" "}
-            so we can mark what fits.
+          <h1 className="mt-4 font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
+            {listing.name}
+          </h1>
+          <p className="mt-2 text-muted-foreground">
+            {listing.orgName}
+            {" · "}
+            {listing.city}
           </p>
-        )}
+          <p className="mt-1 text-sm text-muted-foreground">
+            {formatConfirmedAt(listing.lastConfirmedAt)}
+          </p>
 
-        <div className="mt-4">
-          <Button
-            type="button"
-            variant={saved ? "secondary" : "outline"}
-            size="lg"
-            onClick={onToggleSave}
-          >
-            {saved ? <IconHeartFilled /> : <IconHeart />}
-            {saved ? "Saved" : "Save"}
-          </Button>
-        </div>
-
-        <PlaceIntake listing={listing} intent={intent} />
-
-        <dl className="mt-8 divide-y rounded-xl border bg-card">
-          <DetailRow
-            label="Pets"
-            value={listing.pets ? petsLabel[listing.pets] : "Not published yet"}
-          />
-          <DetailRow
-            label="Couples"
-            value={
-              listing.couples ? couplesLabel[listing.couples] : "Not published yet"
-            }
-          />
-          {listing.kind === "parking" ? (
-            <>
-              <DetailRow
-                label="Lot status"
-                value={
-                  listing.parkingStatus
-                    ? parkingStatusLabel[listing.parkingStatus]
-                    : "Not published yet"
-                }
-              />
-              <DetailRow
-                label="Vehicles"
-                value={listing.vehicleNote ?? "Not published yet"}
-              />
-            </>
-          ) : null}
-          {listing.orgDescription ? (
-            <DetailRow label="About the org" value={listing.orgDescription} />
-          ) : null}
-          {contact ? (
-            <DetailRow label="Phone" value={contact.label} />
+          {fit ? (
+            // FitResult is the two-value shape again: { fits, reasons }. The
+            // three-value verdict belonged to the ranking approach that was
+            // dropped in favour of the embeddings matcher.
+            <div
+              className="mt-4 rounded-lg border bg-card p-3 text-sm"
+              aria-live="polite"
+            >
+              {fit.fits ? (
+                <p className="font-medium text-success-text">
+                  Nothing you told us rules this one out.
+                </p>
+              ) : (
+                <>
+                  <p className="font-medium text-destructive">
+                    This one does not fit.
+                  </p>
+                  <ul className="mt-1 list-disc space-y-1 pl-5">
+                    {fit.reasons.map((reason) => (
+                      <li key={reason}>{reason}</li>
+                    ))}
+                  </ul>
+                </>
+              )}
+            </div>
           ) : (
+            <p className="mt-4 text-sm">
+              <Link
+                href="/get-started/find-a-place"
+                className="font-medium underline"
+              >
+                Answer a few questions
+              </Link>{" "}
+              so we can mark what fits.
+            </p>
+          )}
+
+          <div className="mt-4">
+            <Button
+              type="button"
+              variant={saved ? "secondary" : "outline"}
+              size="touch"
+              aria-pressed={saved}
+              onClick={onToggleSave}
+            >
+              {saved ? <IconHeartFilled /> : <IconHeart />}
+              {saved ? "Saved" : "Save"}
+            </Button>
+          </div>
+
+          <PlaceIntake listing={listing} intent={intent} />
+
+          <dl className="mt-8 divide-y rounded-xl border bg-card">
+            {rows.map((row) => {
+              const resolved = rowFor(row.field, row.value)
+              return (
+                <DetailRow
+                  key={row.label}
+                  label={row.label}
+                  value={resolved.value}
+                  pending={resolved.pending}
+                />
+              )
+            })}
+            {listing.kind === "parking" && listing.vehicleNote ? (
+              <DetailRow label="Lot notes" value={listing.vehicleNote} />
+            ) : null}
+            {listing.orgDescription ? (
+              <DetailRow label="About the org" value={listing.orgDescription} />
+            ) : null}
             <DetailRow
               label="Phone"
-              value="A number to call will show here when the site publishes one."
-              pending
+              value={
+                contact
+                  ? contact.isReferralLine
+                    ? `${contact.label}. ${contact.note}`
+                    : contact.label
+                  : coverageNote(listing.dataSource, "phone")
+              }
+              pending={!contact}
             />
-          )}
-          {laterFields.map((field) => (
-            <DetailRow
-              key={field.label}
-              label={field.label}
-              value={field.body}
-              pending
-            />
-          ))}
-        </dl>
+          </dl>
 
-        <p className="mt-6 text-sm text-muted-foreground">
-          Staff edit this row in the site portal. Publishing a listing puts it
-          on this list. Featured placement on the homepage is separate.
-        </p>
-      </div>
+          {citation ? (
+            <p className="mt-6 text-sm text-muted-foreground">
+              Source: {citation}{" "}
+              {listing.sourceUrl ? (
+                <a
+                  className="font-medium underline"
+                  href={listing.sourceUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  See the original
+                </a>
+              ) : null}
+            </p>
+          ) : null}
+        </div>
       </div>
     </div>
   )

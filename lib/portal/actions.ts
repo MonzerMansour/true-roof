@@ -3,24 +3,80 @@
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 
-import type {
-  CouplesPolicy,
-  Freshness,
-  ParkingStatus,
-  PetsPolicy,
-  SiteKind,
+import { defaultCity } from "@/lib/listings/geo"
+import {
+  couplesPolicyValues,
+  curfewPolicyValues,
+  freshnessValues,
+  idRequiredValues,
+  intakeMethodValues,
+  maxStayValues,
+  parkingStatusValues,
+  petsPolicyValues,
+  registrationRequiredValues,
+  siteKindValues,
+  vehicleAllowedValues,
+  type Freshness,
+  type SiteKind,
 } from "@/lib/listings/types"
 import { requireProviderSession } from "@/lib/portal/queries"
 import { createServerSupabaseClient } from "@/lib/supabase/server"
 
 export type ActionResult = { ok: true } | { ok: false; error: string }
 
+/** Read a FormData field and keep it only if it is a real member of the enum.
+ *
+ * An empty select posts "", which used to be cast straight to the union with
+ * `as` and then rejected by the database check constraint, failing the whole
+ * save with a Postgres error. Anything unrecognised becomes null, which is what
+ * "not published yet" means everywhere else. */
+function readEnum<T extends readonly string[]>(
+  formData: FormData,
+  field: string,
+  values: T
+): T[number] | null {
+  const raw = String(formData.get(field) ?? "").trim()
+  return (values as readonly string[]).includes(raw) ? (raw as T[number]) : null
+}
+
+/** A real "HH:MM" on a 24 hour clock. Inlined rather than imported: the
+ * matcher's time helpers belonged to the ranking approach that was dropped in
+ * favour of the embeddings matcher, but the portal still has to reject a
+ * malformed curfew before it reaches a `time` column. */
+function isHHMM(value: string): boolean {
+  const match = value.match(/^(\d{1,2}):(\d{2})$/)
+  if (!match) return false
+  return Number(match[1]) <= 23 && Number(match[2]) <= 59
+}
+
+/** A time field, kept only when it is a real HH:MM. */
+function readTime(formData: FormData, field: string): string | null {
+  const raw = String(formData.get(field) ?? "").trim()
+  return isHHMM(raw) ? raw : null
+}
+
+/** A whole number inside a range, or null. */
+function readInt(
+  formData: FormData,
+  field: string,
+  min: number,
+  max: number
+): number | null {
+  const raw = String(formData.get(field) ?? "").trim()
+  if (!raw) return null
+  const value = Number(raw)
+  if (!Number.isFinite(value) || !Number.isInteger(value)) return null
+  return value >= min && value <= max ? value : null
+}
+
 export async function createOrganizationWithSite(formData: FormData) {
   const orgName = String(formData.get("orgName") ?? "")
-  const description = String(formData.get("description") ?? "")
+  // Named orgDescription, matching the settings form. Both write the same
+  // organizations.description column and used to disagree about the field name.
+  const description = String(formData.get("orgDescription") ?? "")
   const siteName = String(formData.get("siteName") ?? "")
-  const kind = String(formData.get("kind") ?? "") as SiteKind
-  const city = String(formData.get("city") ?? "San Jose")
+  const kind = readEnum(formData, "kind", siteKindValues) ?? "shelter"
+  const city = String(formData.get("city") ?? defaultCity)
 
   const { supabase } = await requireProviderSession()
 
@@ -75,9 +131,11 @@ export async function updateListingSettings(
 ): Promise<ActionResult> {
   const { supabase, user } = await requireProviderSession()
 
+  // kind and freshness come back too: they are the fallback when a Select
+  // posts nothing, so that a partial save cannot blank a NOT NULL column.
   const { data: listing } = await supabase
     .from("listings")
-    .select("organization_id, published")
+    .select("organization_id, published, kind, freshness")
     .eq("id", listingId)
     .maybeSingle()
 
@@ -104,22 +162,80 @@ export async function updateListingSettings(
   const orgDescription = String(formData.get("orgDescription") ?? "")
   const siteName = String(formData.get("siteName") ?? "")
   const city = String(formData.get("city") ?? "")
-  const kind = String(formData.get("kind") ?? "") as SiteKind
-  const freshness = String(formData.get("freshness") ?? "") as Freshness
-  const petsRaw = String(formData.get("pets") ?? "")
-  const couplesRaw = String(formData.get("couples") ?? "")
-  const parkingRaw = String(formData.get("parkingStatus") ?? "")
+  const address = String(formData.get("address") ?? "")
   const vehicleNote = String(formData.get("vehicleNote") ?? "")
   const phone = String(formData.get("phone") ?? "")
-  const intakeRaw = String(formData.get("intakeMethod") ?? "")
-  const intakeMethod = ["call", "waitlist", "register", "walk_up"].includes(
-    intakeRaw
+
+  const kind: SiteKind =
+    readEnum(formData, "kind", siteKindValues) ?? (listing.kind as SiteKind)
+  const freshness: Freshness =
+    readEnum(formData, "freshness", freshnessValues) ??
+    (listing.freshness as Freshness)
+  const pets = readEnum(formData, "pets", petsPolicyValues)
+  const couples = readEnum(formData, "couples", couplesPolicyValues)
+  const parkingStatus = readEnum(formData, "parkingStatus", parkingStatusValues)
+  const intakeMethod = readEnum(formData, "intakeMethod", intakeMethodValues)
+  const idRequired = readEnum(formData, "idRequired", idRequiredValues)
+  const curfewPolicy = readEnum(formData, "curfewPolicy", curfewPolicyValues)
+  const maxStay = readEnum(formData, "maxStay", maxStayValues)
+  const vehicleAllowed = readEnum(
+    formData,
+    "vehicleAllowed",
+    vehicleAllowedValues
   )
-    ? intakeRaw
-    : null
+  const registrationRequired = readEnum(
+    formData,
+    "registrationRequired",
+    registrationRequiredValues
+  )
+
+  // A curfew time only means something alongside a fixed_time policy, and the
+  // database enforces that pairing, so drop a stray time rather than fail the
+  // save.
+  const curfewTime =
+    curfewPolicy === "fixed_time" ? readTime(formData, "curfewTime") : null
+  // Both ends of the window travel together, also enforced in SQL. A window
+  // whose end is before its start is legal: it wraps past midnight.
+  const intakeFromRaw = readTime(formData, "intakeFrom")
+  const intakeToRaw = readTime(formData, "intakeTo")
+  const hasWindow = intakeFromRaw !== null && intakeToRaw !== null
+  const intakeFrom = hasWindow ? intakeFromRaw : null
+  const intakeTo = hasWindow ? intakeToRaw : null
+
+  const petWeightLimitLbs = readInt(formData, "petWeightLimitLbs", 1, 200)
+  const vehicleMaxLengthFt = readInt(formData, "vehicleMaxLengthFt", 8, 60)
+  const totalBeds = readInt(formData, "totalBeds", 0, 10000)
+
   const latRaw = String(formData.get("lat") ?? "")
   const lngRaw = String(formData.get("lng") ?? "")
   const publishRequested = formData.get("published") === "on"
+
+  // A curfew that is not a fixed time cannot also carry one, and an open lot
+  // should not claim a waitlist intake. Tell staff rather than silently
+  // rewriting what they chose.
+  if (curfewPolicy === "fixed_time" && !curfewTime) {
+    return {
+      ok: false,
+      error: "Add the time the doors lock, or pick No curfew.",
+    }
+  }
+  if (intakeFromRaw !== null && intakeToRaw === null) {
+    return { ok: false, error: "Add the time check-in ends." }
+  }
+  if (intakeToRaw !== null && intakeFromRaw === null) {
+    return { ok: false, error: "Add the time check-in starts." }
+  }
+  if (
+    kind === "parking" &&
+    parkingStatus === "open" &&
+    intakeMethod === "waitlist"
+  ) {
+    return {
+      ok: false,
+      error:
+        "This lot is marked open but intake says join waitlist. Pick one so people are not sent the wrong way.",
+    }
+  }
 
   let published = listing.published
   if (publishRequested !== listing.published) {
@@ -146,10 +262,6 @@ export async function updateListingSettings(
     }
   }
 
-  const pets = petsRaw ? (petsRaw as PetsPolicy) : null
-  const couples = couplesRaw ? (couplesRaw as CouplesPolicy) : null
-  const parkingStatus = parkingRaw ? (parkingRaw as ParkingStatus) : null
-
   const lat = latRaw.trim() ? Number(latRaw) : null
   const lng = lngRaw.trim() ? Number(lngRaw) : null
 
@@ -157,18 +269,35 @@ export async function updateListingSettings(
     .from("listings")
     .update({
       name: siteName.trim(),
-      city: city.trim() || "San Jose",
+      city: city.trim() || defaultCity,
+      address: address.trim() || null,
       kind,
       freshness,
-      pets,
-      couples,
+      pets: kind === "shelter" ? pets : null,
+      couples: kind === "shelter" ? couples : null,
       parking_status: kind === "parking" ? parkingStatus : null,
       vehicle_note: kind === "parking" ? vehicleNote.trim() || null : null,
+      vehicle_allowed: kind === "parking" ? vehicleAllowed : null,
+      vehicle_max_length_ft: kind === "parking" ? vehicleMaxLengthFt : null,
+      registration_required: kind === "parking" ? registrationRequired : null,
+      pet_weight_limit_lbs: kind === "shelter" ? petWeightLimitLbs : null,
+      id_required: idRequired,
+      curfew_policy: curfewPolicy,
+      curfew_time: curfewTime,
+      intake_from: intakeFrom,
+      intake_to: intakeTo,
+      max_stay: maxStay,
+      total_beds: totalBeds,
       phone: phone.trim() || null,
       intake_method: intakeMethod,
       lat: Number.isFinite(lat) ? lat : null,
       lng: Number.isFinite(lng) ? lng : null,
       published,
+      // Staff touched this row, so it is theirs now rather than the imported
+      // source's. Recording that is what lets the seeker page stop saying
+      // "HUD does not publish this".
+      data_source: "provider_portal",
+      source_as_of: new Date().toISOString().slice(0, 10),
       last_confirmed_at: new Date().toISOString(),
     })
     .eq("id", listingId)
@@ -203,7 +332,9 @@ export async function approveMemberRequest(
   return { ok: true }
 }
 
-export async function rejectMemberRequest(memberId: string): Promise<ActionResult> {
+export async function rejectMemberRequest(
+  memberId: string
+): Promise<ActionResult> {
   const { supabase } = await requireProviderSession()
 
   const { error } = await supabase.rpc("reject_member", {
@@ -218,15 +349,17 @@ export async function rejectMemberRequest(memberId: string): Promise<ActionResul
   return { ok: true }
 }
 
-export async function rotateAccessCode(orgId: string): Promise<
-  | { ok: true; code: string }
-  | { ok: false; error: string }
-> {
+export async function rotateAccessCode(
+  orgId: string
+): Promise<{ ok: true; code: string } | { ok: false; error: string }> {
   const { supabase } = await requireProviderSession()
 
-  const { data, error } = await supabase.rpc("rotate_organization_access_code", {
-    p_org_id: orgId,
-  })
+  const { data, error } = await supabase.rpc(
+    "rotate_organization_access_code",
+    {
+      p_org_id: orgId,
+    }
+  )
 
   if (error) {
     return { ok: false, error: error.message }

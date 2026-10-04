@@ -2,8 +2,7 @@ import type { Metadata } from "next"
 
 import { Container } from "@/components/marketing/container"
 import { FinancialHelpForm } from "@/components/dashboard/financial-help-form"
-import { NeedsSignIn } from "@/components/dashboard/needs-sign-in"
-import { hasSeekerAccess } from "@/lib/guest-server"
+import { LocalOnlyNotice } from "@/components/dashboard/local-only-notice"
 
 export const metadata: Metadata = {
   title: "Set up your plan",
@@ -11,9 +10,11 @@ export const metadata: Metadata = {
     "A few facts about your rent, programs, and bills. True Roof writes the rest.",
 }
 
-export default async function FinancialHelpPage() {
-  const user = await hasSeekerAccess()
-
+// No account needed. Everything this form collects is written to localStorage
+// by lib/obligations/storage.ts and never sent anywhere: there is no table for
+// it, no API route, and no network call in the flow. The old sign-in wall
+// protected nothing and blocked someone from writing down their own rent.
+export default function FinancialHelpPage() {
   return (
     <Container className="py-8 sm:py-10">
       <p className="text-sm font-medium text-primary">After you get housed</p>
@@ -25,8 +26,10 @@ export default async function FinancialHelpPage() {
         rent cushion, and are saved on this phone.
       </p>
 
+      <LocalOnlyNotice className="mt-4 max-w-xl rounded-lg border p-3 text-sm" />
+
       <div className="mt-8">
-        {user ? <FinancialHelpForm /> : <NeedsSignIn />}
+        <FinancialHelpForm />
       </div>
     </Container>
   )

@@ -47,7 +47,7 @@ export const metadata: Metadata = {
 const portalPoints = [
   {
     title: "Your site, your attributes",
-    body: "Pets, ID, couples, curfew, intake window, max stay. Enums you pick — not a paragraph you type. New values get added to the shared list, not invented per site.",
+    body: "Pets, ID, couples, curfew, intake window, max stay. Enums you pick, not a paragraph you type. New values get added to the shared list, not invented per site.",
   },
   {
     title: "One row per address",
@@ -65,7 +65,7 @@ const portalPoints = [
 
 const parkingPoints = [
   "Hours, vehicle type, max size, bathrooms, security, consecutive nights, waitlist",
-  "City-sanctioned, org-run, or informally tolerated — informal is opt-in with a disclaimer",
+  "City-sanctioned, org-run, or informally tolerated. Informal is opt-in with a disclaimer",
   "Application, waitlist, or walk-up. Availability reads as open, full, or a count",
 ]
 
@@ -82,17 +82,17 @@ export default async function ProvidersPage() {
           className="absolute inset-0"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/55 to-black/20" />
-        <Container className="relative flex min-h-[24rem] flex-col justify-end pb-12 pt-24 text-white sm:min-h-[32rem]">
+        <Container className="relative flex min-h-[24rem] flex-col justify-end pt-24 pb-12 text-white sm:min-h-[32rem]">
           <Badge variant="secondary" className="w-fit bg-white/15 text-white">
-            Secondary audience — still first-class software
+            Secondary audience, still first-class software
           </Badge>
-          <h1 className="font-heading mt-4 max-w-3xl text-4xl font-semibold tracking-tight text-balance sm:text-6xl">
+          <h1 className="mt-4 max-w-3xl font-heading text-4xl font-semibold tracking-tight text-balance sm:text-6xl">
             A dashboard for the people who run the site
           </h1>
           <p className="mt-4 max-w-2xl text-lg text-white/85">
-            True Roof’s main customer is the person looking for a place. You are who
-            they match to. Update your own listing. See interest. Stop playing
-            phone tag about whether a bed is open.
+            True Roof’s main customer is the person looking for a place. You are
+            who they match to. Update your own listing. See interest. Stop
+            playing phone tag about whether a bed is open.
           </p>
           <div className="mt-6 flex flex-wrap gap-2">
             {signedInProvider ? (
@@ -150,13 +150,16 @@ export default async function ProvidersPage() {
               Safe parking lots are not an afterthought
             </h2>
             <p className="mt-3 text-muted-foreground">
-              If someone sleeps in a vehicle, True Roof asks vehicle questions and
-              puts your lot next to shelters in the same results. You get the
-              same decay model underneath, with simpler public copy.
+              If someone sleeps in a vehicle, True Roof asks vehicle questions
+              and puts your lot next to shelters in the same results. You get
+              the same decay model underneath, with simpler public copy.
             </p>
             <ul className="mt-6 grid gap-2">
               {parkingPoints.map((item) => (
-                <li key={item} className="rounded-lg border bg-card px-3 py-2 text-sm">
+                <li
+                  key={item}
+                  className="rounded-lg border bg-card px-3 py-2 text-sm"
+                >
                   {item}
                 </li>
               ))}
@@ -177,14 +180,18 @@ export default async function ProvidersPage() {
 
       <section className="py-20">
         <Container className="grid gap-6 lg:grid-cols-3">
-          <Card className="lg:col-span-2 overflow-hidden">
-            <MarketingPhoto photo={photos.staff} className="h-64" sizes="70vw" />
+          <Card className="overflow-hidden lg:col-span-2">
+            <MarketingPhoto
+              photo={photos.staff}
+              className="h-64"
+              sizes="70vw"
+            />
             <CardHeader>
               <CardTitle>Freshness is your reputation</CardTitle>
               <CardDescription className="text-base">
-                Seekers see Live, Recent, or Call first — one badge for the
-                whole listing. A conflicting report lowers confidence and pings
-                you to reconcile. True Roof does not blast you with nudges unless
+                Seekers see Live, Recent, or Call first. One badge for the whole
+                listing. A conflicting report lowers confidence and pings you to
+                reconcile. True Roof does not blast you with nudges unless
                 things are extremely stale, or you asked for them.
               </CardDescription>
             </CardHeader>

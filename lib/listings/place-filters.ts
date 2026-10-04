@@ -24,6 +24,40 @@ export const defaultPlaceFilters: PlaceFilters = {
   origin: defaultOrigin,
 }
 
+/** The filters the person actually changed.
+ *
+ * A default is not an applied filter. hideFull ships as true, and the chip row
+ * treats "this setting is on" as "the user applied this", so an untouched page
+ * shows a "Hide full lots" chip and a badge reading 1. Clear all then restores
+ * that same default, the chip and badge come straight back, and Clear all looks
+ * broken when it is in fact working.
+ *
+ * origin is compared by label: two GeoPoints can hold equal coordinates and
+ * still be a different choice ("Near me" versus "Downtown San Jose"). */
+export function changedFilterKeys(
+  filters: PlaceFilters
+): (keyof PlaceFilters)[] {
+  const keys: (keyof PlaceFilters)[] = []
+
+  if (filters.kind !== defaultPlaceFilters.kind) keys.push("kind")
+  if (filters.miles !== defaultPlaceFilters.miles) keys.push("miles")
+  if (filters.intake !== defaultPlaceFilters.intake) keys.push("intake")
+  if (filters.freshness !== defaultPlaceFilters.freshness) keys.push("freshness")
+  if (filters.hideFull !== defaultPlaceFilters.hideFull) keys.push("hideFull")
+  if (filters.onlyFits !== defaultPlaceFilters.onlyFits) keys.push("onlyFits")
+
+  const originLabel = filters.origin?.label ?? defaultPlaceFilters.origin?.label
+  if (originLabel !== defaultPlaceFilters.origin?.label) keys.push("origin")
+
+  return keys
+}
+
+/** Nothing to clear. Drives the disabled state on Clear all, so the control is
+ * visibly inert instead of appearing to fail. */
+export function isDefaultFilters(filters: PlaceFilters): boolean {
+  return changedFilterKeys(filters).length === 0
+}
+
 const KEY = "true-roof:place-filters:v1"
 
 export function loadPlaceFilters(): PlaceFilters {
