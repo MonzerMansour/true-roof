@@ -32,6 +32,7 @@ import {
   defaultOrigin,
   milesBetween,
   cityCenters,
+  usableCoordinate,
 } from "@/lib/listings/geo"
 import {
   defaultPlaceFilters,
@@ -41,11 +42,7 @@ import {
   type DistanceMiles,
   type PlaceFilters,
 } from "@/lib/listings/place-filters"
-import {
-  freshnessLabel,
-  intakeLabel,
-  type Listing,
-} from "@/lib/listings/types"
+import { freshnessLabel, intakeLabel, type Listing } from "@/lib/listings/types"
 
 const distanceOptions: { value: DistanceMiles | null; label: string }[] = [
   { value: null, label: "Any distance" },
@@ -73,7 +70,8 @@ export function PlacesFeed({
   matchDetails?: Record<string, MatchDetail>
 }) {
   const [needs, setNeeds] = React.useState<SeekerNeeds | null>(null)
-  const [filters, setFilters] = React.useState<PlaceFilters>(defaultPlaceFilters)
+  const [filters, setFilters] =
+    React.useState<PlaceFilters>(defaultPlaceFilters)
   const [geoError, setGeoError] = React.useState<string | null>(null)
   const [ready, setReady] = React.useState(false)
   const [filtersOpen, setFiltersOpen] = React.useState(false)
@@ -97,10 +95,11 @@ export function PlacesFeed({
   const origin = filters.origin ?? defaultOrigin
 
   const withMeta = listings.map((listing) => {
-    const miles =
-      listing.lat != null && listing.lng != null
-        ? milesBetween(origin, { lat: listing.lat, lng: listing.lng })
-        : null
+    // usableCoordinate, not a null check: (0, 0) is a real point in the Gulf
+    // of Guinea and is what an unset column looks like, so a null check
+    // rendered a shelter "7934 mi" away.
+    const point = usableCoordinate(listing.lat, listing.lng)
+    const miles = point ? milesBetween(origin, point) : null
     return {
       listing,
       fit: listingFitsNeeds(listing, needs),
@@ -360,9 +359,7 @@ export function PlacesFeed({
                 <Button
                   type="button"
                   size="sm"
-                  variant={
-                    origin.label === "Near me" ? "default" : "outline"
-                  }
+                  variant={origin.label === "Near me" ? "default" : "outline"}
                   onClick={useMyLocation}
                 >
                   Near me
@@ -502,9 +499,7 @@ export function PlacesFeed({
                   <span>Hide full lots</span>
                   <Switch
                     checked={filters.hideFull}
-                    onCheckedChange={(checked) =>
-                      patch({ hideFull: checked })
-                    }
+                    onCheckedChange={(checked) => patch({ hideFull: checked })}
                     aria-label="Hide full lots"
                   />
                 </label>
@@ -550,8 +545,7 @@ export function PlacesFeed({
               className="flex-1"
               onClick={() => setFiltersOpen(false)}
             >
-              See {visible.length}{" "}
-              {visible.length === 1 ? "site" : "sites"}
+              See {visible.length} {visible.length === 1 ? "site" : "sites"}
             </Button>
           </SheetFooter>
         </SheetContent>

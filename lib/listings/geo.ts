@@ -31,6 +31,44 @@ export const defaultOrigin: GeoPoint & { label: string } = {
   label: "Downtown San Jose",
 }
 
+/** A coordinate we are willing to act on, or null.
+ *
+ * null and undefined are the easy cases. The trap is Null Island: (0, 0) is a
+ * real point in the Gulf of Guinea, about 7,900 miles from San Jose, and it is
+ * what an unset or mis-saved column looks like. A `lat != null` check lets it
+ * through, which put a "7934 mi" shelter in the feed and pointed its Directions
+ * link at open ocean.
+ *
+ * The real row that caused this held 0.0002, -0.0005, so an exact `=== 0` test
+ * is not enough. Anything inside half a degree of the origin is rejected: that
+ * box is entirely open water off West Africa, so no real site can be lost to
+ * it, and it catches the near-zero values a bad parse or a stray keypress
+ * produces.
+ *
+ * Range checks are deliberately the full globe rather than a Santa Clara
+ * County box: this rejects corrupt data without deciding the product can never
+ * list a site outside the county. The database constraint in
+ * 20260929000000_listing_coordinates.sql enforces the same rule on write. */
+/** Half a degree around (0, 0). Open ocean, so nothing real is excluded. */
+export const NULL_ISLAND_DEGREES = 0.5
+
+export function usableCoordinate(
+  lat: number | null | undefined,
+  lng: number | null | undefined
+): GeoPoint | null {
+  if (lat == null || lng == null) return null
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null
+  if (
+    Math.abs(lat) < NULL_ISLAND_DEGREES &&
+    Math.abs(lng) < NULL_ISLAND_DEGREES
+  ) {
+    return null
+  }
+  if (lat < -90 || lat > 90) return null
+  if (lng < -180 || lng > 180) return null
+  return { lat, lng }
+}
+
 /** How much to trust a listing's position.
  *
  * "site" means the site's own coordinates. "city" means we only know which
@@ -47,8 +85,9 @@ export function listingPoint(listing: {
   lng: number | null
   city: string
 }): { point: GeoPoint | null; basis: DistanceBasis } {
-  if (listing.lat != null && listing.lng != null) {
-    return { point: { lat: listing.lat, lng: listing.lng }, basis: "site" }
+  const point = usableCoordinate(listing.lat, listing.lng)
+  if (point) {
+    return { point, basis: "site" }
   }
 
   const center = cityCenters[listing.city]
