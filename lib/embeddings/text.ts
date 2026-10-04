@@ -1,18 +1,7 @@
-// Plain sentences embed better than JSON. Keep both sides in the same
-// vocabulary so a seeker and a site land near each other.
-//
-// scripts/embed-listings.mjs holds a hand-written copy of listingToText,
-// because it is a plain .mjs with no build step and cannot resolve the "@/"
-// alias this chain uses. That copy is guarded by a fixture test in
-// lib/embeddings/text.test.ts: change the output here and the test fails,
-// instead of the two quietly producing mismatched vectors.
-//
-// If you change listingToText, update scripts/embed-listings.mjs to match and
-// re-run `npm run embeddings:listings`.
 import {
-  formatTime,
   householdLabel,
   idLabel,
+  formatTime,
   latestEntryLabel,
   partnerRoomsLabel,
   petLabel,
@@ -22,17 +11,10 @@ import {
   vehicleSizeLabel,
   type SeekerNeeds,
 } from "@/lib/matching/needs"
-import {
-  couplesLabel,
-  formatIntakeWindow,
-  idRequiredLabel,
-  maxStayLabel,
-  petsLabel,
-  registrationRequiredLabel,
-  vehicleAllowedLabel,
-  formatTime as formatSiteTime,
-  type Listing,
-} from "@/lib/listings/types"
+import { couplesLabel, petsLabel, type Listing } from "@/lib/listings/types"
+
+// Plain sentences embed better than JSON. Keep both builders in the same
+// vocabulary so a seeker and a site land near each other.
 
 export function needsToText(needs: SeekerNeeds) {
   const lines = [
@@ -45,71 +27,41 @@ export function needsToText(needs: SeekerNeeds) {
     }.`,
     `Photo ID: ${idLabel[needs.idStatus]}.`,
     `Vehicle: ${vehicleLabel[needs.vehicle]}.`,
-    needs.vehicleSize
-      ? `Vehicle size: ${vehicleSizeLabel[needs.vehicleSize]}.`
-      : null,
+    needs.vehicleSize ? `Vehicle size: ${vehicleSizeLabel[needs.vehicleSize]}.` : null,
     needs.vehicleRegistered
       ? `Vehicle registered: ${vehicleRegisteredLabel[needs.vehicleRegistered]}.`
       : null,
     `Can check in between ${formatTime(needs.arrivalFrom)} and ${formatTime(needs.arrivalTo)}.`,
     `Needs late entry: ${latestEntryLabel(needs.latestEntry)}.`,
     `Bed needed: ${stayLabel(needs.daysNeeded)}.`,
+    // Free text, one sentence, labeled clearly as location and community
+    // preference so the embedding model reads it as its own category
+    // (near a park, close to transit, a quiet block) rather than a loose
+    // trailing quote. The categorical fields above still get checked
+    // separately (lib/matching/categorical-score.ts); this is the part
+    // that carries a person's actual words into the text match.
+    needs.placeNote?.trim()
+      ? `Location and community preference, in their own words: "${needs.placeNote.trim()}".`
+      : null,
   ]
 
   return lines.filter(Boolean).join(" ")
 }
 
-/** Accepts a Listing or the snake_case row the embedding script reads. */
-export type ListingTextInput = Pick<
-  Listing,
-  | "kind"
-  | "name"
-  | "orgName"
-  | "city"
-  | "pets"
-  | "couples"
-  | "parkingStatus"
-  | "vehicleNote"
-  | "idRequired"
-  | "curfewPolicy"
-  | "curfewTime"
-  | "intakeFrom"
-  | "intakeTo"
-  | "maxStay"
-  | "petWeightLimitLbs"
-  | "vehicleAllowed"
-  | "registrationRequired"
->
-
-export function listingToText(listing: ListingTextInput) {
+export function listingToText(listing: Listing) {
   const lines = [
     `${listing.kind === "shelter" ? "Shelter" : "Safe parking"}: ${listing.name}, run by ${listing.orgName}, in ${listing.city}.`,
-    listing.pets
-      ? `${petsLabel[listing.pets]}${
-          listing.petWeightLimitLbs
-            ? `, up to ${listing.petWeightLimitLbs} pounds`
-            : ""
-        }.`
-      : null,
+    listing.pets ? `${petsLabel[listing.pets]}.` : null,
     listing.couples ? `${couplesLabel[listing.couples]}.` : null,
-    listing.idRequired ? `${idRequiredLabel[listing.idRequired]}.` : null,
-    listing.curfewPolicy === "no_curfew"
-      ? "No curfew."
-      : listing.curfewPolicy === "fixed_time" && listing.curfewTime
-        ? `Doors lock at ${formatSiteTime(listing.curfewTime)}.`
-        : null,
-    listing.intakeFrom && listing.intakeTo
-      ? `Check in ${formatIntakeWindow(listing.intakeFrom, listing.intakeTo)}.`
-      : null,
-    listing.maxStay ? `${maxStayLabel[listing.maxStay]}.` : null,
     listing.parkingStatus ? `Parking status: ${listing.parkingStatus}.` : null,
-    listing.vehicleAllowed
-      ? `${vehicleAllowedLabel[listing.vehicleAllowed]}.`
+    listing.vehicleNote ? `Vehicles: ${listing.vehicleNote}.` : null,
+    // Same "location and community" framing as needsToText(), so a
+    // seeker's "near a park" and a site's "next to a public park" land in
+    // the same part of the sentence rather than two differently shaped
+    // trailing quotes.
+    listing.orgDescription?.trim()
+      ? `Location and community, what the site says about itself: "${listing.orgDescription.trim()}".`
       : null,
-    listing.registrationRequired
-      ? `${registrationRequiredLabel[listing.registrationRequired]}.`
-      : null,
-    listing.vehicleNote ? `Lot notes: ${listing.vehicleNote}.` : null,
   ]
 
   return lines.filter(Boolean).join(" ")

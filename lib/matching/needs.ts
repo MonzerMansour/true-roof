@@ -1,69 +1,18 @@
-// Seeker side vocabulary. What a person looking for a place tells True Roof.
-// Every answer is a fixed option or a structured time, never free text, so it
-// can be checked against a listing's rules.
+// What a person looking for a place tells True Roof. Every answer is a fixed
+// option or a structured time, never free text, so it can be checked against
+// a listing's rules.
 //
-// This is deliberately NOT the same vocabulary as lib/listings/types.ts. A
-// person HAS a pet; a site ALLOWS pets. Those are different facts and merging
-// them would lose meaning. They are reconciled in lib/matching/vocabulary.ts,
-// which is the only place the two sides meet.
-//
-// Hard constraints remove a listing when they are not met. As of the policy
-// columns migration, all twelve answers below have a listing field to compare
-// against. See lib/matching/hard-filters.ts.
-//
-// Each enum is a const array with the union derived from it, so values can be
-// listed at runtime for option lists and for validating a stored blob.
+// Hard constraints remove a listing when they are not met: pets, vehicle,
+// ID, couples. Time fields (curfew, intake window, max stay) are structured
+// so the matcher can compare them to the site's own hours.
 
-export const householdValues = ["alone", "with_partner"] as const
-export type Household = (typeof householdValues)[number]
-
-export const partnerRoomsValues = [
-  "same_room",
-  "separate_rooms",
-  "either",
-] as const
-export type PartnerRooms = (typeof partnerRoomsValues)[number]
-
-export const petNeedValues = [
-  "none",
-  "service_animal",
-  "small_pet",
-  "larger_pet",
-] as const
-export type PetNeed = (typeof petNeedValues)[number]
-
-export const idStatusValues = ["have_id", "no_id", "in_progress"] as const
-export type IdStatus = (typeof idStatusValues)[number]
-
-export const vehicleNeedValues = ["none", "car", "rv_van"] as const
-export type VehicleNeed = (typeof vehicleNeedValues)[number]
-
-export const vehicleSizeValues = ["standard", "large"] as const
-export type VehicleSize = (typeof vehicleSizeValues)[number]
-
-export const vehicleRegisteredValues = ["yes", "no", "not_sure"] as const
-export type VehicleRegistered = (typeof vehicleRegisteredValues)[number]
-
-/** The questionnaire steps, in order. Declared here rather than in the form so
- * the form and components/matching/needs-summary.tsx cannot drift, and so the
- * ?edit= deep link between them has a real type. */
-export const needsStepIds = [
-  "household",
-  "partnerRooms",
-  "pet",
-  "petWeight",
-  "id",
-  "vehicle",
-  "vehicleDetails",
-  "arrival",
-  "curfew",
-  "stay",
-] as const
-export type NeedsStepId = (typeof needsStepIds)[number]
-
-export function isNeedsStepId(value: string): value is NeedsStepId {
-  return (needsStepIds as readonly string[]).includes(value)
-}
+export type Household = "alone" | "with_partner"
+export type PartnerRooms = "same_room" | "separate_rooms" | "either"
+export type PetNeed = "none" | "service_animal" | "small_pet" | "larger_pet"
+export type IdStatus = "have_id" | "no_id" | "in_progress"
+export type VehicleNeed = "none" | "car" | "rv_van"
+export type VehicleSize = "standard" | "large"
+export type VehicleRegistered = "yes" | "no" | "not_sure"
 
 export type SeekerNeeds = {
   household: Household
@@ -81,7 +30,16 @@ export type SeekerNeeds = {
   latestEntry: string | null
   /** Nights you need a bed. */
   daysNeeded: number
+  /**
+   * Optional, one sentence, in their own words. "Near a park", "close to
+   * the bus line". Never a hard constraint, never checked against a
+   * listing's rules, only carried into the embedding text as a secondary
+   * signal behind the categorical fields above.
+   */
+  placeNote: string | null
 }
+
+export const PLACE_NOTE_MAX_LENGTH = 140
 
 export const householdLabel: Record<Household, string> = {
   alone: "Just me",
@@ -142,10 +100,7 @@ export const latestEntryOptions: { value: string | null; label: string }[] = [
 ]
 
 export function stayLabel(days: number) {
-  return (
-    stayOptions.find((option) => option.days === days)?.label ??
-    `${days} nights`
-  )
+  return stayOptions.find((option) => option.days === days)?.label ?? `${days} nights`
 }
 
 export function latestEntryLabel(value: string | null) {

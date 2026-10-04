@@ -20,20 +20,20 @@ import {
 import { Input } from "@/components/ui/input"
 import { Progress } from "@/components/ui/progress"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Textarea } from "@/components/ui/textarea"
 import {
   householdLabel,
   idLabel,
   latestEntryOptions,
-  isNeedsStepId,
   partnerRoomsLabel,
   petLabel,
+  PLACE_NOTE_MAX_LENGTH,
   stayOptions,
   vehicleLabel,
   vehicleRegisteredLabel,
   vehicleSizeLabel,
   type Household,
   type IdStatus,
-  type NeedsStepId,
   type PartnerRooms,
   type PetNeed,
   type SeekerNeeds,
@@ -63,6 +63,7 @@ type Draft = {
   arrivalTo: string
   latestEntry: string | null | undefined
   daysNeeded: number | null
+  placeNote: string
 }
 
 const emptyDraft: Draft = {
@@ -78,11 +79,25 @@ const emptyDraft: Draft = {
   arrivalTo: "20:00",
   latestEntry: undefined,
   daysNeeded: null,
+  placeNote: "",
 }
 
+type StepId =
+  | "household"
+  | "partnerRooms"
+  | "pet"
+  | "petWeight"
+  | "id"
+  | "vehicle"
+  | "vehicleDetails"
+  | "arrival"
+  | "curfew"
+  | "stay"
+  | "placeNote"
+
 // Follow-up questions only appear when an earlier answer needs them.
-function visibleSteps(draft: Draft): NeedsStepId[] {
-  const steps: NeedsStepId[] = ["household"]
+function visibleSteps(draft: Draft): StepId[] {
+  const steps: StepId[] = ["household"]
   if (draft.household === "with_partner") steps.push("partnerRooms")
   steps.push("pet")
   if (draft.pet === "small_pet") steps.push("petWeight")
@@ -90,11 +105,11 @@ function visibleSteps(draft: Draft): NeedsStepId[] {
   if (draft.vehicle === "car" || draft.vehicle === "rv_van") {
     steps.push("vehicleDetails")
   }
-  steps.push("arrival", "curfew", "stay")
+  steps.push("arrival", "curfew", "stay", "placeNote")
   return steps
 }
 
-function isAnswered(step: NeedsStepId, draft: Draft) {
+function isAnswered(step: StepId, draft: Draft) {
   switch (step) {
     case "household":
       return draft.household !== null
@@ -116,11 +131,13 @@ function isAnswered(step: NeedsStepId, draft: Draft) {
       return draft.latestEntry !== undefined
     case "stay":
       return draft.daysNeeded !== null
+    case "placeNote":
+      return true
   }
 }
 
 // A message when an answer is filled in but cannot be used. Null when fine.
-function stepError(step: NeedsStepId, draft: Draft): string | null {
+function stepError(step: StepId, draft: Draft): string | null {
   if (step === "petWeight" && draft.petWeightLbs.trim()) {
     const weight = Number(draft.petWeightLbs)
     if (!Number.isFinite(weight) || weight < 1 || weight > 200) {
@@ -160,10 +177,10 @@ function toNeeds(draft: Draft): SeekerNeeds | null {
 
   return {
     household: draft.household,
-    partnerRooms:
-      draft.household === "with_partner" ? draft.partnerRooms : null,
+    partnerRooms: draft.household === "with_partner" ? draft.partnerRooms : null,
     pet: draft.pet,
-    petWeightLbs: draft.pet === "small_pet" && weight > 0 ? weight : null,
+    petWeightLbs:
+      draft.pet === "small_pet" && weight > 0 ? weight : null,
     idStatus: draft.idStatus,
     vehicle: draft.vehicle,
     vehicleSize: hasVehicle ? draft.vehicleSize : null,
@@ -172,6 +189,7 @@ function toNeeds(draft: Draft): SeekerNeeds | null {
     arrivalTo: draft.arrivalTo,
     latestEntry: draft.latestEntry,
     daysNeeded: draft.daysNeeded,
+    placeNote: draft.placeNote.trim().slice(0, PLACE_NOTE_MAX_LENGTH) || null,
   }
 }
 
@@ -189,6 +207,7 @@ function fromNeeds(needs: SeekerNeeds): Draft {
     arrivalTo: needs.arrivalTo,
     latestEntry: needs.latestEntry,
     daysNeeded: needs.daysNeeded,
+    placeNote: needs.placeNote ?? "",
   }
 }
 
@@ -212,19 +231,14 @@ function ChoiceGroup({
       <FieldLegend className="font-heading font-semibold data-[variant=legend]:text-2xl">
         {legend}
       </FieldLegend>
-      {hint ? (
-        <FieldDescription className="text-base">{hint}</FieldDescription>
-      ) : null}
+      {hint ? <FieldDescription className="text-base">{hint}</FieldDescription> : null}
       <RadioGroup
         value={value ?? ""}
         onValueChange={(next) => onChange(String(next))}
       >
         {choices.map((choice) => (
           <FieldLabel key={choice.value} htmlFor={`${legend}-${choice.value}`}>
-            <Field
-              orientation="horizontal"
-              className="min-h-14 items-center has-[>[data-slot=field-content]]:items-center"
-            >
+            <Field orientation="horizontal" className="min-h-14 items-center has-[>[data-slot=field-content]]:items-center">
               <RadioGroupItem
                 id={`${legend}-${choice.value}`}
                 value={choice.value}
@@ -261,8 +275,8 @@ export function FindAPlaceForm() {
   const [ready, setReady] = React.useState(false)
   const [resumed, setResumed] = React.useState(false)
   const [editing, setEditing] = React.useState<{
-    stepId: NeedsStepId
-    before: NeedsStepId[]
+    stepId: StepId
+    before: StepId[]
     pos: number
   } | null>(null)
   const headingRef = React.useRef<HTMLDivElement>(null)
@@ -281,8 +295,7 @@ export function FindAPlaceForm() {
       setSaved(existing)
 
       if (editParam && editParam !== "all") {
-        if (!isNeedsStepId(editParam)) return
-        const stepId = editParam
+        const stepId = editParam as StepId
         setEditing({
           stepId,
           before: visibleSteps(nextDraft),
@@ -492,9 +505,7 @@ export function FindAPlaceForm() {
               />
               <span className="text-base">pounds</span>
             </div>
-            {error ? (
-              <FieldError id="pet-weight-error">{error}</FieldError>
-            ) : null}
+            {error ? <FieldError id="pet-weight-error">{error}</FieldError> : null}
           </Field>
         ) : null}
 
@@ -636,6 +647,32 @@ export function FindAPlaceForm() {
             onChange={(value) => patch({ daysNeeded: Number(value) })}
           />
         ) : null}
+
+        {step === "placeNote" ? (
+          <Field>
+            <FieldLabel
+              htmlFor="place-note"
+              className="font-heading text-2xl font-semibold"
+            >
+              Anything else you want us to know?
+            </FieldLabel>
+            <FieldDescription className="text-base">
+              Optional, one short sentence. For example, near a park, close to
+              the bus line, or somewhere quiet.
+            </FieldDescription>
+            <Textarea
+              id="place-note"
+              rows={2}
+              maxLength={PLACE_NOTE_MAX_LENGTH}
+              placeholder="Near a park, close to the bus line..."
+              value={draft.placeNote}
+              onChange={(e) => patch({ placeNote: e.target.value })}
+            />
+            <FieldDescription className="text-right">
+              {draft.placeNote.length}/{PLACE_NOTE_MAX_LENGTH}
+            </FieldDescription>
+          </Field>
+        ) : null}
       </FieldGroup>
 
       <div className="mt-8 flex gap-3">
@@ -686,10 +723,7 @@ export function FindAPlaceForm() {
           )}
         </Button>
       </div>
-      <p
-        className="mt-3 min-h-5 text-sm text-muted-foreground"
-        aria-live="polite"
-      >
+      <p className="mt-3 min-h-5 text-sm text-muted-foreground" aria-live="polite">
         {answered ? "" : "Choose an answer to continue."}
       </p>
     </form>

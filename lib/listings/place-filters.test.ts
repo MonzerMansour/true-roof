@@ -44,8 +44,7 @@ describe("changedFilterKeys", () => {
       [{ intake: "call" }, "intake"],
       [{ freshness: "live" }, "freshness"],
       [{ hideFull: false }, "hideFull"],
-      [{ fit: "all" }, "fit"],
-      [{ fit: "confirmed" }, "fit"],
+      [{ onlyFits: true }, "onlyFits"],
     ]
 
     for (const [patch, key] of cases) {

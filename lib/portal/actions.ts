@@ -19,7 +19,6 @@ import {
   type Freshness,
   type SiteKind,
 } from "@/lib/listings/types"
-import { isHHMM } from "@/lib/matching/time"
 import { requireProviderSession } from "@/lib/portal/queries"
 import { createServerSupabaseClient } from "@/lib/supabase/server"
 
@@ -38,6 +37,16 @@ function readEnum<T extends readonly string[]>(
 ): T[number] | null {
   const raw = String(formData.get(field) ?? "").trim()
   return (values as readonly string[]).includes(raw) ? (raw as T[number]) : null
+}
+
+/** A real "HH:MM" on a 24 hour clock. Inlined rather than imported: the
+ * matcher's time helpers belonged to the ranking approach that was dropped in
+ * favour of the embeddings matcher, but the portal still has to reject a
+ * malformed curfew before it reaches a `time` column. */
+function isHHMM(value: string): boolean {
+  const match = value.match(/^(\d{1,2}):(\d{2})$/)
+  if (!match) return false
+  return Number(match[1]) <= 23 && Number(match[2]) <= 59
 }
 
 /** A time field, kept only when it is a real HH:MM. */

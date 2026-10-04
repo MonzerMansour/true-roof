@@ -41,7 +41,8 @@ export async function POST(request: Request) {
     if (error) throw error
 
     return NextResponse.json({ stored: true })
-  } catch {
+  } catch (err) {
+    console.error("[/api/needs/embed]", err)
     return NextResponse.json({ stored: false, reason: "failed" }, { status: 502 })
   }
 }

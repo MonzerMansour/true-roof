@@ -234,16 +234,18 @@ export function PlaceDetail({
           </p>
 
           {fit ? (
+            // FitResult is the two-value shape again: { fits, reasons }. The
+            // three-value verdict belonged to the ranking approach that was
+            // dropped in favour of the embeddings matcher.
             <div
               className="mt-4 rounded-lg border bg-card p-3 text-sm"
               aria-live="polite"
             >
-              {fit.verdict === "fits" ? (
+              {fit.fits ? (
                 <p className="font-medium text-success-text">
-                  Fits everything you told us.
+                  Nothing you told us rules this one out.
                 </p>
-              ) : null}
-              {fit.verdict === "excluded" ? (
+              ) : (
                 <>
                   <p className="font-medium text-destructive">
                     This one does not fit.
@@ -254,20 +256,7 @@ export function PlaceDetail({
                     ))}
                   </ul>
                 </>
-              ) : null}
-              {fit.verdict === "unknown" ? (
-                <p className="font-medium">
-                  Nothing rules you out, but this site has not published every
-                  rule. Call before you go.
-                </p>
-              ) : null}
-              {fit.notes.length > 0 ? (
-                <ul className="mt-1 list-disc space-y-1 pl-5">
-                  {fit.notes.map((note) => (
-                    <li key={note}>{note}</li>
-                  ))}
-                </ul>
-              ) : null}
+              )}
             </div>
           ) : (
             <p className="mt-4 text-sm">

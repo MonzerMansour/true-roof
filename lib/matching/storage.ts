@@ -1,14 +1,4 @@
-import {
-  householdValues,
-  idStatusValues,
-  partnerRoomsValues,
-  petNeedValues,
-  vehicleNeedValues,
-  vehicleRegisteredValues,
-  vehicleSizeValues,
-  type SeekerNeeds,
-} from "./needs"
-import { isHHMM } from "./time"
+import type { SeekerNeeds } from "./needs"
 
 // Local-first: answers stay on this device until the person chooses to share.
 const NEEDS_KEY = "true-roof:seeker-needs:v1"
@@ -46,69 +36,19 @@ function remove(key: string) {
 }
 
 // A damaged or old entry must never crash the page, so check the shape.
-//
-// This validates enum MEMBERSHIP, not just typeof. A blob holding
-// pet: "dog" used to pass, which made petLabel["dog"] render as undefined and,
-// worse, made the lookup tables in lib/matching/vocabulary.ts return undefined.
-// An undefined verdict is neither "fits" nor "excluded", so a single bad value
-// could quietly change what the whole feed shows. Rejecting the blob means the
-// person answers ten questions again, which is far better than being shown
-// places that do not fit without knowing it.
-function oneOf<T extends readonly string[]>(
-  values: T,
-  value: unknown
-): value is T[number] {
-  return (
-    typeof value === "string" && (values as readonly string[]).includes(value)
-  )
-}
-
 function isNeeds(value: unknown): value is SeekerNeeds {
   if (!value || typeof value !== "object") return false
   const v = value as Record<string, unknown>
 
-  if (!oneOf(householdValues, v.household)) return false
-  if (!oneOf(petNeedValues, v.pet)) return false
-  if (!oneOf(idStatusValues, v.idStatus)) return false
-  if (!oneOf(vehicleNeedValues, v.vehicle)) return false
-
-  // Nullable follow-ups: null is valid, a wrong string is not.
-  if (v.partnerRooms !== null && !oneOf(partnerRoomsValues, v.partnerRooms)) {
-    return false
-  }
-  if (v.vehicleSize !== null && !oneOf(vehicleSizeValues, v.vehicleSize)) {
-    return false
-  }
-  if (
-    v.vehicleRegistered !== null &&
-    !oneOf(vehicleRegisteredValues, v.vehicleRegistered)
-  ) {
-    return false
-  }
-
-  // Times, matching what the questionnaire collects.
-  if (!isHHMM(v.arrivalFrom) || !isHHMM(v.arrivalTo)) return false
-  if (v.latestEntry !== null && !isHHMM(v.latestEntry)) return false
-
-  // Ranges, matching the form's own validation.
-  if (
-    v.petWeightLbs !== null &&
-    (typeof v.petWeightLbs !== "number" ||
-      !Number.isFinite(v.petWeightLbs) ||
-      v.petWeightLbs < 1 ||
-      v.petWeightLbs > 200)
-  ) {
-    return false
-  }
-  if (
-    typeof v.daysNeeded !== "number" ||
-    !Number.isFinite(v.daysNeeded) ||
-    v.daysNeeded < 1
-  ) {
-    return false
-  }
-
-  return true
+  return (
+    typeof v.household === "string" &&
+    typeof v.pet === "string" &&
+    typeof v.idStatus === "string" &&
+    typeof v.vehicle === "string" &&
+    typeof v.arrivalFrom === "string" &&
+    typeof v.arrivalTo === "string" &&
+    typeof v.daysNeeded === "number"
+  )
 }
 
 export function loadNeeds(): SeekerNeeds | null {

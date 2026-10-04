@@ -2,7 +2,13 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { IconHeart, IconHeartFilled } from "@tabler/icons-react"
+import {
+  IconCheck,
+  IconChevronDown,
+  IconHeart,
+  IconHeartFilled,
+  IconX,
+} from "@tabler/icons-react"
 import { toast } from "sonner"
 
 import {
@@ -18,56 +24,72 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { cn } from "cn"
 import {
   isFavorite,
   subscribeActivity,
   toggleFavorite,
 } from "@/lib/listings/activity"
 import { contactForListing } from "@/lib/listings/contacts"
-import { formatDistance, type DistanceBasis } from "@/lib/listings/geo"
+import { formatMiles } from "@/lib/listings/geo"
 import { photoForListing } from "@/lib/listings/photos"
-import { policyFieldLabel } from "@/lib/listings/sources"
 import {
   couplesLabel,
   formatConfirmedAt,
   freshnessLabel,
-  freshnessTone,
   intakeLabel,
   parkingStatusLabel,
   petsLabel,
   type Listing,
 } from "@/lib/listings/types"
-import type { FitResult } from "@/lib/matching/hard-filters"
+import type { MatchDetail } from "@/lib/matching/score-blend"
+import { formatPercent, lenientTextScore } from "@/lib/matching/score-blend"
+
+export function freshnessTone(listing: Listing) {
+  if (listing.kind === "parking") {
+    if (listing.parkingStatus === "open") return "live"
+    if (listing.parkingStatus === "waitlist") return "recent"
+    return "call"
+  }
+
+  if (listing.freshness === "live") return "live"
+  if (listing.freshness === "recent") return "recent"
+  return "call"
+}
 
 export function PlaceCard({
   listing,
   fit,
   miles,
-  basis = "unknown",
+  matchPercent,
+  matchDetail,
 }: {
   listing: Listing
-  fit?: FitResult
+  fit?: { fits: boolean; reasons: string[] }
   miles?: number | null
-  basis?: DistanceBasis
+  /**
+   * 0-1 cosine similarity from match_listings(), the same value used to
+   * order the feed. Shown as a rounded percentage, not a claim of fit,
+   * only how close the wording of their answers landed to this listing.
+   */
+  matchPercent?: number
+  /**
+   * Display-only breakdown behind the match badge: how the structured
+   * fields agree, how close the text is, and which answers drove each
+   * factor. Opening it never changes list order, match_listings' cosine
+   * score does that alone, this only explains the number.
+   */
+  matchDetail?: MatchDetail
 }) {
   const photo = photoForListing(listing)
   const contact = contactForListing(listing)
+  const tone = freshnessTone(listing)
+  const status =
+    listing.kind === "parking" && listing.parkingStatus
+      ? parkingStatusLabel[listing.parkingStatus]
+      : freshnessLabel[listing.freshness]
   const [saved, setSaved] = React.useState(false)
-  const titleId = React.useId()
-
-  // A parking lot reads its status; a shelter reads its freshness badge. Both
-  // always carry text, never colour alone.
-  const isLot = listing.kind === "parking" && listing.parkingStatus
-  const status = isLot
-    ? parkingStatusLabel[listing.parkingStatus!]
-    : freshnessLabel[listing.freshness]
-  const tone = isLot
-    ? listing.parkingStatus === "open"
-      ? "success"
-      : listing.parkingStatus === "waitlist"
-        ? "warning"
-        : "secondary"
-    : freshnessTone(listing.freshness)
+  const [showBreakdown, setShowBreakdown] = React.useState(false)
 
   React.useEffect(() => {
     const sync = () => setSaved(isFavorite(listing.id))
@@ -82,24 +104,23 @@ export function PlaceCard({
     listing.vehicleNote,
   ].filter(Boolean)
 
-  function onToggleSave() {
+  function onToggleSave(event: React.MouseEvent) {
+    event.preventDefault()
+    event.stopPropagation()
     const next = toggleFavorite(listing.id)
     setSaved(next)
     toast.success(next ? "Saved to your dashboard." : "Removed from saved.")
   }
 
+  function onToggleBreakdown(event: React.MouseEvent) {
+    event.preventDefault()
+    event.stopPropagation()
+    setShowBreakdown((prev) => !prev)
+  }
+
   return (
-    // An <article> holding one link and one button, rather than a <Link> wrapped
-    // around the whole card with a <Button> inside it. Interactive content
-    // inside an <a> is invalid HTML, it made the card's accessible name the
-    // entire card text, and the save button only worked because of
-    // preventDefault. The title's stretched ::after keeps the whole card
-    // tappable, and the save button sits above it with z-10.
-    <article
-      aria-labelledby={titleId}
-      className="relative h-full rounded-xl [&:has(a:focus-visible)]:ring-3 [&:has(a:focus-visible)]:ring-ring/50"
-    >
-      <Card className="h-full overflow-hidden transition-colors hover:bg-muted/40">
+    <Link href={`/places/${listing.id}`} className="block h-full">
+      <Card className="relative h-full overflow-hidden transition-colors hover:bg-muted/40">
         <div className="relative">
           <MarketingPhoto
             photo={photo}
@@ -110,12 +131,8 @@ export function PlaceCard({
             type="button"
             variant="secondary"
             size="icon-sm"
-            className="absolute top-2 right-2 z-10 rounded-full bg-background/90 shadow-sm backdrop-blur-sm"
-            aria-label={
-              saved
-                ? `Remove ${listing.name} from saved`
-                : `Save ${listing.name}`
-            }
+            className="absolute top-2 right-2 rounded-full bg-background/90 shadow-sm backdrop-blur-sm"
+            aria-label={saved ? "Remove from saved" : "Save place"}
             aria-pressed={saved}
             onClick={onToggleSave}
           >
@@ -128,24 +145,49 @@ export function PlaceCard({
         </div>
         <CardHeader>
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant={tone}>{status}</Badge>
+            <Badge
+              className={cn(
+                tone === "live" && "bg-emerald-600 text-white",
+                tone === "recent" && "bg-amber-500 text-white",
+                tone === "call" && "bg-muted text-foreground"
+              )}
+            >
+              {status}
+            </Badge>
             <Badge variant="outline">
               {listing.kind === "parking" ? "Safe parking" : "Shelter"}
             </Badge>
-            {fit?.verdict === "excluded" ? (
-              <Badge variant="destructive">Does not fit</Badge>
+            {fit && !fit.fits ? (
+              <Badge variant="destructive">May not fit</Badge>
             ) : null}
-            {fit?.verdict === "fits" ? (
-              <Badge variant="success">Fits what you told us</Badge>
+            {fit?.fits ? (
+              <Badge variant="secondary">Fits what you told us</Badge>
             ) : null}
-            {fit?.verdict === "unknown" ? (
-              <Badge variant="secondary">Some rules not listed</Badge>
+            {matchPercent != null && matchDetail ? (
+              <button
+                type="button"
+                onClick={onToggleBreakdown}
+                aria-expanded={showBreakdown}
+                className="inline-flex items-center gap-1 rounded-4xl border border-transparent px-2 py-0.5 text-xs font-medium outline-none transition-all hover:border-border focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+              >
+                <Badge variant="outline" className="border-none px-0">
+                  {formatPercent(matchDetail.score)} match to your answers
+                </Badge>
+                <IconChevronDown
+                  className={cn(
+                    "size-3 text-muted-foreground transition-transform",
+                    showBreakdown && "rotate-180"
+                  )}
+                />
+              </button>
+            ) : matchPercent != null ? (
+              <Badge variant="outline">
+                {formatPercent(matchPercent)} match to your answers
+              </Badge>
             ) : null}
             <Badge variant="outline">{intakeLabel[listing.intakeMethod]}</Badge>
             {miles != null ? (
-              <Badge variant="outline">
-                {formatDistance(miles, basis, listing.city)}
-              </Badge>
+              <Badge variant="outline">{formatMiles(miles)}</Badge>
             ) : null}
             {saved ? (
               <Badge variant="secondary" className="gap-1">
@@ -154,15 +196,7 @@ export function PlaceCard({
               </Badge>
             ) : null}
           </div>
-          <CardTitle className="text-xl">
-            <Link
-              href={`/places/${listing.id}`}
-              id={titleId}
-              className="after:absolute after:inset-0 after:content-[''] focus-visible:outline-none"
-            >
-              {listing.name}
-            </Link>
-          </CardTitle>
+          <CardTitle className="text-xl">{listing.name}</CardTitle>
           <CardDescription>
             {listing.orgName}
             {" · "}
@@ -173,34 +207,58 @@ export function PlaceCard({
           {facts.length > 0 ? (
             <p className="text-sm text-muted-foreground">{facts.join(" · ")}</p>
           ) : null}
-          {contact ? (
-            <p className="text-sm font-medium">
-              {contact.label}
-              {contact.isReferralLine ? (
-                <span className="font-normal text-muted-foreground">
-                  {" · county shelter line"}
-                </span>
-              ) : null}
-            </p>
+          {listing.orgDescription ? (
+            <p className="text-sm">{listing.orgDescription}</p>
           ) : null}
-          {fit?.verdict === "excluded" && fit.reasons[0] ? (
+          {contact ? (
+            <p className="text-sm font-medium">{contact.label}</p>
+          ) : null}
+          {fit && !fit.fits && fit.reasons[0] ? (
             <p className="text-sm text-destructive">{fit.reasons[0]}</p>
           ) : null}
-          {fit?.verdict !== "excluded" && fit?.notes[0] ? (
-            <p className="text-sm text-warning-text">{fit.notes[0]}</p>
-          ) : null}
-          {fit?.verdict === "unknown" && fit.unknowns.length > 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Not listed:{" "}
-              {fit.unknowns
-                .map((field) => policyFieldLabel[field].toLowerCase())
-                .join(", ")}
-              . Call to check.
-            </p>
+          {showBreakdown && matchDetail ? (
+            <div
+              className="space-y-2 rounded-lg border p-3"
+              onClick={(event) => event.preventDefault()}
+            >
+              <div className="flex flex-wrap gap-2">
+                <Badge variant="outline">
+                  {formatPercent(matchDetail.categorical)} fields
+                </Badge>
+                <Badge variant="outline">
+                  {formatPercent(lenientTextScore(matchDetail.cosine))} text
+                </Badge>
+              </div>
+              <ul className="space-y-1.5">
+                {matchDetail.factors.map((factor) => (
+                  <li
+                    key={factor.label}
+                    className="flex items-start justify-between gap-3 text-sm"
+                  >
+                    <span className="text-muted-foreground">
+                      <span className="font-medium text-foreground">
+                        {factor.label}:
+                      </span>{" "}
+                      {factor.detail}
+                    </span>
+                    <Badge
+                      variant={factor.score >= 0.7 ? "default" : "outline"}
+                      className="shrink-0"
+                    >
+                      {factor.score >= 0.7 ? (
+                        <IconCheck className="size-3" aria-label="Matches" />
+                      ) : (
+                        <IconX className="size-3" aria-label="Does not match" />
+                      )}
+                    </Badge>
+                  </li>
+                ))}
+              </ul>
+            </div>
           ) : null}
           <PhotoCredit photo={photo} />
         </CardContent>
       </Card>
-    </article>
+    </Link>
   )
 }
