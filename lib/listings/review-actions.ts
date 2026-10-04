@@ -210,3 +210,33 @@ export async function reportListingReview(
   if (error) return { ok: false, error: error.message }
   return { ok: true }
 }
+
+export async function reportCustomerReview(
+  formData: FormData
+): Promise<ReviewActionResult | { ok: true }> {
+  const supabase = await createServerSupabaseClient()
+  if (!supabase) return { ok: false, error: "Sign in is not configured." }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { ok: false, error: "Sign in to report this." }
+
+  const reviewId = String(formData.get("reviewId") ?? "").trim()
+  const reason = String(formData.get("reason") ?? "").trim().slice(0, 200)
+  if (!reviewId || !reason) {
+    return { ok: false, error: "Say why you are reporting this." }
+  }
+
+  const { error } = await supabase.from("customer_review_reports").upsert(
+    {
+      review_id: reviewId,
+      reporter_id: user.id,
+      reason,
+    },
+    { onConflict: "review_id,reporter_id" }
+  )
+
+  if (error) return { ok: false, error: error.message }
+  return { ok: true }
+}

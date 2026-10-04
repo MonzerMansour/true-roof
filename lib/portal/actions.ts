@@ -530,6 +530,88 @@ export async function moderateListingReview(
   return { ok: true }
 }
 
+export async function upsertCustomerReview(
+  formData: FormData
+): Promise<ActionResult> {
+  const { supabase, user } = await requireProviderSession()
+  const listingId = String(formData.get("listingId") ?? "").trim()
+  const subjectUserId = String(formData.get("subjectUserId") ?? "").trim()
+  const starsRaw = Number(formData.get("stars"))
+  const bodyRaw = String(formData.get("body") ?? "").trim()
+  const body = bodyRaw ? bodyRaw.slice(0, 600) : null
+
+  if (!listingId || !subjectUserId) {
+    return { ok: false, error: "Pick the person you are reviewing." }
+  }
+  if (subjectUserId === user.id) {
+    return { ok: false, error: "You cannot review yourself." }
+  }
+  if (!Number.isInteger(starsRaw) || starsRaw < 1 || starsRaw > 5) {
+    return { ok: false, error: "Pick a star rating from 1 to 5." }
+  }
+
+  const { data: interest } = await supabase
+    .from("listing_interest")
+    .select("id")
+    .eq("listing_id", listingId)
+    .eq("user_id", subjectUserId)
+    .eq("status", "active")
+    .limit(1)
+
+  if (!interest?.length) {
+    return {
+      ok: false,
+      error: "You can only review someone who asked about this site.",
+    }
+  }
+
+  const { error } = await supabase.from("customer_reviews").upsert(
+    {
+      listing_id: listingId,
+      reviewer_id: user.id,
+      subject_user_id: subjectUserId,
+      stars: starsRaw,
+      body,
+      status: "published",
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "listing_id,reviewer_id,subject_user_id" }
+  )
+
+  if (error) return { ok: false, error: error.message }
+  revalidatePath(`/portal/sites/${listingId}/settings`)
+  return { ok: true }
+}
+
+export async function hideCustomerReview(
+  formData: FormData
+): Promise<ActionResult> {
+  const { supabase } = await requireProviderSession()
+  const reviewId = String(formData.get("reviewId") ?? "").trim()
+  const listingId = String(formData.get("listingId") ?? "").trim()
+  const status = String(formData.get("status") ?? "hidden").trim()
+
+  if (!reviewId || !listingId) {
+    return { ok: false, error: "Missing review." }
+  }
+  if (status !== "hidden" && status !== "published") {
+    return { ok: false, error: "Pick hide or publish." }
+  }
+
+  const { error } = await supabase
+    .from("customer_reviews")
+    .update({
+      status,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", reviewId)
+    .eq("listing_id", listingId)
+
+  if (error) return { ok: false, error: error.message }
+  revalidatePath(`/portal/sites/${listingId}/settings`)
+  return { ok: true }
+}
+
 export async function updateExternalRating(
   formData: FormData
 ): Promise<ActionResult> {

@@ -28,7 +28,7 @@ Column names live once in `lib/listings/columns.ts`. Adding a column is one edit
 
 `/places` is the seeker list (shelters and safe parking together). `/places/[id]` is the site page. Staff publish rows from `/portal`.
 
-The matcher is four files and no more: `hard-filters.ts` removes, `score.ts` orders by distance plus freshness, `vocabulary.ts` translates between the seeker and site vocabularies, `time.ts` does clock arithmetic. `rank.ts` still calls `match_listings` for an embedding order, which now breaks ties inside the score rather than being discarded. Do not build a second matcher.
+The matcher is four files and no more: `hard-filters.ts` removes, `score.ts` orders by distance plus freshness, `vocabulary.ts` translates between the seeker and site vocabularies, `time.ts` does clock arithmetic. `rank.ts` still calls `match_listings` for an embedding order, which now breaks ties inside the score rather than being discarded. Household split in `household-split.ts` reuses `listingFitsNeeds` when a couple has no whole-household fit. Do not build a second matcher.
 
 ## Auth
 

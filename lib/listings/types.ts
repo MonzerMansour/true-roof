@@ -179,6 +179,18 @@ export type ListingReviewStats = {
   reviewCount: number
 }
 
+export type CustomerReview = {
+  id: string
+  listingId: string
+  reviewerId: string
+  subjectUserId: string
+  stars: number
+  body: string | null
+  status: "published" | "hidden"
+  createdAt: string
+  updatedAt: string
+}
+
 // Sentence maps. These read as prose because they feed the embedding text in
 // lib/embeddings/text.ts and the fact lists on cards. Do not use them as
 // dropdown option labels: see the *Option maps below.

@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/card"
 import { cn } from "cn"
 import { listingFitsNeeds } from "@/lib/matching/hard-filters"
+import { suggestHouseholdSplit } from "@/lib/matching/household-split"
 import { loadNeeds } from "@/lib/matching/storage"
 import type { SeekerNeeds } from "@/lib/matching/needs"
 import type { RankSource } from "@/lib/matching/rank"
@@ -43,6 +44,7 @@ import {
   type PlaceFilters,
 } from "@/lib/listings/place-filters"
 import { freshnessLabel, intakeLabel, type Listing } from "@/lib/listings/types"
+import { here4You } from "@/lib/listings/sources"
 
 const distanceOptions: { value: DistanceMiles | null; label: string }[] = [
   { value: null, label: "Any distance" },
@@ -152,6 +154,14 @@ export function PlacesFeed({
       if (b.miles == null) return -1
       return a.miles - b.miles
     })
+
+  const householdSplit =
+    visible.length === 0
+      ? suggestHouseholdSplit(
+          withinDistance.map(({ listing }) => listing),
+          needs
+        )
+      : null
 
   function patch(next: Partial<PlaceFilters>) {
     setFilters((prev) => ({ ...prev, ...next }))
@@ -565,10 +575,41 @@ export function PlacesFeed({
       {visible.length === 0 ? (
         <Card className="mt-8 ring-1 ring-primary/10">
           <CardHeader>
-            <CardTitle>Nothing on this list fits</CardTitle>
+            <CardTitle>
+              {householdSplit
+                ? "No one site takes you both tonight"
+                : "Nothing on this list can take you tonight"}
+            </CardTitle>
             <CardDescription className="text-base">
-              Open Filters and widen the distance, or clear a tag above. Crisis
-              lines stay separate:{" "}
+              {householdSplit ? (
+                <>
+                  Two sites below can each take one person. If that will not
+                  work, call {here4You.name} at{" "}
+                  <a
+                    className="font-medium underline"
+                    href={`tel:${here4You.phone}`}
+                  >
+                    {here4You.display}
+                  </a>
+                  .
+                </>
+              ) : (
+                <>
+                  Call {here4You.name} at{" "}
+                  <a
+                    className="font-medium underline"
+                    href={`tel:${here4You.phone}`}
+                  >
+                    {here4You.display}
+                  </a>
+                  . They place people into shelter across the county and can look
+                  beyond this list. You can also open Filters and widen the
+                  distance.
+                </>
+              )}
+              <br />
+              <br />
+              Crisis lines stay separate:{" "}
               <a className="font-medium underline" href="tel:911">
                 911
               </a>
@@ -607,50 +648,38 @@ export function PlacesFeed({
         </div>
       )}
 
-      {hidden.length > 0 ? (
-        <div className="mt-8">
-          <Button
-            type="button"
-            size="touch"
-            variant="outline"
-            aria-expanded={showHidden}
-            onClick={() => setShowHidden((open) => !open)}
-          >
-            {showHidden ? "Hide" : "Show"} {hidden.length}{" "}
-            {hidden.length === 1 ? "place" : "places"} hidden by your answers
-          </Button>
-          {showHidden ? (
-            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {hidden.map(({ listing, fit, rank }) => (
-                <PlaceCard
-                  key={listing.id}
-                  listing={listing}
-                  fit={fit}
-                  miles={rank.miles}
-                  basis={rank.basis}
-                />
-              ))}
+      {householdSplit && visible.length === 0 ? (
+        <div className="mt-8 space-y-4">
+          <div>
+            <p className="text-sm font-medium text-primary">Two places</p>
+            <h2 className="mt-1 font-heading text-xl font-semibold tracking-tight">
+              Stay on two sites instead of one compromise
+            </h2>
+            <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+              Each site can take one of you. Call both before you go. This is
+              not a handoff.
+            </p>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                For you
+              </p>
+              <PlaceCard
+                listing={householdSplit.yours}
+                fit={householdSplit.yoursFit}
+              />
             </div>
-          ) : null}
-        </div>
-      ) : null}
-
-      {unplaceable.length > 0 ? (
-        <div className="mt-8 rounded-2xl border bg-card p-4 ring-1 ring-primary/10">
-          <h2 className="font-heading text-base font-semibold">
-            {unplaceable.length}{" "}
-            {unplaceable.length === 1 ? "place has" : "places have"} no address
-            on file
-          </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            The county bed count these came from does not publish addresses, so
-            they cannot be measured against a distance. Clear the distance
-            filter to see them, or call {here4You.name} at{" "}
-            <a className="font-medium underline" href={`tel:${here4You.phone}`}>
-              {here4You.display}
-            </a>
-            .
-          </p>
+            <div className="space-y-2">
+              <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                For your partner
+              </p>
+              <PlaceCard
+                listing={householdSplit.partner}
+                fit={householdSplit.partnerFit}
+              />
+            </div>
+          </div>
         </div>
       ) : null}
 

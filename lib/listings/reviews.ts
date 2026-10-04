@@ -1,5 +1,6 @@
 import { createServerSupabaseClient } from "@/lib/supabase/server"
 import type {
+  CustomerReview,
   ListingReview,
   ListingReviewStats,
   ReviewStatus,
@@ -197,6 +198,72 @@ export async function getReportCountsForReviews(
 
   const { data, error } = await supabase
     .from("listing_review_reports")
+    .select("review_id")
+    .in("review_id", reviewIds)
+
+  if (error || !data) return map
+  for (const row of data as { review_id: string }[]) {
+    map.set(row.review_id, (map.get(row.review_id) ?? 0) + 1)
+  }
+  return map
+}
+
+type CustomerReviewRow = {
+  id: string
+  listing_id: string
+  reviewer_id: string
+  subject_user_id: string
+  stars: number
+  body: string | null
+  status: "published" | "hidden"
+  created_at: string
+  updated_at: string
+}
+
+export function mapCustomerReview(row: CustomerReviewRow): CustomerReview {
+  return {
+    id: row.id,
+    listingId: row.listing_id,
+    reviewerId: row.reviewer_id,
+    subjectUserId: row.subject_user_id,
+    stars: row.stars,
+    body: row.body,
+    status: row.status,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  }
+}
+
+export async function getStaffCustomerReviewsForListing(
+  listingId: string
+): Promise<CustomerReview[]> {
+  const supabase = await createServerSupabaseClient()
+  if (!supabase) return []
+
+  const { data, error } = await supabase
+    .from("customer_reviews")
+    .select(
+      "id, listing_id, reviewer_id, subject_user_id, stars, body, status, created_at, updated_at"
+    )
+    .eq("listing_id", listingId)
+    .order("created_at", { ascending: false })
+    .limit(100)
+
+  if (error || !data) return []
+  return (data as CustomerReviewRow[]).map(mapCustomerReview)
+}
+
+export async function getCustomerReportCounts(
+  reviewIds: string[]
+): Promise<Map<string, number>> {
+  const map = new Map<string, number>()
+  if (reviewIds.length === 0) return map
+
+  const supabase = await createServerSupabaseClient()
+  if (!supabase) return map
+
+  const { data, error } = await supabase
+    .from("customer_review_reports")
     .select("review_id")
     .in("review_id", reviewIds)
 

@@ -22,10 +22,11 @@ Marketing phase plus the seeker Places feed and staff portal. Do not add matcher
 - `lib/supabase/admin.ts`: service role client for those two writes only.
 - `lib/matching/rank.ts`: calls `match_listings` when a seeker embedding exists. Otherwise keeps `sort_order`.
 - `lib/matching/hard-filters.ts`: the ONLY place a listing is removed. Reads all twelve questionnaire answers. Returns a three-value verdict, fits / unknown / excluded. A null policy on a listing NEVER excludes: it means "not published", not "no". Does not score.
+- `lib/matching/household-split.ts`: when a couple has zero whole-household fits, pairs two sites that each take one person. Reuses `listingFitsNeeds`. Does not score.
 - `lib/matching/score.ts`: the ONLY place order is decided. Distance plus freshness, pure, injectable clock. Does not exclude.
 - `lib/matching/vocabulary.ts`: the ONLY place the seeker and site vocabularies meet. Lookup tables, no logic.
 - `lib/matching/time.ts`: HH:MM helpers. A window whose end is before its start wraps past midnight, which is a real shelter pattern.
-- Those four plus `rank.ts` ARE the matcher. Do not add a fifth.
+- Those four plus `rank.ts` ARE the matcher. Household split reuses hard filters. Do not add a fifth scoring file.
 - `lib/obligations/recurrence.ts`: pure date math for repeating deadlines. Each date is counted from the first one, so the 31st goes Feb 28 then Mar 31.
 - `lib/obligations/deadline-rules.ts`: the referee for typed deadlines. Program cycles (from `program-rules.ts`) override the reader, and a date the person did not say is blanked, never guessed.
 - `lib/obligations/read-deadline.ts` + `app/api/deadlines/read`: the AI only fills the add-deadline form. Nothing is saved server side; deadlines live in the local obligations profile.
@@ -44,6 +45,8 @@ One listing row per **physical site**, linked to an organization.
 - `listings` policy columns, all nullable, null means "not published": `id_required` `required` | `not_required` | `case_by_case`; `curfew_policy` `no_curfew` | `fixed_time` plus `curfew_time`; `intake_from` / `intake_to` times; `max_stay` tiers; `pet_weight_limit_lbs`; `vehicle_allowed` `car_only` | `car_van` | `car_van_rv`; `vehicle_max_length_ft`; `registration_required`. Provenance: `data_source`, `source_url`, `source_as_of`.
 - `listings`: `kind` `shelter` | `parking`; `freshness` `live` | `recent` | `call_first`; `pets` / `couples` enums or null; parking uses `parking_status` `open` | `full` | `waitlist` plus `vehicle_note`. `lat` / `lng` for near-me distance. `phone` for call intake. `intake_method` `call` | `waitlist` | `register` | `walk_up`. `featured` + `sort_order` drive the homepage hero (first three). `published` puts a row on `/places`.
 - `listing_interest`: seeker waitlist / register / on-the-way rows. Not matcher scoring. Own-row write. Org staff can read.
+- `listing_reviews` / `listing_review_reports`: stay reviews of a site, with a report flag. Seekers write. Staff moderate.
+- `customer_reviews` / `customer_review_reports`: staff notes on a seeker who asked about the site. Recourse for bad-faith ratings. Never a public score. Seekers cannot read the table.
 - Places feed day-of filters (distance, intake, freshness, hide full lots) live in `lib/listings/place-filters.ts`. Hard filters still remove listings. Distance sorts client-side. It is not a second matcher.
 - `profiles`: `id` = `auth.users.id`, `role` `seeker` | `provider`. Created by `handle_new_user` on signup.
 - `organization_members`: staff roles for the portal.
