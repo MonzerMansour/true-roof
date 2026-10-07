@@ -487,14 +487,13 @@ function IncomeStat({
       <p className="font-heading text-3xl font-semibold tracking-tight">
         {monthlyIncome != null ? `$${monthlyIncome.toLocaleString()}` : "Not set"}
       </p>
-      <div className="flex gap-2">
+      <div className="grid gap-2">
         <Input
           type="number"
           inputMode="decimal"
           min={0}
           placeholder="Amount"
           aria-label="New monthly income"
-          className="min-w-0 flex-1"
           value={value}
           onChange={(e) => setValue(e.target.value)}
         />
@@ -502,6 +501,7 @@ function IncomeStat({
           type="button"
           variant="outline"
           size="sm"
+          className="w-fit"
           disabled={!value}
           onClick={() => {
             onUpdate(Number(value))
