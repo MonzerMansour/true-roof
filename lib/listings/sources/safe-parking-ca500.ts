@@ -178,7 +178,7 @@ export const safeParkingSites: SafeParkingSite[] = [
     intakeFrom: null,
     intakeTo: null,
     vehicleNote:
-      "Former VTA parking lot. Oversized vehicles with some passenger vehicles. 30 oversized vehicle spaces plus 21 flex spaces. The city page still lists this lot, but says its extension ran through June 30 2026, which has passed. Call before you go.",
+      "Call to verify this lot is still open. Former VTA parking lot, oversized vehicles with some passenger vehicles, 30 oversized vehicle spaces plus 21 flex spaces. The city page still lists it, but the extension it cites ran to June 30 2026, which has passed, and the page has not been updated since. Do not drive here without ringing MOVE Mountain View first.",
     ...moveOperations,
     sourceUrl: mvSource,
     checkedOn: "2026-10-06",

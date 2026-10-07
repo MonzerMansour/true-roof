@@ -11,6 +11,11 @@ export type PlaceFilters = {
   freshness: "all" | Freshness
   hideFull: boolean
   onlyFits: boolean
+  /** The person sleeps in a vehicle. Safe parking sorts first, and shelters
+   * stay in the list rather than being filtered out: plenty of people with a
+   * car still want a bed, and a lot that is full tonight should not leave them
+   * with nothing. This prioritises; it does not exclude. */
+  hasVehicle: boolean
   origin: (GeoPoint & { label: string }) | null
 }
 
@@ -21,6 +26,7 @@ export const defaultPlaceFilters: PlaceFilters = {
   freshness: "all",
   hideFull: true,
   onlyFits: false,
+  hasVehicle: false,
   origin: defaultOrigin,
 }
 
@@ -42,9 +48,13 @@ export function changedFilterKeys(
   if (filters.kind !== defaultPlaceFilters.kind) keys.push("kind")
   if (filters.miles !== defaultPlaceFilters.miles) keys.push("miles")
   if (filters.intake !== defaultPlaceFilters.intake) keys.push("intake")
-  if (filters.freshness !== defaultPlaceFilters.freshness) keys.push("freshness")
+  if (filters.freshness !== defaultPlaceFilters.freshness)
+    keys.push("freshness")
   if (filters.hideFull !== defaultPlaceFilters.hideFull) keys.push("hideFull")
   if (filters.onlyFits !== defaultPlaceFilters.onlyFits) keys.push("onlyFits")
+  if (filters.hasVehicle !== defaultPlaceFilters.hasVehicle) {
+    keys.push("hasVehicle")
+  }
 
   const originLabel = filters.origin?.label ?? defaultPlaceFilters.origin?.label
   if (originLabel !== defaultPlaceFilters.origin?.label) keys.push("origin")

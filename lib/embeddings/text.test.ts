@@ -43,6 +43,14 @@ function shelter(over: Partial<Listing> = {}): Listing {
     externalRating: null,
     externalRatingCount: null,
     externalRatingSource: null,
+    costNote: null,
+    screeningNote: null,
+    requiresDocuments: null,
+    facilitiesNote: null,
+    securityNote: null,
+    maxStayNote: null,
+    waitlistNote: null,
+    petsNote: null,
     ...over,
   }
 }

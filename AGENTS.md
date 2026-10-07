@@ -22,13 +22,24 @@ Canonical SQL is `supabase/migrations/`. Apply with `npm run db:setup` or `npx s
 
 Real Santa Clara County data lives in `lib/listings/sources/`: shelters from the HUD 2025 Housing Inventory Count for CoC CA-500, safe parking from each city's own program page. Both the SQL and the seed array derive from those two files, so edit a source file and run `npm run inventory:sql`, never the generated migration. HUD publishes no pets, ID, couples, curfew, check-in or max-stay rules, so those columns are null on imported rows. Null means "not published", never "no". Do not guess a policy to fill a gap.
 
-Column names live once in `lib/listings/columns.ts`. Adding a column is one edit there, not six select strings.
+Column names live once in `lib/listings/columns.ts`. Adding a column is one edit there, not six select strings. Tiers are ordered widest first and the query falls through, so a database missing a migration still serves rows with those fields null.
+
+Safe parking rows also carry what a lot is like to use: cost, screening, documents, facilities, security, max stay, waitlist, pets. Those are short published facts quoted from the operator, not enums, because flattening "free, it is temporary shelter not a rental" into an enum loses the thing that matters. The matcher never reads them.
 
 ## Places feed
 
 `/places` is the seeker list (shelters and safe parking together). `/places/[id]` is the site page. Staff publish rows from `/portal`.
 
-The matcher is four files and no more: `hard-filters.ts` removes, `score.ts` orders by distance plus freshness, `vocabulary.ts` translates between the seeker and site vocabularies, `time.ts` does clock arithmetic. `rank.ts` still calls `match_listings` for an embedding order, which now breaks ties inside the score rather than being discarded. Household split in `household-split.ts` reuses `listingFitsNeeds` when a couple has no whole-household fit. Do not build a second matcher.
+The matcher, as it actually is:
+
+- `hard-filters.ts` removes a listing. The only thing that does. A null policy never excludes: it means the site has not published that rule, not that the answer is no.
+- `categorical-score.ts` scores how far the structured fields agree. Display only; it does not reorder.
+- `score-blend.ts` blends that with cosine similarity into the percentage people see. Text carries 65%, fields 35%.
+- `rank.ts` calls the `match_listings` RPC for the embedding order, which is what actually sorts the feed.
+- `phrase-similarity.ts` and `embed-limit.ts` support the text side.
+- `household-split.ts` reuses `listingFitsNeeds` when a couple has no whole-household fit.
+
+Do not build a second matcher. An earlier distance-plus-freshness ranker (`score.ts`, `vocabulary.ts`, `time.ts`) was dropped in favour of the embeddings one and no longer exists; this file described it for a while after it was deleted.
 
 ## Auth
 

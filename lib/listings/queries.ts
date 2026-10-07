@@ -54,6 +54,15 @@ export type ListingRow = {
   data_source?: DataSource | null
   source_url?: string | null
   source_as_of?: string | null
+  // 20261006000000_parking_operations.sql
+  cost_note?: string | null
+  screening_note?: string | null
+  requires_documents?: string[] | null
+  facilities_note?: string | null
+  security_note?: string | null
+  max_stay_note?: string | null
+  waitlist_note?: string | null
+  pets_note?: string | null
   // Present only once 20261003000100_listing_details.sql has run.
   description?: string | null
   photo_url?: string | null
@@ -111,6 +120,14 @@ export function mapListingRow(row: ListingRow): Listing {
     dataSource: row.data_source ?? null,
     sourceUrl: row.source_url ?? null,
     sourceAsOf: row.source_as_of ?? null,
+    costNote: row.cost_note ?? null,
+    screeningNote: row.screening_note ?? null,
+    requiresDocuments: row.requires_documents ?? null,
+    facilitiesNote: row.facilities_note ?? null,
+    securityNote: row.security_note ?? null,
+    maxStayNote: row.max_stay_note ?? null,
+    waitlistNote: row.waitlist_note ?? null,
+    petsNote: row.pets_note ?? null,
     description: row.description?.trim() || null,
     photoUrl: row.photo_url ?? null,
     externalRating:

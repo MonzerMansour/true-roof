@@ -323,6 +323,38 @@ export function PlaceDetail({
                 />
               )
             })}
+            {/* What a lot is actually like to use. These are the questions
+                people ask before driving anywhere, and until the operations
+                columns existed they could only live in free text where nothing
+                could show them separately. Each renders only when the operator
+                published it. */}
+            {listing.costNote ? (
+              <DetailRow label="Cost" value={listing.costNote} />
+            ) : null}
+            {listing.facilitiesNote ? (
+              <DetailRow
+                label="Toilets and showers"
+                value={listing.facilitiesNote}
+              />
+            ) : null}
+            {listing.securityNote ? (
+              <DetailRow label="Security" value={listing.securityNote} />
+            ) : null}
+            {listing.petsNote ? (
+              <DetailRow label="Pets" value={listing.petsNote} />
+            ) : null}
+            {listing.maxStayNote ? (
+              <DetailRow
+                label="How long you can stay"
+                value={listing.maxStayNote}
+              />
+            ) : null}
+            {listing.waitlistNote ? (
+              <DetailRow label="Waitlist" value={listing.waitlistNote} />
+            ) : null}
+            {listing.screeningNote ? (
+              <DetailRow label="How you get in" value={listing.screeningNote} />
+            ) : null}
             {listing.kind === "parking" && listing.vehicleNote ? (
               <DetailRow label="Lot notes" value={listing.vehicleNote} />
             ) : null}
@@ -341,6 +373,37 @@ export function PlaceDetail({
               pending={!contact}
             />
           </dl>
+
+          {/* A checklist, not a paragraph. "What do I have to bring" is the
+              question that stops people applying, and it is worked through one
+              item at a time. */}
+          {listing.requiresDocuments && listing.requiresDocuments.length > 0 ? (
+            <section
+              aria-labelledby="documents-heading"
+              className="mt-6 rounded-xl border bg-card p-4"
+            >
+              <h2
+                id="documents-heading"
+                className="font-heading text-base font-semibold"
+              >
+                What to bring
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {listing.requiresDocuments.length} things this site asks for.
+                Call them if any of these are hard to get: operators often help.
+              </p>
+              <ul className="mt-3 grid gap-2">
+                {listing.requiresDocuments.map((document) => (
+                  <li key={document} className="flex gap-2 text-sm">
+                    <span aria-hidden className="text-muted-foreground">
+                      &bull;
+                    </span>
+                    <span>{document}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
 
           {citation ? (
             <p className="mt-6 text-sm text-muted-foreground">

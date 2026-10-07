@@ -246,6 +246,14 @@ export function PlacesFeed({
   // Only when it is OFF. Hiding full lots is the default, so advertising it as
   // a filter the person applied put a chip and a badge on an untouched page,
   // and made Clear all look broken when the same default came back.
+  if (filters.hasVehicle) {
+    tags.push({
+      id: "hasVehicle",
+      label: "Safe parking first",
+      clear: () => patch({ hasVehicle: false }),
+    })
+  }
+
   if (!filters.hideFull) {
     tags.push({
       id: "hideFull",
@@ -516,6 +524,19 @@ export function PlacesFeed({
 
             <FilterSection title="More">
               <div className="grid gap-4">
+                {/* Prioritises safe parking without hiding shelters, so
+                    someone with a car still sees a bed when every lot is
+                    full. */}
+                <label className="flex min-h-11 items-center justify-between gap-3 text-sm">
+                  <span>I have a car or RV</span>
+                  <Switch
+                    checked={filters.hasVehicle}
+                    onCheckedChange={(checked) =>
+                      patch({ hasVehicle: checked })
+                    }
+                    aria-label="I have a car or RV. Shows safe parking first."
+                  />
+                </label>
                 <label className="flex items-center justify-between gap-3 text-sm">
                   <span>Hide full lots</span>
                   <Switch
@@ -602,8 +623,8 @@ export function PlacesFeed({
                   >
                     {here4You.display}
                   </a>
-                  . They place people into shelter across the county and can look
-                  beyond this list. You can also open Filters and widen the
+                  . They place people into shelter across the county and can
+                  look beyond this list. You can also open Filters and widen the
                   distance.
                 </>
               )}

@@ -144,6 +144,16 @@ export type Listing = {
   sourceUrl: string | null
   /** ISO date. When the source last published or a human last checked it. */
   sourceAsOf: string | null
+  /** What a lot is like to use. Quoted from the operator, read by a person,
+   * never by the matcher. Null means the operator does not publish it. */
+  costNote: string | null
+  screeningNote: string | null
+  requiresDocuments: readonly string[] | null
+  facilitiesNote: string | null
+  securityNote: string | null
+  maxStayNote: string | null
+  waitlistNote: string | null
+  petsNote: string | null
   /** Staff-entered external average (estimate). Not a live Google sync. */
   externalRating: number | null
   externalRatingCount: number | null

@@ -130,3 +130,56 @@ describe("safe parking sources", () => {
     expect(wrapping.length).toBeGreaterThan(0)
   })
 })
+
+describe("safe parking operational fields", () => {
+  // What a lot is like to use: cost, documents, toilets, security, waitlist.
+  // These reach the page through the operations column tier, so a database
+  // that has not run 20261006000000_parking_operations.sql falls back to a
+  // narrower select and they come back null. The seed is what a fresh clone
+  // sees, so it has to carry them.
+  const parking = seedListings.filter((site) => site.kind === "parking")
+
+  it("has parking sites", () => {
+    expect(parking.length).toBeGreaterThan(0)
+  })
+
+  it("carries MOVE Mountain View's published operations", () => {
+    const shoreline = parking.find((site) => site.name === "Shoreline Lot B")
+    expect(shoreline?.costNote).toContain("Free")
+    expect(shoreline?.facilitiesNote).toContain("Restrooms")
+    expect(shoreline?.securityNote).toContain("24/7")
+    expect(shoreline?.waitlistNote).toBeTruthy()
+    expect(shoreline?.requiresDocuments?.length).toBeGreaterThan(0)
+  })
+
+  it("carries the Amigos document checklist and pets policy", () => {
+    const amigos = parking.find(
+      (site) => site.orgName === "Amigos de Guadalupe"
+    )
+    expect(amigos).toBeDefined()
+    expect(amigos?.requiresDocuments?.length).toBeGreaterThanOrEqual(6)
+    expect(amigos?.petsNote).toContain("two pets")
+    // Their own page publishes no lot address, and the site reported at Santa
+    // Teresa was called unpermitted by the city. Never guess one in.
+    expect(amigos?.address).toBeNull()
+  })
+
+  it("never puts an empty string in a document checklist", () => {
+    // An empty item renders a blank bullet, which reads as a requirement
+    // nobody can satisfy. The SQL constraint enforces the same thing.
+    for (const site of parking) {
+      for (const document of site.requiresDocuments ?? []) {
+        expect(document.trim().length, site.name).toBeGreaterThan(0)
+      }
+    }
+  })
+
+  it("leaves HUD shelters' operational fields null", () => {
+    const hud = seedListings.filter((s) => s.dataSource === "hud_hic_2025")
+    for (const site of hud) {
+      expect(site.costNote, site.name).toBeNull()
+      expect(site.requiresDocuments, site.name).toBeNull()
+      expect(site.securityNote, site.name).toBeNull()
+    }
+  })
+})

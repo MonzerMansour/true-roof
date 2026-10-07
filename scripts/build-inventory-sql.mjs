@@ -29,6 +29,12 @@ const { safeParkingSites, safeParkingOrganizations } = await load(
 const { hudHic2025, unknownCity } = await load("lib/listings/sources.ts")
 
 /** Postgres string literal. Doubles any single quote. */
+/** Postgres text[] literal, or null. */
+const arr = (values) =>
+  values && values.length
+    ? `ARRAY[${values.map((v) => `'${String(v).replace(/'/g, "''")}'`).join(", ")}]::text[]`
+    : "null"
+
 const q = (value) =>
   value == null ? "null" : `'${String(value).replace(/'/g, "''")}'`
 const n = (value) => (value == null ? "null" : String(value))
@@ -99,6 +105,15 @@ ordered.forEach(({ kind, site }, index) => {
       `    ${q(isParking ? "city_program" : "hud_hic_2025")},`,
       `    ${q(isParking ? site.sourceUrl : hudHic2025.url)},`,
       `    ${q(isParking ? site.checkedOn : hudHic2025.asOf)},`,
+      // What a lot is like to use. HUD's bed count publishes none of it.
+      `    ${q(isParking ? site.cost : null)},`,
+      `    ${q(isParking ? site.screening : null)},`,
+      `    ${isParking ? arr(site.documents) : "null"},`,
+      `    ${q(isParking ? site.facilities : null)},`,
+      `    ${q(isParking ? site.security : null)},`,
+      `    ${q(isParking ? site.maxStayNote : null)},`,
+      `    ${q(isParking ? site.waitlist : null)},`,
+      `    ${q(isParking ? site.petsNote : null)},`,
       `    ${featured.includes(site.id) ? "true" : "false"},`,
       `    ${n(index + 1)},`,
       "    true",
@@ -162,7 +177,10 @@ insert into public.listings (
   id, organization_id, name, kind, freshness, last_confirmed_at, city,
   address, phone, intake_method, vehicle_note, vehicle_allowed,
   registration_required, intake_from, intake_to, project_type,
-  data_source, source_url, source_as_of, featured, sort_order, published
+  data_source, source_url, source_as_of,
+  cost_note, screening_note, requires_documents, facilities_note,
+  security_note, max_stay_note, waitlist_note, pets_note,
+  featured, sort_order, published
 ) values
 ${rows.join(",\n")}
 on conflict (id) do update set
@@ -184,6 +202,14 @@ on conflict (id) do update set
   data_source = excluded.data_source,
   source_url = excluded.source_url,
   source_as_of = excluded.source_as_of,
+  cost_note = excluded.cost_note,
+  screening_note = excluded.screening_note,
+  requires_documents = excluded.requires_documents,
+  facilities_note = excluded.facilities_note,
+  security_note = excluded.security_note,
+  max_stay_note = excluded.max_stay_note,
+  waitlist_note = excluded.waitlist_note,
+  pets_note = excluded.pets_note,
   featured = excluded.featured,
   sort_order = excluded.sort_order,
   published = excluded.published;

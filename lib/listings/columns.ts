@@ -41,6 +41,18 @@ export const listingColumns = {
     "source_url",
     "source_as_of",
   ],
+  // 20261006000000_parking_operations.sql. What a lot is like to use: cost,
+  // screening, documents, facilities, security, stay, waitlist, pets.
+  operations: [
+    "cost_note",
+    "screening_note",
+    "requires_documents",
+    "facilities_note",
+    "security_note",
+    "max_stay_note",
+    "waitlist_note",
+    "pets_note",
+  ],
   // 20261003000100_listing_details.sql
   details: ["description", "photo_url"],
   // 20261004000000_listing_reviews.sql
@@ -62,6 +74,10 @@ function join(tiers: ColumnTier[], extra: string[] = []) {
 // Widest first. queries.ts walks this in order and stops at the first select
 // the database accepts, so a partially migrated project still serves rows.
 export const listingSelectTiers = [
+  join(
+    ["core", "intake", "policies", "details", "reviews", "operations"],
+    [orgJoin]
+  ),
   join(["core", "intake", "policies", "details", "reviews"], [orgJoin]),
   join(["core", "intake", "policies", "details"], [orgJoin]),
   join(["core", "intake", "policies", "reviews"], [orgJoin]),
@@ -75,6 +91,10 @@ export const listingSelectTiers = [
 const portalExtra = ["organization_id", "published", "sort_order"]
 
 export const portalListingSelectTiers = [
+  join(
+    ["core", "intake", "policies", "details", "reviews", "operations"],
+    portalExtra
+  ),
   join(["core", "intake", "policies", "details", "reviews"], portalExtra),
   join(["core", "intake", "policies", "details"], portalExtra),
   join(["core", "intake", "policies", "reviews"], portalExtra),
