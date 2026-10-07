@@ -2,7 +2,12 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { IconArrowLeft, IconHeart, IconHeartFilled } from "@tabler/icons-react"
+import {
+  IconArrowLeft,
+  IconHeart,
+  IconHeartFilled,
+  IconPhoneCall,
+} from "@tabler/icons-react"
 import { toast } from "sonner"
 
 import {
@@ -13,7 +18,7 @@ import { PlaceIntake } from "@/components/places/place-intake"
 import { PlaceReviews } from "@/components/places/place-reviews"
 import { StarRating } from "@/components/places/star-rating"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { cn } from "cn"
 import {
   isFavorite,
@@ -430,6 +435,27 @@ export function PlaceDetail({
         ownReview={ownReview}
         signedIn={signedIn}
       />
+
+      {/* The page is about 2,000px on a phone. Calling is the whole point of
+          reading it, and the call button scrolls away exactly while someone is
+          reading the rules that make them want to call. This keeps it under a
+          thumb. Phone only, and only when there is a number to ring. */}
+      {contact ? (
+        <div className="sticky bottom-0 z-20 -mx-4 mt-8 border-t bg-background/95 px-4 py-3 backdrop-blur sm:hidden">
+          <a
+            href={`tel:${contact.tel}`}
+            className={cn(buttonVariants({ size: "touch" }), "w-full")}
+          >
+            <IconPhoneCall />
+            Call {contact.label}
+          </a>
+          {contact.isReferralLine ? (
+            <p className="mt-2 text-center text-xs text-muted-foreground">
+              County shelter line, not this site&apos;s own number.
+            </p>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   )
 }
