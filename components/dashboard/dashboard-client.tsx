@@ -49,21 +49,21 @@ import type {
 
 const riskCopy: Record<
   RiskLevel,
-  { label: string; tone: string; helper: string }
+  { label: string; text: string; helper: string }
 > = {
   steady: {
     label: "Steady",
-    tone: "bg-success/10 text-success-text",
+    text: "text-success-text",
     helper: "Nothing is overdue and nothing is due in the next week.",
   },
   watch: {
     label: "Watch",
-    tone: "bg-warning/10 text-warning-text",
+    text: "text-warning-text",
     helper: "Something is due soon. Pay it down or mark it handled below.",
   },
   act: {
     label: "Act",
-    tone: "bg-destructive/10 text-destructive",
+    text: "text-destructive",
     helper: "Something is overdue. Use Get Help below if you cannot cover it.",
   },
 }
@@ -77,7 +77,7 @@ export function DashboardClient() {
 
   React.useEffect(() => {
     const tab = new URLSearchParams(window.location.search).get("tab")
-    if (tab === "notifications" || tab === "scanner") setInitialTab(tab)
+    if (tab === "scanner") setInitialTab(tab)
     setProfile(loadProfile())
     setCompletedIds(loadCompletedOccurrenceIds())
     setPayments(loadPayments())
@@ -101,7 +101,6 @@ export function DashboardClient() {
         incomeUpdatedAt: profile?.incomeUpdatedAt ?? null,
         lastShutoffNoticeAt: profile?.lastShutoffNoticeAt ?? null,
         lastCheckInAt: profile?.lastCheckInAt ?? null,
-        lastCheckInFlaggedAt: profile?.lastCheckInFlaggedAt ?? null,
       }),
     [occurrences, completedIds, profile]
   )
@@ -136,18 +135,10 @@ export function DashboardClient() {
     if (next) setProfile(next)
   }
 
-  function handleCheckIn(flagged: boolean) {
-    const today = isoDate(new Date())
-    const next = updateProfile({
-      lastCheckInAt: today,
-      lastCheckInFlaggedAt: flagged ? today : null,
-    })
+  function handleCheckIn() {
+    const next = updateProfile({ lastCheckInAt: isoDate(new Date()) })
     if (next) setProfile(next)
-    toast.success(
-      flagged
-        ? "Checked in. Flagged for follow-up."
-        : "Checked in. Glad things are steady."
-    )
+    toast.success("Checked in. Update anything that has changed.")
   }
 
   function handleUpdateIncome(amount: number) {
@@ -265,105 +256,154 @@ export function DashboardClient() {
         )
       : 0
 
+  const nextDue = occurrences[0] ?? null
+  const nextDueOverdue = nextDue ? nextDue.date < isoDate(new Date()) : false
+
   return (
     <div className="grid gap-6">
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Status</CardTitle>
-            <CardAction>
-              <Badge className={cn("border-0", copy.tone)}>{copy.label}</Badge>
-            </CardAction>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">{copy.helper}</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Rent cushion</CardTitle>
-            <CardDescription>
-              ${profile.savingsSaved.toLocaleString()} of $
-              {profile.savingsGoal.toLocaleString()}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex items-center gap-3">
-            <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
-              <div
-                className="h-full rounded-full bg-primary transition-all"
-                style={{ width: `${cushionPct}%` }}
-              />
+      <Card>
+        <CardContent className="grid gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-0">
+          <div className="grid content-between gap-6 lg:pr-8">
+            <div>
+              <p className="text-sm text-muted-foreground">Status</p>
+              <p
+                className={cn(
+                  "mt-1 font-heading text-5xl font-semibold tracking-tight",
+                  copy.text
+                )}
+              >
+                {copy.label}
+              </p>
+              <p className="mt-2 max-w-sm text-sm text-muted-foreground">
+                {copy.helper}
+              </p>
             </div>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              onClick={() => handleAddSavings(20)}
-            >
-              +$20
-            </Button>
+            <CheckInRow
+              lastCheckInAt={profile.lastCheckInAt}
+              onCheckIn={handleCheckIn}
+            />
+          </div>
+
+          <div className="grid divide-y border-t sm:grid-cols-3 sm:divide-x sm:divide-y-0 lg:border-t-0 lg:border-l">
+            <Stat label="Next due">
+              {nextDue ? (
+                <>
+                  <p
+                    className={cn(
+                      "font-heading text-3xl font-semibold tracking-tight",
+                      nextDueOverdue && "text-destructive"
+                    )}
+                  >
+                    {parseLocalDate(nextDue.date).toLocaleDateString(
+                      undefined,
+                      { month: "short", day: "numeric" }
+                    )}
+                  </p>
+                  <p className="text-sm">
+                    {nextDueOverdue ? "Overdue: " : ""}
+                    {nextDue.title}
+                  </p>
+                </>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Nothing scheduled yet.
+                </p>
+              )}
+            </Stat>
+
+            <Stat label="Rent cushion">
+              <p className="font-heading text-3xl font-semibold tracking-tight">
+                ${profile.savingsSaved.toLocaleString()}
+                <span className="ml-1 text-sm font-normal text-muted-foreground">
+                  of ${profile.savingsGoal.toLocaleString()}
+                </span>
+              </p>
+              <div
+                role="progressbar"
+                aria-label="Rent cushion saved"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={cushionPct}
+                className="h-1.5 overflow-hidden rounded-full bg-muted"
+              >
+                <div
+                  className="h-full rounded-full bg-primary transition-all"
+                  style={{ width: `${cushionPct}%` }}
+                />
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="w-fit"
+                onClick={() => handleAddSavings(20)}
+              >
+                +$20
+              </Button>
+            </Stat>
+
+            <IncomeStat
+              monthlyIncome={profile.monthlyIncome}
+              onUpdate={handleUpdateIncome}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="grid gap-6 lg:grid-cols-3 lg:grid-rows-[auto_1fr] lg:items-start">
+        <Card className="order-2 lg:order-1 lg:col-span-2 lg:row-span-2">
+          <CardContent>
+            <Tabs defaultValue={initialTab}>
+              <TabsList>
+                <TabsTrigger value="calendar">
+                  <IconCalendar />
+                  Calendar
+                </TabsTrigger>
+                <TabsTrigger value="scanner">
+                  <IconCamera />
+                  Scanner
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="calendar" className="pt-4">
+                <CalendarTab
+                  occurrences={occurrences}
+                  done={schedule.done}
+                  onMarkDone={handleMarkDone}
+                  onUndo={handleUndo}
+                  onRemoveDeadline={handleRemoveDeadline}
+                  onDeleteOne={handleDeleteOne}
+                  onAddDeadline={handleAddDeadline}
+                />
+              </TabsContent>
+
+              <TabsContent value="scanner" className="pt-4">
+                <ScannerTab
+                  payments={payments}
+                  onLog={handleLogPayment}
+                  onLogShutoffNotice={handleLogShutoffNotice}
+                  onAddDeadline={handleAddDeadline}
+                />
+              </TabsContent>
+            </Tabs>
           </CardContent>
         </Card>
 
-        <CheckInCard
-          lastCheckInAt={profile.lastCheckInAt}
-          onCheckIn={handleCheckIn}
+        <AttentionPanel
+          className="order-1 lg:order-2"
+          risk={risk}
+          profile={profile}
         />
-        <IncomeCard
-          monthlyIncome={profile.monthlyIncome}
-          onUpdate={handleUpdateIncome}
-        />
+
+        <div className="order-3">
+          <DeadlinesCard
+            deadlines={profile.deadlines ?? []}
+            completedIds={completedIds}
+            onAdd={handleAddDeadline}
+            onRemove={handleRemoveDeadline}
+          />
+        </div>
       </div>
-
-      <DeadlinesCard
-        deadlines={profile.deadlines ?? []}
-        completedIds={completedIds}
-        onAdd={handleAddDeadline}
-        onRemove={handleRemoveDeadline}
-      />
-
-      <Tabs defaultValue={initialTab}>
-        <TabsList>
-          <TabsTrigger value="calendar">
-            <IconCalendar />
-            Calendar
-          </TabsTrigger>
-          <TabsTrigger value="notifications">
-            <IconBell />
-            Notifications
-          </TabsTrigger>
-          <TabsTrigger value="scanner">
-            <IconCamera />
-            Scanner
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="calendar" className="pt-4">
-          <CalendarTab
-            occurrences={occurrences}
-            done={schedule.done}
-            onMarkDone={handleMarkDone}
-            onUndo={handleUndo}
-            onRemoveDeadline={handleRemoveDeadline}
-            onDeleteOne={handleDeleteOne}
-            onAddDeadline={handleAddDeadline}
-          />
-        </TabsContent>
-
-        <TabsContent value="notifications" className="pt-4">
-          <NotificationsTab risk={risk} profile={profile} />
-        </TabsContent>
-
-        <TabsContent value="scanner" className="pt-4">
-          <ScannerTab
-            payments={payments}
-            onLog={handleLogPayment}
-            onLogShutoffNotice={handleLogShutoffNotice}
-            onAddDeadline={handleAddDeadline}
-          />
-        </TabsContent>
-      </Tabs>
     </div>
   )
 }
@@ -383,15 +423,32 @@ function parseLocalDate(iso: string) {
   return new Date(year, (month ?? 1) - 1, day ?? 1)
 }
 
-function CheckInCard({
+function startOfDayClient(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate())
+}
+
+function Stat({
+  label,
+  children,
+}: {
+  label: string
+  children: React.ReactNode
+}) {
+  return (
+    <div className="grid content-start gap-2 py-4 sm:px-5 sm:py-1 sm:first:pl-0 lg:first:pl-5">
+      <p className="text-sm text-muted-foreground">{label}</p>
+      {children}
+    </div>
+  )
+}
+
+function CheckInRow({
   lastCheckInAt,
   onCheckIn,
 }: {
   lastCheckInAt: string | null
-  onCheckIn: (flagged: boolean) => void
+  onCheckIn: () => void
 }) {
-  const [asking, setAsking] = React.useState(false)
-
   const daysSince = lastCheckInAt
     ? Math.round(
         (startOfDayClient(new Date()).getTime() -
@@ -400,56 +457,23 @@ function CheckInCard({
       )
     : null
 
-  function respond(flagged: boolean) {
-    onCheckIn(flagged)
-    setAsking(false)
-  }
-
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Weekly check-in</CardTitle>
-        <CardDescription>
-          {daysSince === null
-            ? "You have not checked in yet."
-            : `Last check-in: ${daysSince} day${daysSince === 1 ? "" : "s"} ago.`}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {asking ? (
-          <div className="grid gap-2">
-            <p className="text-sm font-medium">
-              How are things going this week?
-            </p>
-            <div className="flex flex-wrap gap-2">
-              <Button type="button" size="sm" onClick={() => respond(false)}>
-                Good, nothing&apos;s wrong
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={() => respond(true)}
-              >
-                Something&apos;s off
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <Button type="button" size="sm" onClick={() => setAsking(true)}>
-            Check in
-          </Button>
-        )}
-      </CardContent>
-    </Card>
+    <div className="grid gap-2 border-t pt-4">
+      <p className="text-sm font-medium">Weekly check-in</p>
+      <p className="text-sm text-muted-foreground">
+        {daysSince === null
+          ? "You have not checked in yet."
+          : `Last check-in: ${daysSince} day${daysSince === 1 ? "" : "s"} ago.`}{" "}
+        Has anything changed? Update your income, savings, or deadlines.
+      </p>
+      <Button type="button" size="sm" className="w-fit" onClick={onCheckIn}>
+        Check in
+      </Button>
+    </div>
   )
 }
 
-function startOfDayClient(date: Date) {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate())
-}
-
-function IncomeCard({
+function IncomeStat({
   monthlyIncome,
   onUpdate,
 }: {
@@ -459,16 +483,11 @@ function IncomeCard({
   const [value, setValue] = React.useState("")
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Monthly income</CardTitle>
-        <CardDescription>
-          {monthlyIncome != null
-            ? `Currently $${monthlyIncome.toLocaleString()}`
-            : "Not set yet"}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="flex gap-2">
+    <Stat label="Monthly income">
+      <p className="font-heading text-3xl font-semibold tracking-tight">
+        {monthlyIncome != null ? `$${monthlyIncome.toLocaleString()}` : "Not set"}
+      </p>
+      <div className="flex gap-2">
         <Input
           type="number"
           inputMode="decimal"
@@ -491,36 +510,42 @@ function IncomeCard({
         >
           Update
         </Button>
-      </CardContent>
-    </Card>
+      </div>
+    </Stat>
   )
 }
 
-function NotificationsTab({
+function AttentionPanel({
   risk,
   profile,
+  className,
 }: {
   risk: ReturnType<typeof assessRisk>
   profile: ObligationsProfile
+  className?: string
 }) {
   return (
-    <div className="grid gap-4">
-      {risk.reasons.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          No warnings right now. Check back after your next due date.
-        </p>
-      ) : (
-        <ul className="grid gap-2">
-          {risk.reasons.map((reason) => (
-            <li key={reason}>
-              <Card
-                className={cn(
-                  "flex-row items-start gap-2 px-4",
-                  risk.level === "act"
-                    ? "ring-destructive/30"
-                    : "ring-warning/30"
-                )}
-              >
+    <Card className={className}>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <IconBell className="size-4" />
+          Needs attention
+        </CardTitle>
+        {risk.reasons.length > 0 ? (
+          <CardAction>
+            <Badge variant="secondary">{risk.reasons.length}</Badge>
+          </CardAction>
+        ) : null}
+      </CardHeader>
+      <CardContent className="grid gap-4">
+        {risk.reasons.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            No warnings right now. Check back after your next due date.
+          </p>
+        ) : (
+          <ul className="grid divide-y">
+            {risk.reasons.map((reason) => (
+              <li key={reason} className="flex items-start gap-2 py-2 first:pt-0">
                 <IconAlertTriangle
                   className={cn(
                     "mt-0.5 size-4 shrink-0",
@@ -530,40 +555,40 @@ function NotificationsTab({
                   )}
                 />
                 <p className="text-sm">{reason}</p>
-              </Card>
-            </li>
-          ))}
-        </ul>
-      )}
+              </li>
+            ))}
+          </ul>
+        )}
 
-      {risk.level === "act" ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Get Help</CardTitle>
-            <CardDescription className="text-base">
-              Pick a door. This does not send anything until you tap one.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-wrap gap-2">
-            <a
-              href="tel:211"
-              className={cn(buttonVariants({ variant: "outline" }))}
-            >
-              <IconPhoneCall />
-              Call 211
-            </a>
-            {profile.caseManagerContact ? (
+        {risk.level === "act" ? (
+          <div className="grid gap-3 rounded-lg border p-3">
+            <div>
+              <p className="font-medium">Get Help</p>
+              <p className="text-sm text-muted-foreground">
+                Pick a door. This does not send anything until you tap one.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
               <a
-                href={`tel:${profile.caseManagerContact.replace(/[^0-9+]/g, "")}`}
+                href="tel:211"
                 className={cn(buttonVariants({ variant: "outline" }))}
               >
                 <IconPhoneCall />
-                Call {profile.caseManagerName || "case manager"}
+                Call 211
               </a>
-            ) : null}
-          </CardContent>
-        </Card>
-      ) : null}
-    </div>
+              {profile.caseManagerContact ? (
+                <a
+                  href={`tel:${profile.caseManagerContact.replace(/[^0-9+]/g, "")}`}
+                  className={cn(buttonVariants({ variant: "outline" }))}
+                >
+                  <IconPhoneCall />
+                  Call {profile.caseManagerName || "case manager"}
+                </a>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
+      </CardContent>
+    </Card>
   )
 }

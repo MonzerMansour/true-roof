@@ -90,7 +90,6 @@ export type ObligationsProfile = {
   incomeUpdatedAt: string | null
   lastShutoffNoticeAt: string | null
   lastCheckInAt: string | null
-  lastCheckInFlaggedAt: string | null
   // Deadlines the person typed in once. Profiles saved before this field
   // existed do not have it, so read it as `profile.deadlines ?? []`.
   deadlines?: Deadline[]
@@ -137,6 +136,5 @@ export const emptyProfile: ObligationsProfile = {
   incomeUpdatedAt: null,
   lastShutoffNoticeAt: null,
   lastCheckInAt: null,
-  lastCheckInFlaggedAt: null,
   deadlines: [],
 }
