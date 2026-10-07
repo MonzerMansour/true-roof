@@ -13,7 +13,6 @@ import {
 } from "@tabler/icons-react"
 
 import { useSession } from "@/components/auth/session-provider"
-import { NeedChoices } from "@/components/app/need-choices"
 import { MarketingPhoto } from "@/components/marketing/marketing-photo"
 import { Badge } from "@/components/ui/badge"
 import { buttonVariants } from "@/components/ui/button"
@@ -92,9 +91,7 @@ export function SeekerDashboard({ listings }: { listings: Listing[] }) {
     const completed = loadCompletedOccurrenceIds()
     setCompletedIds(completed)
     if (plan) {
-      setUpcoming(
-        buildSchedule(plan, completed).upcoming.slice(0, 6)
-      )
+      setUpcoming(buildSchedule(plan, completed).upcoming.slice(0, 6))
     } else {
       setUpcoming([])
     }
@@ -117,7 +114,11 @@ export function SeekerDashboard({ listings }: { listings: Listing[] }) {
     .filter((item): item is Listing => Boolean(item))
 
   const risk = profile
-    ? assessRisk(buildSchedule(profile, completedIds).upcoming, completedIds, profile)
+    ? assessRisk(
+        buildSchedule(profile, completedIds).upcoming,
+        completedIds,
+        profile
+      )
     : null
   const riskUi = risk ? riskCopy[risk.level] : null
   const nextDue = upcoming[0] ?? null
@@ -173,6 +174,10 @@ export function SeekerDashboard({ listings }: { listings: Listing[] }) {
                 : heroLine}
             </p>
 
+            {/* One primary action, and a second that follows where the
+                person actually is. "Set up Financials" used to sit here from
+                day one, offering paperwork to someone who has nowhere to sleep
+                tonight. It now appears once they have a plan started. */}
             <div className="mt-6 flex flex-wrap gap-2">
               <Link
                 href="/places"
@@ -181,16 +186,28 @@ export function SeekerDashboard({ listings }: { listings: Listing[] }) {
                 <IconMapPin />
                 Find a place
               </Link>
-              <Link
-                href={profile ? "/financials" : "/get-started/financial-help"}
-                className={cn(
-                  buttonVariants({ variant: "outline", size: "lg" }),
-                  "rounded-full"
-                )}
-              >
-                <IconWallet />
-                {profile ? "Open Financials" : "Set up Financials"}
-              </Link>
+              {!needs ? (
+                <Link
+                  href="/get-started/find-a-place"
+                  className={cn(
+                    buttonVariants({ variant: "outline", size: "lg" }),
+                    "rounded-full"
+                  )}
+                >
+                  Answer a few questions
+                </Link>
+              ) : profile ? (
+                <Link
+                  href="/financials"
+                  className={cn(
+                    buttonVariants({ variant: "outline", size: "lg" }),
+                    "rounded-full"
+                  )}
+                >
+                  <IconWallet />
+                  Open Financials
+                </Link>
+              ) : null}
             </div>
           </div>
 
@@ -255,13 +272,42 @@ export function SeekerDashboard({ listings }: { listings: Listing[] }) {
         </div>
       </section>
 
+      {/* Was the same two-card "pick one" chooser as the deleted hub page.
+          A first-time person gets one thing to do, and the quieter path for
+          someone who already has a place sits under it as a sentence rather
+          than competing as a tile. */}
       {empty ? (
         <section className="grid gap-4">
           <SectionHead
             title="Start here"
-            body="Pick what you need right now. Your dashboard will fill in after."
+            body="One step. Your dashboard fills in as you go."
           />
-          <NeedChoices />
+          <div className="rounded-xl border bg-card p-5">
+            <h3 className="font-heading text-lg font-semibold">
+              Find somewhere to stay tonight
+            </h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Shelters and safe parking across Santa Clara County. No account
+              needed to look, call, or get directions.
+            </p>
+            <Link
+              href="/places"
+              className={cn(buttonVariants({ size: "touch" }), "mt-4")}
+            >
+              <IconMapPin />
+              See places near you
+            </Link>
+            <p className="mt-4 text-sm text-muted-foreground">
+              Already have a place and want help keeping it?{" "}
+              <Link
+                href="/get-started/financial-help"
+                className="font-medium underline"
+              >
+                Set up rent and deadlines
+              </Link>
+              .
+            </p>
+          </div>
         </section>
       ) : null}
 
@@ -461,35 +507,38 @@ export function SeekerDashboard({ listings }: { listings: Listing[] }) {
           )}
         </Panel>
 
+        {/* Was a five item directory, two of which linked to pages that say
+            "Not built yet". A shortcut to something unbuilt is not a shortcut.
+            What is left is what this person can act on now. */}
         <Panel
-          title="Shortcuts"
-          description="Jump to the parts of True Roof you use most."
+          title="What to do next"
+          description="Based on where you are right now."
         >
           <div className="grid gap-2">
-            <Shortcut
-              href="/places"
-              title="Places"
-              body="Shelters and safe parking near you"
-            />
-            <Shortcut
-              href={profile ? "/financials" : "/get-started/financial-help"}
-              title="Financials"
-              body="Rent, bills, cushion, and reminders"
-            />
-            <Shortcut
-              href="/financials/letters"
-              title="Photo a letter"
-              body="Coming next: one task from a county letter"
-            />
-            <Shortcut
-              href="/financials/income"
-              title="Will this job hurt me?"
-              body="Coming next: wage vs benefits estimate"
-            />
+            {!needs ? (
+              <Shortcut
+                href="/get-started/find-a-place"
+                title="Answer a few questions"
+                body="One minute, and the places list drops what cannot take you"
+              />
+            ) : null}
+            {profile ? (
+              <Shortcut
+                href="/financials"
+                title="Rent and deadlines"
+                body="What is due, and what is coming up"
+              />
+            ) : (
+              <Shortcut
+                href="/get-started/financial-help"
+                title="Already have a place?"
+                body="Set up rent, bills, and renewal dates so none of them slip"
+              />
+            )}
             <Shortcut
               href="/settings"
               title="Your answers"
-              body="Household answers and account"
+              body="Change what you told us, or make the text bigger"
             />
           </div>
         </Panel>

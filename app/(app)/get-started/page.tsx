@@ -1,25 +1,17 @@
-import type { Metadata } from "next"
+import { redirect } from "next/navigation"
 
-import { NeedChoices } from "@/components/app/need-choices"
-import { Container } from "@/components/marketing/container"
-
-export const metadata: Metadata = {
-  title: "What do you need",
-  description: "Looking for shelter tonight, or help staying housed?",
-}
-
+// This was a menu: "What do you need right now? Pick one", and two cards.
+//
+// It asked someone to classify themselves before the app did anything for
+// them, which is the hardest question to answer when you are tired and it is
+// getting dark. Nothing in the app linked here, so in practice it was a page
+// you could only reach by typing the URL.
+//
+// Seeing real places is the useful first step for almost everyone who opens
+// True Roof, and it needs no account and no self-classification. The questions
+// that narrow the list, and the after-you-are-housed path, are both offered
+// from there in context. The redirect stays so an old bookmark still lands
+// somewhere useful.
 export default function GetStartedPage() {
-  return (
-    <Container className="py-8 sm:py-10">
-      <p className="text-sm font-medium text-primary">Welcome</p>
-      <h1 className="font-heading mt-2 max-w-2xl text-3xl font-semibold tracking-tight sm:text-4xl">
-        What do you need right now?
-      </h1>
-      <p className="mt-2 max-w-xl text-muted-foreground">Pick one.</p>
-
-      <div className="mt-8">
-        <NeedChoices />
-      </div>
-    </Container>
-  )
+  redirect("/places")
 }

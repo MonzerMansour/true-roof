@@ -2,7 +2,6 @@ import type { Metadata } from "next"
 
 import { Container } from "@/components/marketing/container"
 import { DashboardClient } from "@/components/dashboard/dashboard-client"
-import { FinancialStubs } from "@/components/dashboard/financial-stubs"
 import { LocalOnlyNotice } from "@/components/dashboard/local-only-notice"
 
 export const metadata: Metadata = {
@@ -27,9 +26,12 @@ export default function FinancialsPage() {
 
         <LocalOnlyNotice className="mt-4 max-w-2xl rounded-xl border bg-card p-3 text-sm ring-1 ring-primary/10" />
 
+        {/* The "Coming next" grid of unbuilt features was removed. Three of
+            its four tiles linked to pages that say "Not built yet", which is a
+            roadmap, not something a person can act on. The stub pages still
+            exist under /financials/* for whoever builds them. */}
         <div className="mt-8 grid gap-8">
           <DashboardClient />
-          <FinancialStubs />
         </div>
       </Container>
     </div>
