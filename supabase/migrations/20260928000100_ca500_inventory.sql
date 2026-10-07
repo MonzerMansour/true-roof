@@ -17,7 +17,7 @@
 -- "not published", never "no". See lib/listings/sources.ts for what each
 -- source covers, and how the UI turns a null into "call to check".
 --
--- 84 shelters and 7 safe parking sites.
+-- 84 shelters and 8 safe parking sites.
 -- 6 domestic violence programs from the HUD list are deliberately
 -- excluded: their locations are not public, and crisis and DV go through a
 -- separate human path rather than the listings feed.
@@ -53,8 +53,9 @@ insert into public.organizations (id, name, description, access_code) values
   ('a80e7417-b896-5620-80b1-55d5eebb6a58', 'St. Andrew''s Residential Programs for Youth', null, public.generate_access_code()),
   ('db955654-26ba-5a3a-ad2f-e645b9314998', 'St. Joseph''s Family Center', null, public.generate_access_code()),
   ('91467490-21cf-5905-83e6-9dbbd2ac229c', 'YWCA Golden Gate Silicon Valley', null, public.generate_access_code()),
-  ('69e0273f-a643-5794-8b66-770cc90302e7', 'MOVE Mountain View', 'Runs the City of Mountain View safe parking lots. To apply, call (650) 861-0181 or email movemvemail@gmail.com. The city gives preference to families with students in Mountain View school districts, people who live or work in Mountain View, seniors 55 and older, and people with disabilities. Restrooms, water, and wash stations are on the lots.', public.generate_access_code()),
+  ('69e0273f-a643-5794-8b66-770cc90302e7', 'MOVE Mountain View', 'Runs the City of Mountain View safe parking lots, seven days a week, and is one of the county''s two contracted safe parking operators. Free: it is temporary shelter, not a rental. To apply, call (650) 861-0181 or email movemvemail@gmail.com; the application goes straight onto a waitlist whose length depends on vacancies. You need a current California driver''s license, vehicle registration, and insurance, and if you cannot get those, call the office and they will refer you for help. Every lot has restrooms and hand washing stations, with 24/7 security driving through and staff checking daily. Stays renew month to month with a case manager while you work toward permanent housing. Priority goes to Mountain View and Palo Alto residents, and to Santa Clara County applicants who are disabled or seniors. MOVE manages seven lots in total; the four below are the city-run ones, and rules on hours and pets differ lot by lot.', public.generate_access_code()),
   ('0cf22988-d7d5-56f2-a5ad-7429f1ea9452', 'City of San Jose Housing Department', 'Runs two safe parking sites through contracted providers. Intake is through the city''s targeted outreach program, not walk up, so call or email safe.parking@sanjoseca.gov rather than driving to the lot. The program is focused on RVs. One operable commuter car is allowed per participant when there is space. Participants get case management and two meals a day.', public.generate_access_code()),
+  ('9c1b8f5a-ffc1-5e64-b75a-3c03b75fc9e3', 'Amigos de Guadalupe', 'One of the county''s two contracted safe parking operators, serving people living in operable cars, trucks, vans, and SUVs with overnight parking, case management, and free showers through local YMCAs. Up to two pets are welcome with proof of current vaccinations. Apply by taking copies of your documents to 1897 Alum Rock Avenue, Suite 35, San Jose, or emailing them to safepark@amigosdeguadalupe.org. You need a current driver''s license for drivers, current ID for every adult, a birth certificate for every child, current vehicle registration, insurance even if expired, and the last 30 days of income and expenses.', public.generate_access_code()),
   ('bf346f87-e559-5094-a240-aa05d5eb9a1a', 'County of Santa Clara Office of Supportive Housing', 'Funds safe parking across the county and runs the Here4You referral line at (408) 385-2400 for shelter and temporary housing.', public.generate_access_code())
 on conflict (id) do update set
   name = excluded.name,
@@ -72,20 +73,20 @@ insert into public.listings (
     'Shoreline Lot B',
     'parking',
     'call_first',
-    '2026-09-26T00:00:00Z',
+    '2026-10-06T00:00:00Z',
     'Mountain View',
     'Crittenden Lane, Mountain View, CA',
     '+16508610181',
     'call',
     'Oversized vehicles with some passenger vehicles. 46 oversized vehicle spaces, 2 ADA spaces, 1 loading zone.',
     'car_van_rv',
-    null,
+    'required',
     null,
     null,
     null,
     'city_program',
     'https://www.mountainview.gov/our-city/departments/city-manager-s-office/human-services/homelessness/safe-parking',
-    '2026-09-26',
+    '2026-10-06',
     true,
     1,
     true
@@ -96,20 +97,20 @@ insert into public.listings (
     'Evelyn Lot',
     'parking',
     'call_first',
-    '2026-09-26T00:00:00Z',
+    '2026-10-06T00:00:00Z',
     'Mountain View',
     'Evelyn Avenue, Mountain View, CA',
     '+16508610181',
     'call',
-    'Former VTA parking lot. Oversized vehicles with some passenger vehicles. 30 oversized vehicle spaces plus 21 flex spaces. The city has extended use of this lot through June 30, 2026.',
+    'Former VTA parking lot. Oversized vehicles with some passenger vehicles. 30 oversized vehicle spaces plus 21 flex spaces. The city page still lists this lot, but says its extension ran through June 30 2026, which has passed. Call before you go.',
     'car_van_rv',
-    null,
+    'required',
     null,
     null,
     null,
     'city_program',
     'https://www.mountainview.gov/our-city/departments/city-manager-s-office/human-services/homelessness/safe-parking',
-    '2026-09-26',
+    '2026-10-06',
     false,
     2,
     true
@@ -120,20 +121,20 @@ insert into public.listings (
     'St. Timothy''s Lot',
     'parking',
     'call_first',
-    '2026-09-26T00:00:00Z',
+    '2026-10-06T00:00:00Z',
     'Mountain View',
     null,
     '+16508610181',
     'call',
     'Passenger vehicles only. 4 spaces. Faith hosted lot.',
     'car_only',
-    null,
+    'required',
     '19:00',
     '07:00',
     null,
     'city_program',
     'https://www.mountainview.gov/our-city/departments/city-manager-s-office/human-services/homelessness/safe-parking',
-    '2026-09-26',
+    '2026-10-06',
     false,
     3,
     true
@@ -144,20 +145,20 @@ insert into public.listings (
     'Lord''s Grace Lot',
     'parking',
     'call_first',
-    '2026-09-26T00:00:00Z',
+    '2026-10-06T00:00:00Z',
     'Mountain View',
     null,
     '+16508610181',
     'call',
     'Passenger vehicles only. 4 spaces. Faith hosted lot.',
     'car_only',
-    null,
+    'required',
     '18:00',
     '08:00',
     null,
     'city_program',
     'https://www.mountainview.gov/our-city/departments/city-manager-s-office/human-services/homelessness/safe-parking',
-    '2026-09-26',
+    '2026-10-06',
     false,
     4,
     true
@@ -223,7 +224,7 @@ insert into public.listings (
     'call',
     'Recreational vehicles and passenger cars. City owned lot near the Baylands Athletic Center, with water, power, lighting, and restrooms. Funded by the County of Santa Clara.',
     'car_van_rv',
-    null,
+    'required',
     null,
     null,
     null,
@@ -232,6 +233,30 @@ insert into public.listings (
     '2026-09-26',
     true,
     7,
+    true
+  ),
+  (
+    'de24d402-63b0-5d38-83a4-8d7fa298928d',
+    '9c1b8f5a-ffc1-5e64-b75a-3c03b75fc9e3',
+    'Amigos de Guadalupe Safe Park',
+    'parking',
+    'call_first',
+    '2026-10-06T00:00:00Z',
+    'San Jose',
+    null,
+    null,
+    'call',
+    'Operable cars, trucks, vans, and SUVs. Overnight parking for individuals and families, with case management and free showers through local YMCAs.',
+    'car_van',
+    'required',
+    null,
+    null,
+    null,
+    'city_program',
+    'https://www.amigoscenter.com/safepark',
+    '2026-10-06',
+    false,
+    8,
     true
   ),
   (
@@ -255,7 +280,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    8,
+    9,
     true
   ),
   (
@@ -279,7 +304,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    9,
+    10,
     true
   ),
   (
@@ -303,7 +328,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    10,
+    11,
     true
   ),
   (
@@ -327,7 +352,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    11,
+    12,
     true
   ),
   (
@@ -351,7 +376,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    12,
+    13,
     true
   ),
   (
@@ -375,7 +400,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    13,
+    14,
     true
   ),
   (
@@ -399,7 +424,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    14,
+    15,
     true
   ),
   (
@@ -423,7 +448,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    15,
+    16,
     true
   ),
   (
@@ -447,7 +472,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    16,
+    17,
     true
   ),
   (
@@ -471,7 +496,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    17,
+    18,
     true
   ),
   (
@@ -495,7 +520,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    18,
+    19,
     true
   ),
   (
@@ -519,7 +544,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    19,
+    20,
     true
   ),
   (
@@ -543,7 +568,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    20,
+    21,
     true
   ),
   (
@@ -567,7 +592,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    21,
+    22,
     true
   ),
   (
@@ -591,7 +616,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    22,
+    23,
     true
   ),
   (
@@ -615,7 +640,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    23,
+    24,
     true
   ),
   (
@@ -639,7 +664,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    24,
+    25,
     true
   ),
   (
@@ -663,7 +688,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    25,
+    26,
     true
   ),
   (
@@ -687,7 +712,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    26,
+    27,
     true
   ),
   (
@@ -711,7 +736,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    27,
+    28,
     true
   ),
   (
@@ -735,7 +760,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    28,
+    29,
     true
   ),
   (
@@ -759,7 +784,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    29,
+    30,
     true
   ),
   (
@@ -783,7 +808,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    30,
+    31,
     true
   ),
   (
@@ -807,7 +832,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    31,
+    32,
     true
   ),
   (
@@ -831,7 +856,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    32,
+    33,
     true
   ),
   (
@@ -855,7 +880,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    33,
+    34,
     true
   ),
   (
@@ -879,7 +904,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    34,
+    35,
     true
   ),
   (
@@ -903,7 +928,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    35,
+    36,
     true
   ),
   (
@@ -927,7 +952,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    36,
+    37,
     true
   ),
   (
@@ -951,7 +976,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    37,
+    38,
     true
   ),
   (
@@ -975,7 +1000,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    38,
+    39,
     true
   ),
   (
@@ -999,7 +1024,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    39,
+    40,
     true
   ),
   (
@@ -1023,7 +1048,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    40,
+    41,
     true
   ),
   (
@@ -1047,7 +1072,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    41,
+    42,
     true
   ),
   (
@@ -1071,7 +1096,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    42,
+    43,
     true
   ),
   (
@@ -1095,7 +1120,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    43,
+    44,
     true
   ),
   (
@@ -1119,7 +1144,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    44,
+    45,
     true
   ),
   (
@@ -1143,7 +1168,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    45,
+    46,
     true
   ),
   (
@@ -1167,7 +1192,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    46,
+    47,
     true
   ),
   (
@@ -1191,7 +1216,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    47,
+    48,
     true
   ),
   (
@@ -1215,7 +1240,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    48,
+    49,
     true
   ),
   (
@@ -1239,7 +1264,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    49,
+    50,
     true
   ),
   (
@@ -1263,7 +1288,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    50,
+    51,
     true
   ),
   (
@@ -1287,7 +1312,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    51,
+    52,
     true
   ),
   (
@@ -1311,7 +1336,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    52,
+    53,
     true
   ),
   (
@@ -1335,7 +1360,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    53,
+    54,
     true
   ),
   (
@@ -1359,7 +1384,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    54,
+    55,
     true
   ),
   (
@@ -1383,7 +1408,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    55,
+    56,
     true
   ),
   (
@@ -1407,7 +1432,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    56,
+    57,
     true
   ),
   (
@@ -1431,7 +1456,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    57,
+    58,
     true
   ),
   (
@@ -1455,7 +1480,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    58,
+    59,
     true
   ),
   (
@@ -1479,7 +1504,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    59,
+    60,
     true
   ),
   (
@@ -1503,7 +1528,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    60,
+    61,
     true
   ),
   (
@@ -1527,7 +1552,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    61,
+    62,
     true
   ),
   (
@@ -1551,7 +1576,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    62,
+    63,
     true
   ),
   (
@@ -1575,7 +1600,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    63,
+    64,
     true
   ),
   (
@@ -1599,7 +1624,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    64,
+    65,
     true
   ),
   (
@@ -1623,7 +1648,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    65,
+    66,
     true
   ),
   (
@@ -1647,7 +1672,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    66,
+    67,
     true
   ),
   (
@@ -1671,7 +1696,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    67,
+    68,
     true
   ),
   (
@@ -1695,7 +1720,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    68,
+    69,
     true
   ),
   (
@@ -1719,7 +1744,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    69,
+    70,
     true
   ),
   (
@@ -1743,7 +1768,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    70,
+    71,
     true
   ),
   (
@@ -1767,7 +1792,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    71,
+    72,
     true
   ),
   (
@@ -1791,7 +1816,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    72,
+    73,
     true
   ),
   (
@@ -1815,7 +1840,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    73,
+    74,
     true
   ),
   (
@@ -1839,7 +1864,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    74,
+    75,
     true
   ),
   (
@@ -1863,7 +1888,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    75,
+    76,
     true
   ),
   (
@@ -1887,7 +1912,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    76,
+    77,
     true
   ),
   (
@@ -1911,7 +1936,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    77,
+    78,
     true
   ),
   (
@@ -1935,7 +1960,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    78,
+    79,
     true
   ),
   (
@@ -1959,7 +1984,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    79,
+    80,
     true
   ),
   (
@@ -1983,7 +2008,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    80,
+    81,
     true
   ),
   (
@@ -2007,7 +2032,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    81,
+    82,
     true
   ),
   (
@@ -2031,7 +2056,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    82,
+    83,
     true
   ),
   (
@@ -2055,7 +2080,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    83,
+    84,
     true
   ),
   (
@@ -2079,7 +2104,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    84,
+    85,
     true
   ),
   (
@@ -2103,7 +2128,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    85,
+    86,
     true
   ),
   (
@@ -2127,7 +2152,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    86,
+    87,
     true
   ),
   (
@@ -2151,7 +2176,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    87,
+    88,
     true
   ),
   (
@@ -2175,7 +2200,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    88,
+    89,
     true
   ),
   (
@@ -2199,7 +2224,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    89,
+    90,
     true
   ),
   (
@@ -2223,7 +2248,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    90,
+    91,
     true
   ),
   (
@@ -2247,7 +2272,7 @@ insert into public.listings (
     'https://files.hudexchange.info/reports/published/CoC_HIC_CoC_CA-500-2025_CA_2025.pdf',
     '2025-01-22',
     false,
-    91,
+    92,
     true
   )
 on conflict (id) do update set

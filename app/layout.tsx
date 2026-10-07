@@ -5,6 +5,7 @@ import { Noto_Sans, Nunito_Sans } from "next/font/google"
 import { AppProviders } from "@/components/app-providers"
 import { cn } from "@/lib/utils"
 import { getAppSession } from "@/lib/auth/session"
+import { a11yBootScript } from "@/lib/a11y/preferences"
 import { site } from "@/lib/site"
 
 import "./globals.css"
@@ -64,6 +65,13 @@ export default async function RootLayout({
         nunitoSansHeading.variable
       )}
     >
+      <head>
+        {/* Applies saved text size and contrast before the first paint.
+            Without it the page renders at normal size and jumps when React
+            hydrates, which is the person this setting exists for watching the
+            text they need resize under them. */}
+        <script dangerouslySetInnerHTML={{ __html: a11yBootScript }} />
+      </head>
       <body>
         <AppProviders session={session}>
           <a

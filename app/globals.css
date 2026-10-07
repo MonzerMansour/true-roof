@@ -146,6 +146,81 @@
     --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+
+/* Display preferences a person sets for themselves.
+   lib/a11y/preferences.ts writes these attributes on <html>, and an inline
+   script in app/layout.tsx sets them before first paint so the page never
+   resizes under someone after it has loaded. */
+
+/* Large text.
+   Tailwind sizes AND spacing are in rem, so scaling the root font size grows
+   the whole layout together. Scaling only font-size would leave bigger text
+   inside boxes that did not grow with it. */
+html[data-text-size="large"] {
+  font-size: 125%;
+}
+html[data-text-size="larger"] {
+  font-size: 150%;
+}
+
+/* High contrast.
+   Only the token values change, so every component follows without any
+   component-level branching. Measured against the theme background:
+     light  foreground 21:1, muted-foreground 12.2:1, border 7.4:1
+     dark   foreground 21:1, muted-foreground 12.4:1, border 6.5:1
+   AA wants 4.5:1 for text and 3:1 for a boundary, so these clear both with
+   room to spare. */
+html[data-contrast="high"] {
+  --foreground: oklch(0 0 0);
+  --card-foreground: oklch(0 0 0);
+  --popover-foreground: oklch(0 0 0);
+  --muted-foreground: oklch(0.33 0 0);
+  --secondary-foreground: oklch(0 0 0);
+  --accent-foreground: oklch(0 0 0);
+  --border: oklch(0.45 0 0);
+  --input: oklch(0.45 0 0);
+  --ring: oklch(0 0 0);
+}
+
+html[data-contrast="high"].dark {
+  --background: oklch(0 0 0);
+  --foreground: oklch(1 0 0);
+  --card: oklch(0.12 0 0);
+  --card-foreground: oklch(1 0 0);
+  --popover: oklch(0.12 0 0);
+  --popover-foreground: oklch(1 0 0);
+  --muted-foreground: oklch(0.83 0 0);
+  --secondary-foreground: oklch(1 0 0);
+  --accent-foreground: oklch(1 0 0);
+  --border: oklch(0.65 0 0);
+  --input: oklch(0.65 0 0);
+  --ring: oklch(1 0 0);
+}
+
+/* A boundary you can actually see. In high contrast a hairline border is the
+   first thing to disappear, so cards and inputs get a real one. */
+html[data-contrast="high"] [data-slot="card"],
+html[data-contrast="high"] [data-slot="input"],
+html[data-contrast="high"] [data-slot="textarea"],
+html[data-contrast="high"] [data-slot="select-trigger"] {
+  border-width: 2px;
+}
+
+/* Focus has to be unmissable, not just present. */
+html[data-contrast="high"] :focus-visible {
+  outline: 3px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* Someone who asked for high contrast did not ask for decorative motion. */
+html[data-contrast="high"] *,
+html[data-contrast="high"] *::before,
+html[data-contrast="high"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

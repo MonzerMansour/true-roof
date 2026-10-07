@@ -3,6 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 
+import { DisplaySettings } from "@/components/app/display-settings"
 import { NeedsSummary } from "@/components/matching/needs-summary"
 import { MyPlaceRequests } from "@/components/places/my-place-requests"
 import { Button, buttonVariants } from "@/components/ui/button"
@@ -13,7 +14,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { Field, FieldContent, FieldDescription, FieldLabel } from "@/components/ui/field"
+import {
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldLabel,
+} from "@/components/ui/field"
 import { Switch } from "@/components/ui/switch"
 import { useSession } from "@/components/auth/session-provider"
 import { setDeveloperMode, useDeveloperMode } from "@/lib/dev-mode"
@@ -54,7 +60,7 @@ export function SettingsClient() {
     <div className="flex max-w-2xl flex-col gap-8">
       <div>
         <p className="text-sm font-medium text-primary">Account</p>
-        <h1 className="font-heading mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
+        <h1 className="mt-2 font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
           Settings
         </h1>
         <p className="mt-2 text-muted-foreground">
@@ -62,6 +68,10 @@ export function SettingsClient() {
           under this account menu, not in the sidebar.
         </p>
       </div>
+
+      {/* First, not last: for someone who cannot read the page comfortably,
+          nothing below this matters until it is set. */}
+      <DisplaySettings />
 
       <Card>
         <CardHeader>
@@ -185,7 +195,9 @@ export function SettingsClient() {
               checked={developerMode}
               onCheckedChange={(checked) => {
                 setDeveloperMode(checked)
-                toast.success(checked ? "Developer mode on." : "Developer mode off.")
+                toast.success(
+                  checked ? "Developer mode on." : "Developer mode off."
+                )
               }}
             />
           </Field>
