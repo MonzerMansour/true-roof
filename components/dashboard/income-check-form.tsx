@@ -76,9 +76,9 @@ export function IncomeCheckForm() {
           <IconAlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-600" />
           <p>
             These are estimates from general rules, not a benefits
-            determination — deductions and your county&apos;s rules can change
-            the real number. Confirm with a worker before you decide. True
-            Roof will not tell you to take or refuse a job.
+            determination. Deductions and your county&apos;s rules can change
+            the real number. Confirm with a worker before you decide. True Roof
+            will not tell you to take or refuse a job.
           </p>
         </CardContent>
       </Card>
@@ -247,7 +247,9 @@ function IncomeCheckResults({ result }: { result: IncomeCheckResult }) {
         <Card>
           <CardHeader>
             <CardTitle>Housing voucher rent share</CardTitle>
-            <CardDescription>Gradual — moves with your income.</CardDescription>
+            <CardDescription>
+              Gradual. It moves with your income.
+            </CardDescription>
           </CardHeader>
           <CardContent className="flex items-center gap-3 text-lg font-medium">
             <span>{money(result.rentShare.before)}</span>
@@ -261,7 +263,9 @@ function IncomeCheckResults({ result }: { result: IncomeCheckResult }) {
         <Card>
           <CardHeader>
             <CardTitle>CalFresh benefit</CardTitle>
-            <CardDescription>Gradual — moves with your income.</CardDescription>
+            <CardDescription>
+              Gradual. It moves with your income.
+            </CardDescription>
           </CardHeader>
           <CardContent className="flex items-center gap-3 text-lg font-medium">
             <span>{money(result.calFresh.before)}</span>
@@ -287,16 +291,16 @@ function IncomeCheckResults({ result }: { result: IncomeCheckResult }) {
             <CardDescription>
               Estimated using the Medi-Cal expansion income limit for your
               household size ({money(result.mediCal.limit)}/year). Other
-              Medi-Cal categories (disability, age, pregnancy) follow
-              different rules this does not check.
+              Medi-Cal categories (disability, age, pregnancy) follow different
+              rules this does not check.
             </CardDescription>
           </CardHeader>
           <CardContent>
             {result.mediCal.wasUnder && !result.mediCal.isUnder ? (
               <p className="font-medium text-destructive">
-                This income may put you over the Medi-Cal limit. Confirm
-                before assuming you would lose coverage — do not make this
-                decision on this estimate alone.
+                This income may put you over the Medi-Cal limit. Confirm before
+                assuming you would lose coverage. Do not make this decision on
+                this estimate alone.
               </p>
             ) : !result.mediCal.wasUnder && result.mediCal.isUnder ? (
               <p className="font-medium">
@@ -317,9 +321,9 @@ function IncomeCheckResults({ result }: { result: IncomeCheckResult }) {
         <CardHeader>
           <CardTitle>Net change</CardTitle>
           <CardDescription>
-            New income, minus the rent share increase, plus the CalFresh
-            change. Does not include Medi-Cal, since losing coverage is not a
-            dollar amount.
+            New income, minus the rent share increase, plus the CalFresh change.
+            Does not include Medi-Cal, since losing coverage is not a dollar
+            amount.
           </CardDescription>
         </CardHeader>
         <CardContent>

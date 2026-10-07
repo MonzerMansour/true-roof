@@ -375,7 +375,7 @@ function isoDate(date: Date) {
   return `${y}-${m}-${d}`
 }
 
-// "YYYY-MM-DD" strings must be parsed as local dates, not UTC — `new
+// "YYYY-MM-DD" strings must be parsed as local dates, not UTC. `new
 // Date("2026-10-01")` parses as UTC midnight, which renders as Sep 30 in any
 // timezone behind UTC.
 function parseLocalDate(iso: string) {

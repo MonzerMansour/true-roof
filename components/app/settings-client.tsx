@@ -64,8 +64,8 @@ export function SettingsClient() {
           Settings
         </h1>
         <p className="mt-2 text-muted-foreground">
-          Review what you told True Roof here. Place answers and your plan live
-          under this account menu, not in the sidebar.
+          Change what you told us, make the text bigger, or delete everything
+          off this phone.
         </p>
       </div>
 

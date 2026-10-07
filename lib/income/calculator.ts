@@ -1,4 +1,4 @@
-// Rough, general-rule estimates only — not a benefits determination.
+// Rough, general-rule estimates only, not a benefits determination.
 // Real amounts depend on deductions, household composition, and county
 // rules that only a caseworker's system actually has. Every function here
 // is a simplification of a real federal formula, kept because it is at

@@ -139,15 +139,18 @@ export function SeekerDashboard({ listings }: { listings: Listing[] }) {
     !needs &&
     !profile
 
+  // The most pressing real thing, said as something to do. A deadline with a
+  // date beats an ask, which beats a saved place, because that is the order
+  // they stop being optional in.
   const heroLine = nextDue
-    ? `${nextDue.title} by ${formatShortDate(nextDue.date)}`
+    ? `${nextDue.title} is due ${formatShortDate(nextDue.date)}.`
     : asks.length > 0
-      ? `${asks.length} open ask${asks.length === 1 ? "" : "s"} with sites`
+      ? `You asked ${asks.length} ${asks.length === 1 ? "site" : "sites"} for a place. Call to check where it stands.`
       : favoriteListings.length > 0
-        ? `${favoriteListings.length} saved place${favoriteListings.length === 1 ? "" : "s"} ready to reopen`
+        ? `You saved ${favoriteListings.length} ${favoriteListings.length === 1 ? "place" : "places"}. Open one to call it.`
         : needs
-          ? "Your place answers are ready. Browse sites that fit."
-          : "Start with a place tonight, or set up rent and bills."
+          ? "Your answers are saved. See the places that can take you."
+          : "Answer a few questions and this list only shows places that can take you."
 
   return (
     <div className="grid gap-8 pb-4">
@@ -170,7 +173,11 @@ export function SeekerDashboard({ listings }: { listings: Listing[] }) {
             </h1>
             <p className="mt-3 max-w-xl text-base text-muted-foreground sm:text-lg">
               {empty
-                ? "This feed fills with asks, saved places, visits, and deadlines as you use True Roof."
+                ? // Was a description of the feed: "This feed fills with asks,
+                  // saved places, visits, and deadlines as you use True Roof."
+                  // True, and no use to anyone. A first-time person needs one
+                  // thing to do, not an explanation of the furniture.
+                  "Start by seeing what is open near you. It takes one tap and no account."
                 : heroLine}
             </p>
 

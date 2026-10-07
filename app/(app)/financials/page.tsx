@@ -21,7 +21,8 @@ export default function FinancialsPage() {
           Financials
         </h1>
         <p className="mt-3 max-w-2xl text-muted-foreground">
-          Rent, bills, and program deadlines. This is not another place search.
+          Rent, bills, and the renewal dates that are easy to miss. Mark things
+          done as you go.
         </p>
 
         <LocalOnlyNotice className="mt-4 max-w-2xl rounded-xl border bg-card p-3 text-sm ring-1 ring-primary/10" />

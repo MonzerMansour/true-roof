@@ -305,7 +305,7 @@ export function FinancialHelpForm() {
       savingsGoal: rent,
       savingsSaved: existing?.savingsSaved ?? 0,
       monthlyIncome: monthlyIncome ? Number(monthlyIncome) : null,
-      // A change made here is a correction, not a "my income changed" event —
+      // A change made here is a correction, not a "my income changed" event,
       // that only happens through the dedicated update action on Financials,
       // so the drop-detection baseline carries over untouched.
       previousMonthlyIncome: existing?.previousMonthlyIncome ?? null,
