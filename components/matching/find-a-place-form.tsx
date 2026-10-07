@@ -21,6 +21,8 @@ import { Input } from "@/components/ui/input"
 import { Progress } from "@/components/ui/progress"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Textarea } from "@/components/ui/textarea"
+import { VoiceInput } from "@/components/voice/voice-input"
+import type { VoiceField } from "@/lib/voice/answer-rules"
 import {
   householdLabel,
   idLabel,
@@ -177,10 +179,10 @@ function toNeeds(draft: Draft): SeekerNeeds | null {
 
   return {
     household: draft.household,
-    partnerRooms: draft.household === "with_partner" ? draft.partnerRooms : null,
+    partnerRooms:
+      draft.household === "with_partner" ? draft.partnerRooms : null,
     pet: draft.pet,
-    petWeightLbs:
-      draft.pet === "small_pet" && weight > 0 ? weight : null,
+    petWeightLbs: draft.pet === "small_pet" && weight > 0 ? weight : null,
     idStatus: draft.idStatus,
     vehicle: draft.vehicle,
     vehicleSize: hasVehicle ? draft.vehicleSize : null,
@@ -219,26 +221,35 @@ function ChoiceGroup({
   value,
   choices,
   onChange,
+  voiceField,
 }: {
   legend: string
   hint?: string
   value: string | null
   choices: Choice[]
   onChange: (value: string) => void
+  /** Lets this question be answered out loud. The spoken answer is proposed
+   * and confirmed, never applied straight to the draft. */
+  voiceField?: VoiceField
 }) {
   return (
     <FieldSet>
       <FieldLegend className="font-heading font-semibold data-[variant=legend]:text-2xl">
         {legend}
       </FieldLegend>
-      {hint ? <FieldDescription className="text-base">{hint}</FieldDescription> : null}
+      {hint ? (
+        <FieldDescription className="text-base">{hint}</FieldDescription>
+      ) : null}
       <RadioGroup
         value={value ?? ""}
         onValueChange={(next) => onChange(String(next))}
       >
         {choices.map((choice) => (
           <FieldLabel key={choice.value} htmlFor={`${legend}-${choice.value}`}>
-            <Field orientation="horizontal" className="min-h-14 items-center has-[>[data-slot=field-content]]:items-center">
+            <Field
+              orientation="horizontal"
+              className="min-h-14 items-center has-[>[data-slot=field-content]]:items-center"
+            >
               <RadioGroupItem
                 id={`${legend}-${choice.value}`}
                 value={choice.value}
@@ -253,6 +264,19 @@ function ChoiceGroup({
           </FieldLabel>
         ))}
       </RadioGroup>
+      {voiceField ? (
+        <div className="mt-4">
+          <VoiceInput
+            field={voiceField}
+            label={legend}
+            onProposal={onChange}
+            optionLabel={(proposed) =>
+              choices.find((choice) => choice.value === proposed)?.title ??
+              proposed
+            }
+          />
+        </div>
+      ) : null}
     </FieldSet>
   )
 }
@@ -383,7 +407,10 @@ export function FindAPlaceForm() {
         const body = (await response.json().catch(() => null)) as {
           retryAfterSeconds?: number
         } | null
-        const minutes = Math.max(1, Math.ceil((body?.retryAfterSeconds ?? 3600) / 60))
+        const minutes = Math.max(
+          1,
+          Math.ceil((body?.retryAfterSeconds ?? 3600) / 60)
+        )
         toast.message(
           `You have changed your answers a lot this hour. Places will use your new answers if you save again in about ${minutes} minute${minutes === 1 ? "" : "s"}.`
         )
@@ -451,6 +478,7 @@ export function FindAPlaceForm() {
             legend="Who needs a place?"
             value={draft.household}
             choices={entries(householdLabel)}
+            voiceField="household"
             onChange={(value) => {
               const household = value as Household
               patch({
@@ -485,6 +513,7 @@ export function FindAPlaceForm() {
               { value: "small_pet", title: petLabel.small_pet },
               { value: "larger_pet", title: petLabel.larger_pet },
             ]}
+            voiceField="pet"
             onChange={(value) => patch({ pet: value as PetNeed })}
           />
         ) : null}
@@ -516,7 +545,9 @@ export function FindAPlaceForm() {
               />
               <span className="text-base">pounds</span>
             </div>
-            {error ? <FieldError id="pet-weight-error">{error}</FieldError> : null}
+            {error ? (
+              <FieldError id="pet-weight-error">{error}</FieldError>
+            ) : null}
           </Field>
         ) : null}
 
@@ -527,6 +558,7 @@ export function FindAPlaceForm() {
             value={draft.idStatus}
             choices={entries(idLabel)}
             onChange={(value) => patch({ idStatus: value as IdStatus })}
+            voiceField="id"
           />
         ) : null}
 
@@ -544,6 +576,7 @@ export function FindAPlaceForm() {
                   : { vehicle }
               )
             }}
+            voiceField="vehicle"
           />
         ) : null}
 
@@ -682,6 +715,17 @@ export function FindAPlaceForm() {
             <FieldDescription className="text-right">
               {draft.placeNote.length}/{PLACE_NOTE_MAX_LENGTH}
             </FieldDescription>
+            {/* Free text, so the words go straight into the box. They are her
+                own words in a field she can see and edit, so there is nothing
+                to confirm. */}
+            <div className="mt-2">
+              <VoiceInput
+                label="anything else you want us to know"
+                onTranscript={(text) =>
+                  patch({ placeNote: text.slice(0, PLACE_NOTE_MAX_LENGTH) })
+                }
+              />
+            </div>
           </Field>
         ) : null}
       </FieldGroup>
@@ -734,7 +778,10 @@ export function FindAPlaceForm() {
           )}
         </Button>
       </div>
-      <p className="mt-3 min-h-5 text-sm text-muted-foreground" aria-live="polite">
+      <p
+        className="mt-3 min-h-5 text-sm text-muted-foreground"
+        aria-live="polite"
+      >
         {answered ? "" : "Choose an answer to continue."}
       </p>
     </form>
