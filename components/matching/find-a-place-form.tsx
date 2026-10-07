@@ -232,6 +232,16 @@ function ChoiceGroup({
    * and confirmed, never applied straight to the draft. */
   voiceField?: VoiceField
 }) {
+  // The id has to be a valid HTML id, and these used to be built from the
+  // legend text: "Who needs a place?-alone". aria-labelledby is a
+  // SPACE-SEPARATED list of ids, so an id containing spaces cannot be resolved.
+  // The browser's own accessibility tree reported these radios with no name at
+  // all, which means a screen reader announced "radio button" and nothing else
+  // on every question in the questionnaire.
+  const groupId = React.useId()
+  const optionId = (value: string) =>
+    `${groupId}-${value.replace(/[^a-zA-Z0-9_-]/g, "-")}`
+
   return (
     <FieldSet>
       <FieldLegend className="font-heading font-semibold data-[variant=legend]:text-2xl">
@@ -245,14 +255,21 @@ function ChoiceGroup({
         onValueChange={(next) => onChange(String(next))}
       >
         {choices.map((choice) => (
-          <FieldLabel key={choice.value} htmlFor={`${legend}-${choice.value}`}>
+          <FieldLabel key={choice.value} htmlFor={optionId(choice.value)}>
             <Field
               orientation="horizontal"
               className="min-h-14 items-center has-[>[data-slot=field-content]]:items-center"
             >
+              {/* aria-label, not the wrapping <label>. Base UI points the
+                  radio's aria-labelledby at the FieldLabel that CONTAINS it,
+                  and an ancestor reference would recurse through the radio
+                  itself, so browsers resolve it to an empty name. The
+                  accessibility tree reported these as "radio" with no name on
+                  every question. An explicit label cannot recurse. */}
               <RadioGroupItem
-                id={`${legend}-${choice.value}`}
+                id={optionId(choice.value)}
                 value={choice.value}
+                aria-label={choice.title}
               />
               <FieldContent>
                 <FieldTitle className="text-base">{choice.title}</FieldTitle>
