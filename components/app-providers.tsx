@@ -8,6 +8,7 @@ import { ThemeCorner } from "@/components/theme-corner"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
+import { VoiceTypingButton } from "@/components/voice/voice-typing-button"
 import type { AppSession } from "@/lib/auth/session"
 
 export function AppProviders({
@@ -23,6 +24,7 @@ export function AppProviders({
         <SessionProvider initial={session}>
           <SignInProvider>
             {children}
+            <VoiceTypingButton />
             <ThemeCorner />
             <Toaster />
           </SignInProvider>

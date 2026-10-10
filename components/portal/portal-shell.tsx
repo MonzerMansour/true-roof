@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react"
 
+import { SeekerAccountMenu } from "@/components/app/seeker-account-menu"
 import { PortalSidebar } from "@/components/portal/portal-sidebar"
 import { Separator } from "@/components/ui/separator"
 import {
@@ -38,6 +39,9 @@ export function PortalShell({
           {title ? (
             <h1 className="font-heading text-lg font-semibold">{title}</h1>
           ) : null}
+          <div className="ml-auto flex items-center gap-1">
+            <SeekerAccountMenu settingsHref="/portal/settings" />
+          </div>
         </header>
         <div className="flex flex-1 flex-col p-4 md:p-6">{children}</div>
       </SidebarInset>

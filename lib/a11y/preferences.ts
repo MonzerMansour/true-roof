@@ -17,11 +17,15 @@ export type Contrast = (typeof contrastValues)[number]
 export type A11yPreferences = {
   textSize: TextSize
   contrast: Contrast
+  // A mic in the corner that types into whichever text box was last tapped.
+  // Off by default: recording audio is a choice, never a surprise.
+  voiceTyping: boolean
 }
 
 export const defaultA11yPreferences: A11yPreferences = {
   textSize: "normal",
   contrast: "normal",
+  voiceTyping: false,
 }
 
 export const textSizeLabel: Record<TextSize, string> = {
@@ -47,6 +51,9 @@ export const textScale: Record<TextSize, number> = {
 export const TEXT_SIZE_ATTR = "data-text-size"
 export const CONTRAST_ATTR = "data-contrast"
 export const A11Y_STORAGE_KEY = "true-roof:a11y:v1"
+/** Fired on window after preferences are saved, so other parts of the page
+ * (the voice typing mic) update without a reload. */
+export const A11Y_CHANGE_EVENT = "true-roof:a11y-change"
 
 function isTextSize(value: unknown): value is TextSize {
   return (
@@ -72,6 +79,7 @@ export function parseA11yPreferences(raw: unknown): A11yPreferences {
     contrast: isContrast(value.contrast)
       ? value.contrast
       : defaultA11yPreferences.contrast,
+    voiceTyping: value.voiceTyping === true,
   }
 }
 
@@ -92,6 +100,7 @@ export function saveA11yPreferences(preferences: A11yPreferences) {
   } catch {
     // Storage can be full or blocked. The setting still applies this session.
   }
+  window.dispatchEvent(new Event(A11Y_CHANGE_EVENT))
 }
 
 export function applyA11yPreferences(preferences: A11yPreferences) {

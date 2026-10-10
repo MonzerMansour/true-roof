@@ -3,7 +3,6 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
-  IconBuildingCommunity,
   IconHome,
   IconKey,
   IconSettings,
@@ -11,6 +10,7 @@ import {
 } from "@tabler/icons-react"
 
 import { Logo } from "@/components/marketing/logo"
+import { VoiceTypingSidebarGroup } from "@/components/voice/voice-typing-sidebar-item"
 import {
   Sidebar,
   SidebarContent,
@@ -65,10 +65,10 @@ export function PortalSidebar({
         ]
       : []),
     {
-      href: "/portal/profile",
-      label: "Profile",
+      href: "/portal/settings",
+      label: "Settings",
       icon: IconUser,
-      active: pathname === "/portal/profile",
+      active: pathname === "/portal/settings",
     },
   ]
 
@@ -104,22 +104,7 @@ export function PortalSidebar({
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-        <SidebarGroup>
-          <SidebarGroupLabel>Marketing</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  tooltip="For shelters and lots"
-                  render={<Link href="/for-providers" />}
-                >
-                  <IconBuildingCommunity />
-                  <span>Public provider page</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        <VoiceTypingSidebarGroup />
       </SidebarContent>
       <SidebarFooter className="border-t border-sidebar-border p-2 text-xs text-muted-foreground">
         One row per physical site. Enums only on the listing seekers see.

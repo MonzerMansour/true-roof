@@ -27,7 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
+import { VoiceTextarea } from "@/components/voice/voice-textarea"
 import {
   checkDeadline,
   requiredRepeat,
@@ -323,17 +323,18 @@ export function AddDeadlineForm({
         {showSentence ? (
           <Field>
             <FieldLabel htmlFor={id("sentence")}>Add a deadline</FieldLabel>
-            <Textarea
+            <VoiceTextarea
+              label="the deadline"
               id={id("sentence")}
               placeholder="CalFresh report due the 15th, bring my last 2 pay stubs"
               maxLength={400}
               value={sentence}
-              onChange={(e) => setSentence(e.target.value)}
+              onValueChange={setSentence}
             />
             <FieldDescription>
-              Type it the way you would say it, then tap Fill in for me. What
-              you type is sent to our reader to fill the boxes below. It is not
-              saved anywhere but this phone.
+              Type it, or tap Say it instead and speak, then tap Fill in for
+              me. Only what is in the box is sent to our reader to fill the
+              boxes below. It is not saved anywhere but this phone.
             </FieldDescription>
             <Button
               type="button"

@@ -150,7 +150,7 @@ describe("categoricalAgreement", () => {
       const result = categoricalAgreement(needs({ pet: "larger_pet" }), hudRow)
       const pets = result.factors.find((f) => f.label === "Pets")
       expect(pets?.score).toBe(0.5)
-      expect(pets?.detail).toContain("not on file")
+      expect(pets?.detail).toContain("has not shared its pet rules")
     })
 
     it("lands near the midpoint regardless of what the person asked for", () => {
@@ -169,5 +169,49 @@ describe("categoricalAgreement", () => {
       const easy = categoricalAgreement(needs(), hudRow)
       expect(Math.abs(picky.score - easy.score)).toBeLessThan(0.3)
     })
+  })
+})
+
+describe("details are written for the person reading them", () => {
+  // Every detail is shown to the person on a Places card. A stored value like
+  // "same_room" or a quoted code is unreadable there.
+  const pets = ["none", "service_animal", "small_pet", "larger_pet"] as const
+  const rooms = ["same_room", "separate_rooms", "either", null] as const
+  const vehicles = ["none", "car"] as const
+  const sitePets = ["not_allowed", "service_only", "small_pets", "any", null] as const
+  const siteCouples = ["not_allowed", "same_room", "separate_rooms", null] as const
+  const statuses = ["open", "full", "waitlist", null] as const
+
+  it("never shows an underscore or a quote, for any combination", () => {
+    for (const pet of pets)
+      for (const partnerRooms of rooms)
+        for (const vehicle of vehicles)
+          for (const sitePet of sitePets)
+            for (const couples of siteCouples)
+              for (const kind of ["shelter", "parking"] as const)
+                for (const parkingStatus of statuses) {
+                  const result = categoricalAgreement(
+                    needs({
+                      pet,
+                      household: partnerRooms ? "with_partner" : "alone",
+                      partnerRooms,
+                      vehicle,
+                    } as Partial<SeekerNeeds>),
+                    shelter({ kind, pets: sitePet, couples, parkingStatus })
+                  )
+                  for (const factor of result.factors) {
+                    expect(factor.detail, factor.detail).not.toMatch(/[_"]/)
+                  }
+                }
+  })
+
+  it("says what the mismatch is in plain words", () => {
+    const result = categoricalAgreement(
+      needs({ household: "with_partner", partnerRooms: "same_room" } as Partial<SeekerNeeds>),
+      shelter({ couples: "separate_rooms" })
+    )
+    expect(result.factors.find((f) => f.label === "Couples")?.detail).toBe(
+      "You want to share a room, but this site puts couples in separate rooms."
+    )
   })
 })

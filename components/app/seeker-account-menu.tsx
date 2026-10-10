@@ -15,7 +15,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
-export function SeekerAccountMenu() {
+/** Email, Settings, and Sign out from the top right corner. The staff portal
+ * uses the same menu with its own settings page. */
+export function SeekerAccountMenu({
+  settingsHref = "/settings",
+}: {
+  settingsHref?: string
+}) {
   const router = useRouter()
   const { session, signOut } = useSession()
 
@@ -37,7 +43,7 @@ export function SeekerAccountMenu() {
           <DropdownMenuLabel>{session?.email ?? "Signed in"}</DropdownMenuLabel>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => router.push("/settings")}>
+        <DropdownMenuItem onClick={() => router.push(settingsHref)}>
           <IconSettings />
           Settings
         </DropdownMenuItem>

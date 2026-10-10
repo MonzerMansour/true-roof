@@ -1,7 +1,6 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { redirect } from "next/navigation"
 import { after } from "next/server"
 
 import {
@@ -140,17 +139,14 @@ export async function createOrganizationWithSite(formData: FormData) {
     }
   }
 
-  // Embed the new site once the redirect is sent, so it can rank on Places
+  // Embed the new site after the response, so it can rank on Places
   // as soon as it is published. Never blocks or fails the create.
   if (listingId) after(() => syncListingEmbedding(listingId))
 
   revalidatePath("/portal")
 
-  if (listingId) {
-    redirect(`/portal/sites/${listingId}/settings`)
-  }
-
-  redirect("/portal")
+  // The form uploads a photo, if one was picked, then opens the new site.
+  return { ok: true as const, listingId: listingId ?? null }
 }
 
 /** Adds another physical site to the organization the person already
@@ -182,7 +178,9 @@ export async function addSiteToOrganization(formData: FormData) {
     city,
     freshness: "call_first",
     published: false,
+    // listings_source_shape_check: a source must come with its as-of date.
     data_source: "provider_portal",
+    source_as_of: new Date().toISOString().slice(0, 10),
   }
 
   let { data, error } = await supabase
@@ -203,7 +201,7 @@ export async function addSiteToOrganization(formData: FormData) {
   after(() => syncListingEmbedding(listingId))
 
   revalidatePath("/portal")
-  redirect(`/portal/sites/${listingId}/settings`)
+  return { ok: true as const, listingId }
 }
 
 export async function requestJoinOrganization(
