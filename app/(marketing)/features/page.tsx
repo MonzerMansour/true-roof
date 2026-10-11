@@ -12,7 +12,7 @@ import { photos } from "@/lib/photos"
 export const metadata: Metadata = {
   title: "Features",
   description:
-    "Matching, safe parking, deadlines, letters, savings, Get Help, income cliffs, privacy, and quiet mode.",
+    "Matching, safe parking, deadlines, letters, savings, and privacy.",
 }
 
 export default function FeaturesPage() {

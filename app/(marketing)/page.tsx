@@ -231,24 +231,6 @@ export default async function HomePage() {
                 >
                   Cheap phone & privacy
                 </Link>
-                <Link
-                  href="/features/quiet"
-                  className={cn(
-                    buttonVariants({ variant: "outline" }),
-                    "border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white"
-                  )}
-                >
-                  Quiet mode
-                </Link>
-                <Link
-                  href="/features/help"
-                  className={cn(
-                    buttonVariants({ variant: "outline" }),
-                    "border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white"
-                  )}
-                >
-                  Get Help
-                </Link>
               </div>
             </div>
           </Reveal>
@@ -258,7 +240,7 @@ export default async function HomePage() {
                 "Large text, high contrast, screen reader, one-handed layout",
                 "SMS when there is no data, including a borrowed phone",
                 "PIN or biometric lock, auto-lock, export & delete",
-                "Quiet mode after about six steady months, not forever nagging",
+                "Works on a cheap phone, and offline for what matters",
               ].map((item) => (
                 <li
                   key={item}

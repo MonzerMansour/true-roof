@@ -138,54 +138,6 @@ export const features: Feature[] = [
     ],
   },
   {
-    slug: "help",
-    eyebrow: "When it slips",
-    title: "Warnings you can act on",
-    lede: "Missed rent and a skipped check-in should not sit quietly in an app. True Roof names the level, names why, and names the next step.",
-    photo: photos.phone,
-    audience: "seeker",
-    sections: [
-      {
-        title: "Watch",
-        body: "March 6. Rent was due the 1st. CalFresh recert was due the 2nd. She skipped last week’s check-in. The top of the screen says Watch, lists why, and says: pay rent first if you can, then call the county. She can mark “I paid rent on the 4th, landlord did not give me a receipt.” Rent clears. One item remains.",
-      },
-      {
-        title: "Act",
-        body: "A 3-day pay-or-quit notice jumps the level to Act. The screen becomes a short list: emergency rent assistance, tenant legal aid, and “Share my situation with my case manager.”",
-      },
-      {
-        title: "Get Help, one tap",
-        body: "Manual anytime. Auto-surfaces at Act. You pick the door: prevention fund, 211, tenant legal aid, case manager, or a crisis line. You toggle each item in the bundle before it goes. The send is a secure expiring link plus a PDF, and a phone script if the door is phone-only. You see if the link was opened. True Roof never says it was approved.",
-      },
-      {
-        title: "Crisis is separate",
-        body: "911, DV, and 988 are a different button. That path skips the bundle. Links you already sent can be revoked. If you have no signal, the send waits, and the phone script is still on screen.",
-      },
-    ],
-  },
-  {
-    slug: "income",
-    eyebrow: "Work and benefits",
-    title: "Will this job hurt me?",
-    lede: "A raise can cost Medi-Cal. A gig week can look like too much income. True Roof shows rent share, CalFresh, and coverage before and after, then the honest monthly net.",
-    photo: photos.work,
-    audience: "seeker",
-    sections: [
-      {
-        title: "What you enter",
-        body: "Gross monthly, or a rate and hours. A range if the work is gig or uneven.",
-      },
-      {
-        title: "What you see",
-        body: "Before and after for rent share, CalFresh, and Medi-Cal. A net-change number. Cliffs (a hard drop-off) marked differently from gradual slopes. What you must report, to whom, and when it takes effect.",
-      },
-      {
-        title: "Guardrails",
-        body: "This is an estimate. Confirm with a worker. True Roof will not tell you to skip a job. The same tool runs in reverse after a job loss.",
-      },
-    ],
-  },
-  {
     slug: "privacy",
     eyebrow: "The phone you actually have",
     title: "Built for a cheap phone, and for privacy",
@@ -199,7 +151,7 @@ export const features: Feature[] = [
       },
       {
         title: "Offline tiers",
-        body: "Deadline list, savings, document capture, and the cliff calculator work offline. Matcher results and handoffs wait in a queue until there is signal.",
+        body: "Deadline list, savings, and document capture work offline. Matcher results wait in a queue until there is signal.",
       },
       {
         title: "Your device first",
@@ -208,28 +160,6 @@ export const features: Feature[] = [
       {
         title: "Access",
         body: "Large text, high contrast, screen reader, one-handed layout. Every control is reachable with a thumb and announced to a screen reader.",
-      },
-    ],
-  },
-  {
-    slug: "quiet",
-    eyebrow: "When things are steady",
-    title: "The app gets quiet",
-    lede: "True Roof is not supposed to nag you forever. About six months of on-time rent, no missed deadlines, and no warnings, and it steps back.",
-    photo: photos.window,
-    audience: "seeker",
-    sections: [
-      {
-        title: "Active, then Steady, then Graduated",
-        body: "Quiet mode keeps essential renewal reminders only. It is not blind. Any warning sign turns full monitoring back on immediately, in an encouraging tone, not a punishment.",
-      },
-      {
-        title: "What you can take with you",
-        body: "A clean on-time rent-history letter for a future landlord. Mentor mode (later) is for helping a newer person, with moderation.",
-      },
-      {
-        title: "No thrash",
-        body: "Reactivation is instant. Graduating again takes another stretch of steadiness. The app does not bounce you in and out of quiet because of one noisy week.",
       },
     ],
   },

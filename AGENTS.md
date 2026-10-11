@@ -51,4 +51,8 @@ Use shadcn components in `components/ui`. Add with `npx shadcn@latest add`. If a
 
 ## Now vs later
 
-This phase includes marketing, sign-in, the seeker app (Dashboard, Places, Financials sidebar), and the staff portal. Do not invent extra matcher scoring. Letter parse, income cliffs, quiet mode, and Get Help are stub pages under `/financials/*`.
+This phase includes marketing, sign-in, the seeker app (Dashboard, Places, Financials sidebar), and the staff portal. Do not invent extra matcher scoring. Letter parse is a stub page under `/financials/letters`.
+
+One-tap help, quiet mode and the income cliff check were removed, along with their marketing feature pages and nav entries. Do not re-add them. Crisis, DV and 988 numbers survive as plain `tel:` links in the app footer and on `/financials`; they are not a feature and they send nothing.
+
+Voice typing was removed too: there is no `/api/voice`, no transcription helper and no `TRANSCRIBE_MODEL`. `OPENAI_API_KEY` stays, because the scan reader, the deadline reader and the embeddings all use it.
