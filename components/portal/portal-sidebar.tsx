@@ -13,7 +13,6 @@ import { Logo } from "@/components/marketing/logo"
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -104,9 +103,6 @@ export function PortalSidebar({
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="border-t border-sidebar-border p-2 text-xs text-muted-foreground">
-        One row per physical site. Enums only on the listing seekers see.
-      </SidebarFooter>
       <SidebarRail />
     </Sidebar>
   )

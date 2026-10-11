@@ -733,7 +733,11 @@ export function PlacesFeed({
         </div>
       ) : null}
 
-      <div className="sticky bottom-0 z-20 -mx-4 mt-6 border-t bg-background/95 px-4 py-3 backdrop-blur sm:hidden">
+      {/* Stands down while the guided tour is open. This bar is the
+          thumb-reachable copy of the Filters button at the top of the feed,
+          so nothing is lost by hiding it, and leaving it would have put the
+          tour on top of the very button step 2 asks somebody to press. */}
+      <div className="sticky bottom-0 z-20 -mx-4 mt-6 border-t bg-background/95 px-4 py-3 backdrop-blur sm:hidden [:root[data-tour-open]_&]:hidden">
         <Button
           type="button"
           size="touch"

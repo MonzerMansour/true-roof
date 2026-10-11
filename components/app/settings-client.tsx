@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/field"
 import { Switch } from "@/components/ui/switch"
 import { useSession } from "@/components/auth/session-provider"
+import { ReplayTourButton } from "@/components/app/replay-tour-button"
 import { FIND_A_PLACE_PATH } from "@/lib/matching/paths"
 import { setDeveloperMode, useDeveloperMode } from "@/lib/dev-mode"
 import { clearNeeds, loadNeeds } from "@/lib/matching/storage"
@@ -65,14 +66,29 @@ export function SettingsClient() {
           Settings
         </h1>
         <p className="mt-2 text-muted-foreground">
-          Change what you told us, make the text bigger, or delete everything
-          off this phone.
+          Your answers, your plan, and your account.
         </p>
       </div>
 
       {/* First, not last: for someone who cannot read the page comfortably,
           nothing below this matters until it is set. */}
       <DisplaySettings />
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Tour of the app</CardTitle>
+          <CardDescription>
+            A walk through each page, what it is for, and the one thing to do
+            there. You can close it at any point and it never covers the page.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ReplayTourButton
+            role="seeker"
+            audience={{ signedIn: Boolean(session) }}
+          />
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

@@ -2,6 +2,7 @@ import type { ReactNode } from "react"
 import { Suspense } from "react"
 
 import { AppChrome } from "@/components/app/app-chrome"
+import { SeekerTour } from "@/components/app/seeker-tour"
 import { SignInUrlHandler } from "@/components/auth/sign-in-url-handler"
 
 export default function AppLayout({ children }: { children: ReactNode }) {
@@ -13,6 +14,9 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         <SignInUrlHandler />
       </Suspense>
       {children}
+      {/* In the layout rather than on a page, so moving between steps does not
+          unmount the tour and lose where the person had got to. */}
+      <SeekerTour />
     </AppChrome>
   )
 }

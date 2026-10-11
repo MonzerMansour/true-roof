@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 
 import { DisplaySettings } from "@/components/app/display-settings"
+import { ReplayTourButton } from "@/components/app/replay-tour-button"
 import { SignOutButton } from "@/components/auth/sign-out-button"
 import {
   Card,
@@ -42,6 +43,27 @@ export default async function PortalSettingsPage() {
       </div>
 
       <DisplaySettings />
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Tour of the portal</CardTitle>
+          <CardDescription>
+            A walk through each page, what it is for, and the one thing to do
+            there. You can close it at any point and it never covers the page.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ReplayTourButton
+            role="provider"
+            audience={{
+              signedIn: true,
+              isDirector: Boolean(context?.isDirector),
+              hasOrganization: Boolean(context?.organization),
+              primaryListingId: context?.listings[0]?.id ?? null,
+            }}
+          />
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

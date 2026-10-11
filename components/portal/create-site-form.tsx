@@ -143,11 +143,7 @@ export function CreateSiteForm({
             maxLength={1000}
             placeholder="What it is like to stay here, what is nearby, and what to expect at intake."
           />
-          <FieldDescription>
-            Shown on this site&apos;s page. People looking for a place read it,
-            and it helps match them to sites like this one. Up to 1,000
-            characters.
-          </FieldDescription>
+          <FieldDescription>Up to 1,000 characters.</FieldDescription>
         </Field>
 
         <Field>
