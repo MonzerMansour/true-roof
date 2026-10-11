@@ -9,8 +9,9 @@ import { FloatingHeader } from "@/components/marketing/floating-header"
 import { SiteHeader } from "@/components/marketing/site-header"
 
 /**
- * Seekers get the closable sidebar (default open). Guests share the marketing
- * floating pill. Providers keep the sticky app bar for portal nav.
+ * Seekers get the closable sidebar (default open). Anyone signed out shares
+ * the marketing floating pill. Providers keep the sticky app bar for portal
+ * nav.
  */
 export function AppChrome({ children }: { children: ReactNode }) {
   const { session } = useSession()

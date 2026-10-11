@@ -92,9 +92,11 @@ export function SettingsClient() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Signed in</CardTitle>
+          <CardTitle>{session ? "Signed in" : "Not signed in"}</CardTitle>
           <CardDescription>
-            {session?.email ?? "This session has no email on file."}
+            {session
+              ? (session.email ?? "This session has no email on file.")
+              : "You are browsing without an account, which most of True Roof does not need."}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -104,7 +106,8 @@ export function SettingsClient() {
             </Button>
           ) : (
             <p className="text-sm text-muted-foreground">
-              You are using this phone as a guest.
+              An account adds one thing: the questions that score each place
+              against what you need, saved so they follow you to another phone.
             </p>
           )}
         </CardContent>

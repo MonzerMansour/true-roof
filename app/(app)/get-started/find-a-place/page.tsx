@@ -13,12 +13,13 @@ export const metadata: Metadata = {
     "A few short questions so True Roof can show shelters and safe parking that fit you.",
 }
 
-// Account only, and a guest cookie is not enough.
+// Account only.
 //
 // What these answers unlock needs a real auth.uid(): the match percentage and
-// the order of the feed both come from an embedding stored in public.seeker_needs,
-// whose RLS policies are scoped to the signed-in user. A guest has no row there,
-// so answering the questions as a guest would produce no match score at all.
+// the order of the feed both come from an embedding stored in
+// public.seeker_needs, whose RLS policies are scoped to the signed-in user.
+// Somebody signed out has no row there, so answering the questions would
+// produce no match score at all.
 //
 // Browsing is deliberately not gated. A signed-out person still gets the whole
 // list, the distance sort and every filter on /places; they are sent there

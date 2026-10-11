@@ -194,7 +194,7 @@ export function SeekerDashboard({ listings }: { listings: Listing[] }) {
                 <IconMapPin />
                 Find a place
               </Link>
-              {/* Matching is account-only, so a guest on this page gets no
+              {/* Matching is account-only, so somebody signed out gets no
                   offer that would only bounce them to a sign-in prompt. */}
               {!needs && session ? (
                 <Link

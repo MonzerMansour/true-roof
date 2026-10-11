@@ -14,7 +14,8 @@ import { createServerSupabaseClient } from "@/lib/supabase/server"
 const METADATA_KEY = "needs_embed_times"
 
 // Stores a signed-in person's questionnaire answers and their embedding.
-// Guests have no account, so they get 401 and their answers stay on the phone.
+// Without an account there is no row to write, so this answers 401 and the
+// answers stay on the phone.
 // Answers that read the same as last time are saved without a new embedding
 // and do not count toward the limit.
 export async function POST(request: Request) {

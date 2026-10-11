@@ -21,8 +21,8 @@ export type TourStep = {
   body: string
   /** The single thing to do here, shown on its own line. */
   action?: string
-  /** Shown only to someone with an account. A guest gets the signed-out step
-   * instead, which names what an account adds. */
+  /** Shown only to someone with an account. Somebody signed out gets the
+   * signed-out step instead, which names what an account adds. */
   accountOnly?: boolean
   /** Shown only to a director, who is the only one who can reach it. */
   directorOnly?: boolean

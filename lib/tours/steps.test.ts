@@ -46,13 +46,13 @@ describe("every step is well formed", () => {
 })
 
 describe("the seeker tour needs no account", () => {
-  it("gives a guest a walkable tour with the account step swapped out", () => {
-    const guest = stepsForTour("seeker", { signedIn: false })
-    const ids = guest.map((step) => step.id)
+  it("gives a signed-out person a walkable tour with the account step swapped out", () => {
+    const signedOut = stepsForTour("seeker", { signedIn: false })
+    const ids = signedOut.map((step) => step.id)
 
-    expect(guest.length).toBeGreaterThan(1)
-    // The questionnaire is account-only, so a guest must not be sent to a
-    // page that would only redirect them back.
+    expect(signedOut.length).toBeGreaterThan(1)
+    // The questionnaire is account-only, so somebody signed out must not be
+    // sent to a page that would only redirect them back.
     expect(ids).not.toContain("match")
     // In its place, one step saying what signing in would add.
     expect(ids).toContain("signed-out")
