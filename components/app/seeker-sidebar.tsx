@@ -21,7 +21,6 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar"
-import { VoiceTypingSidebarGroup } from "@/components/voice/voice-typing-sidebar-item"
 import { seekerAppNav, site } from "@/lib/site"
 
 const icons = {
@@ -73,7 +72,6 @@ export function SeekerSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-        <VoiceTypingSidebarGroup />
       </SidebarContent>
       <SidebarRail />
     </Sidebar>

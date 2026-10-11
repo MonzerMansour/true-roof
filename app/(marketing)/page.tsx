@@ -255,7 +255,7 @@ export default async function HomePage() {
           <Reveal>
             <ul className="grid gap-3 text-sm">
               {[
-                "Large text, high contrast, screen reader, voice intake",
+                "Large text, high contrast, screen reader, one-handed layout",
                 "SMS when there is no data, including a borrowed phone",
                 "PIN or biometric lock, auto-lock, export & delete",
                 "Quiet mode after about six steady months, not forever nagging",
@@ -288,7 +288,7 @@ export default async function HomePage() {
                 <h3 className="font-heading text-2xl font-semibold">For you</h3>
                 <p className="text-muted-foreground">
                   Need a bed, a lot that takes your van, or help staying in the
-                  apartment you just got. Voice intake if reading is hard.
+                  apartment you just got.
                 </p>
                 <SignInButton>Create a free account</SignInButton>
               </div>

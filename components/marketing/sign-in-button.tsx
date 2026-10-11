@@ -10,11 +10,15 @@ export function SignInButton({
   variant = "default",
   size = "lg",
   className,
+  next,
 }: {
   children?: ReactNode
   variant?: ComponentProps<typeof Button>["variant"]
   size?: ComponentProps<typeof Button>["size"]
   className?: string
+  /** Where to land once they are in. Lets a gated page prompt from the page
+   * the person was browsing and still take them on afterwards. */
+  next?: string
 }) {
   const { openSignIn } = useSignIn()
 
@@ -23,7 +27,7 @@ export function SignInButton({
       variant={variant}
       size={size}
       className={className}
-      onClick={() => openSignIn()}
+      onClick={() => openSignIn({ next })}
     >
       {children}
     </Button>

@@ -211,7 +211,9 @@ export function SignInDialog() {
           <DialogDescription>
             {next?.includes("intent=")
               ? "Sign in or create an account to join a waitlist or ask for a bed. Guest mode cannot send that."
-              : "One account works on this phone or a borrowed one. You can export or delete your data later in one tap."}
+              : next?.startsWith("/get-started/find-a-place")
+                ? "Matching needs an account, because your answers are saved to it and used to score each place. Browsing the full list needs nothing."
+                : "One account works on this phone or a borrowed one. You can export or delete your data later in one tap."}
           </DialogDescription>
         </DialogHeader>
 

@@ -98,15 +98,6 @@ export function ScrollHero({
         >
           See places near you
         </Link>
-        <Link
-          href="/get-started/find-a-place"
-          className={cn(
-            buttonVariants({ variant: "outline", size: "touch" }),
-            "sm:w-auto"
-          )}
-        >
-          Answer a few questions first
-        </Link>
       </div>
       <p className="mx-auto mt-4 max-w-xl text-sm text-muted-foreground">
         No account needed. Run a shelter or lot?{" "}

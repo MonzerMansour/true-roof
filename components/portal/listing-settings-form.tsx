@@ -33,7 +33,7 @@ import type {
 import type { PortalListing, PortalOrganization } from "@/lib/portal/types"
 import { OptionalSiteFields } from "@/components/portal/optional-site-fields"
 import { SitePhotoField } from "@/components/portal/site-photo-field"
-import { VoiceTextarea } from "@/components/voice/voice-textarea"
+import { Textarea } from "@/components/ui/textarea"
 import {
   Accordion,
   AccordionContent,
@@ -188,8 +188,7 @@ export function ListingSettingsForm({
           <FieldLabel htmlFor="siteDescription">
             About this site (optional)
           </FieldLabel>
-          <VoiceTextarea
-            label="About this site"
+          <Textarea
             id="siteDescription"
             name="siteDescription"
             defaultValue={listing.description ?? ""}

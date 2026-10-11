@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/field"
 import { Switch } from "@/components/ui/switch"
 import { useSession } from "@/components/auth/session-provider"
+import { FIND_A_PLACE_PATH } from "@/lib/matching/paths"
 import { setDeveloperMode, useDeveloperMode } from "@/lib/dev-mode"
 import { clearNeeds, loadNeeds } from "@/lib/matching/storage"
 import { clearAllData, loadProfile } from "@/lib/obligations/storage"
@@ -106,18 +107,24 @@ export function SettingsClient() {
         <CardContent>
           {needs ? (
             <NeedsSummary needs={needs} onClear={handleClearNeeds} />
-          ) : (
+          ) : session ? (
             <div className="flex flex-col gap-3">
               <p className="text-sm text-muted-foreground">
                 You have not answered the place questions yet.
               </p>
               <Link
-                href="/get-started/find-a-place"
+                href={FIND_A_PLACE_PATH}
                 className={buttonVariants({ variant: "outline" })}
               >
                 Answer a few questions
               </Link>
             </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Matching needs an account, because your answers are saved to it
+              and used to score each place. Browsing the full list on Places
+              needs nothing.
+            </p>
           )}
         </CardContent>
       </Card>

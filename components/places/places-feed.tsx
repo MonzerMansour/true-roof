@@ -26,6 +26,9 @@ import { cn } from "cn"
 import { listingFitsNeeds } from "@/lib/matching/hard-filters"
 import { suggestHouseholdSplit } from "@/lib/matching/household-split"
 import { loadNeeds } from "@/lib/matching/storage"
+import { useSession } from "@/components/auth/session-provider"
+import { SignInButton } from "@/components/marketing/sign-in-button"
+import { FIND_A_PLACE_PATH } from "@/lib/matching/paths"
 import type { SeekerNeeds } from "@/lib/matching/needs"
 import type { RankSource } from "@/lib/matching/rank"
 import type { MatchDetail } from "@/lib/matching/score-blend"
@@ -71,6 +74,7 @@ export function PlacesFeed({
   similarity?: Record<string, number>
   matchDetails?: Record<string, MatchDetail>
 }) {
+  const { session } = useSession()
   const [needs, setNeeds] = React.useState<SeekerNeeds | null>(null)
   const [filters, setFilters] =
     React.useState<PlaceFilters>(defaultPlaceFilters)
@@ -345,7 +349,28 @@ export function PlacesFeed({
         </div>
       ) : null}
 
-      {!needs ? (
+      {/* Narrowing the list is account-only, so a signed-out person gets the
+          offer rather than a link into a redirect. The list above stays whole
+          either way: this is an offer, not a wall. */}
+      {!session ? (
+        <Card className="mt-4 ring-1 ring-primary/10">
+          <CardHeader>
+            <CardTitle className="text-lg">Sign in to get matched</CardTitle>
+            <CardDescription className="text-base">
+              Answer ten quick questions and every place gets a match score, the
+              closest fits move to the top, and places that cannot take your pet,
+              your partner or your van drop out. Your answers are saved to your
+              account, so a borrowed phone still has them. The full list below
+              needs no account.
+            </CardDescription>
+            <div className="mt-3">
+              <SignInButton size="touch" next={FIND_A_PLACE_PATH}>
+                Sign in to get matched
+              </SignInButton>
+            </div>
+          </CardHeader>
+        </Card>
+      ) : !needs ? (
         <Card className="mt-4 ring-1 ring-primary/10">
           <CardHeader>
             <CardTitle className="text-lg">
@@ -353,12 +378,11 @@ export function PlacesFeed({
             </CardTitle>
             <CardDescription className="text-base">
               Ten quick questions about pets, ID, a partner, a car, and what
-              time you can get there. No account needed, and your answers stay
-              on this phone.
+              time you can get there.
             </CardDescription>
             <div className="mt-3">
               <Link
-                href="/get-started/find-a-place"
+                href={FIND_A_PLACE_PATH}
                 className={cn(buttonVariants({ size: "touch" }))}
               >
                 Answer the questions
@@ -556,9 +580,9 @@ export function PlacesFeed({
                       aria-label="Only show places that fit what you told us"
                     />
                   </label>
-                ) : (
+                ) : session ? (
                   <Link
-                    href="/get-started/find-a-place"
+                    href={FIND_A_PLACE_PATH}
                     className={cn(
                       buttonVariants({ variant: "outline", size: "sm" }),
                       "w-fit"
@@ -567,6 +591,11 @@ export function PlacesFeed({
                   >
                     Answer a few questions
                   </Link>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Sign in to answer a few questions, and this filter can hide
+                    places that cannot take you.
+                  </p>
                 )}
               </div>
             </FilterSection>

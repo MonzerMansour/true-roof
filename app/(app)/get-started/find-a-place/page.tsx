@@ -1,8 +1,11 @@
 import type { Metadata } from "next"
 import { Suspense } from "react"
+import { redirect } from "next/navigation"
 
 import { Container } from "@/components/marketing/container"
 import { FindAPlaceForm } from "@/components/matching/find-a-place-form"
+import { getAppSession } from "@/lib/auth/session"
+import { FIND_A_PLACE_PATH } from "@/lib/matching/paths"
 
 export const metadata: Metadata = {
   title: "Find a place",
@@ -10,14 +13,23 @@ export const metadata: Metadata = {
     "A few short questions so True Roof can show shelters and safe parking that fit you.",
 }
 
-// No account needed, and no guest cookie needed either.
+// Account only, and a guest cookie is not enough.
 //
-// These ten answers are written to localStorage and never leave the phone
-// unless the person is signed in, in which case a copy is embedded for ranking.
-// Requiring an account to answer them contradicted the page's own promise that
-// answers stay on this device, and it put a login wall in front of somebody
-// trying to find a bed tonight.
-export default function FindAPlacePage() {
+// What these answers unlock needs a real auth.uid(): the match percentage and
+// the order of the feed both come from an embedding stored in public.seeker_needs,
+// whose RLS policies are scoped to the signed-in user. A guest has no row there,
+// so answering the questions as a guest would produce no match score at all.
+//
+// Browsing is deliberately not gated. A signed-out person still gets the whole
+// list, the distance sort and every filter on /places; they are sent there
+// rather than to a dead end.
+export default async function FindAPlacePage() {
+  const session = await getAppSession()
+
+  if (!session) {
+    redirect(`/places?signin=1&next=${encodeURIComponent(FIND_A_PLACE_PATH)}`)
+  }
+
   return (
     <Container className="py-8 sm:py-10">
       <p className="text-sm font-medium text-primary">
@@ -27,8 +39,8 @@ export default function FindAPlacePage() {
         A few questions, so we only show places that fit
       </h1>
       <p className="mt-3 max-w-xl text-muted-foreground">
-        About a minute, and no account needed. Answers stay on this phone. Sign
-        in later if you want them on another device.
+        About a minute. Your answers are saved on this phone and to your
+        account, so they follow you to another phone.
       </p>
 
       <p className="mt-4 max-w-xl rounded-lg border p-3 text-sm">

@@ -13,6 +13,7 @@ import {
 } from "@tabler/icons-react"
 
 import { useSession } from "@/components/auth/session-provider"
+import { FIND_A_PLACE_PATH } from "@/lib/matching/paths"
 import { MarketingPhoto } from "@/components/marketing/marketing-photo"
 import { Badge } from "@/components/ui/badge"
 import { buttonVariants } from "@/components/ui/button"
@@ -193,9 +194,11 @@ export function SeekerDashboard({ listings }: { listings: Listing[] }) {
                 <IconMapPin />
                 Find a place
               </Link>
-              {!needs ? (
+              {/* Matching is account-only, so a guest on this page gets no
+                  offer that would only bounce them to a sign-in prompt. */}
+              {!needs && session ? (
                 <Link
-                  href="/get-started/find-a-place"
+                  href={FIND_A_PLACE_PATH}
                   className={cn(
                     buttonVariants({ variant: "outline", size: "lg" }),
                     "rounded-full"
@@ -522,9 +525,9 @@ export function SeekerDashboard({ listings }: { listings: Listing[] }) {
           description="Based on where you are right now."
         >
           <div className="grid gap-2">
-            {!needs ? (
+            {!needs && session ? (
               <Shortcut
-                href="/get-started/find-a-place"
+                href={FIND_A_PLACE_PATH}
                 title="Answer a few questions"
                 body="One minute, and the places list drops what cannot take you"
               />

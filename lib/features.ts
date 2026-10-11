@@ -207,7 +207,7 @@ export const features: Feature[] = [
       },
       {
         title: "Access",
-        body: "Large text, high contrast, screen reader, voice input, one-handed layout. Dictate is a first-class way in, not an afterthought.",
+        body: "Large text, high contrast, screen reader, one-handed layout. Every control is reachable with a thumb and announced to a screen reader.",
       },
     ],
   },
