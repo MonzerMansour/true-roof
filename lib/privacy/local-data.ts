@@ -40,6 +40,7 @@ export const KEPT_ON_SIGN_OUT = [
   "true-roof:a11y:v1",
   "true-roof:tour:seeker:v1",
   "true-roof:tour:provider:v1",
+  "true-roof:tour:features:v1",
   "true-roof:developer-mode",
 ] as const
 
