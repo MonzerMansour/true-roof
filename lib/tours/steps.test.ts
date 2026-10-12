@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest"
 
-import { stepsForTour, tours, type TourRole } from "@/lib/tours/steps"
+import { features } from "@/lib/features"
+import { stepsForTour, tours, type TourId } from "@/lib/tours/steps"
 
-const roles: TourRole[] = ["seeker", "provider"]
+const roles: TourId[] = ["seeker", "provider", "features"]
 
 describe("every step is well formed", () => {
   it("has a unique id, an internal path, and plain copy", () => {
@@ -172,5 +173,38 @@ describe("no audience gets an empty tour", () => {
         ).toBeGreaterThan(1)
       }
     }
+  })
+})
+
+describe("the features tour", () => {
+  it("has a step for every feature, in the order the page lists them", () => {
+    // Generated from lib/features.ts rather than written out again, so a
+    // feature that is deleted cannot leave a step walking people to a page
+    // that 404s. That is exactly how the nav entries for Get Help, the income
+    // cliff check and quiet mode survived their own removal.
+    const steps = stepsForTour("features", { signedIn: false })
+    const featureSteps = steps.filter((step) => step.id.startsWith("feature-"))
+
+    expect(featureSteps.map((step) => step.id)).toEqual(
+      features.map((feature) => `feature-${feature.slug}`)
+    )
+    expect(featureSteps.map((step) => step.path)).toEqual(
+      features.map((feature) => `/features/${feature.slug}`)
+    )
+  })
+
+  it("opens on the index and ends on the real list", () => {
+    const steps = stepsForTour("features", { signedIn: false })
+
+    expect(steps[0]?.path).toBe("/features")
+    expect(steps[steps.length - 1]?.path).toBe("/places")
+  })
+
+  it("shows the same steps whether or not somebody is signed in", () => {
+    // None of these pages is gated, so filtering by account would only be a
+    // way to get the count wrong.
+    const out = stepsForTour("features", { signedIn: false }).map((s) => s.id)
+    const inn = stepsForTour("features", { signedIn: true }).map((s) => s.id)
+    expect(out).toEqual(inn)
   })
 })

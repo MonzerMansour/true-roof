@@ -16,5 +16,5 @@ export function SeekerTour() {
   // so they are not offered this one on top of it.
   if (session?.role === "provider") return null
 
-  return <GuidedTour role="seeker" audience={{ signedIn: Boolean(session) }} />
+  return <GuidedTour tour="seeker" audience={{ signedIn: Boolean(session) }} />
 }

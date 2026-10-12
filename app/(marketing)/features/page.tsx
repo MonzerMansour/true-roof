@@ -4,6 +4,7 @@ import Link from "next/link"
 import { Container } from "@/components/marketing/container"
 import { MarketingPhoto } from "@/components/marketing/marketing-photo"
 import { Reveal } from "@/components/marketing/reveal"
+import { ReplayTourButton } from "@/components/app/replay-tour-button"
 import { SignInButton } from "@/components/marketing/sign-in-button"
 import { Badge } from "@/components/ui/badge"
 import { features } from "@/lib/features"
@@ -36,8 +37,15 @@ export default function FeaturesPage() {
               Every tab below is a real part of True Roof. Start with finding a
               place. Everything after that is for after you have keys.
             </p>
-            <div className="mt-6">
+            <div className="mt-6 flex flex-wrap items-center gap-3">
               <SignInButton>Get started</SignInButton>
+              {/* Marketing is signed out and has no settings page, so the way
+                  back into this tour lives on the page it is about. */}
+              <ReplayTourButton
+                tour="features"
+                audience={{ signedIn: false }}
+                label="Take the tour"
+              />
             </div>
           </Reveal>
         </Container>

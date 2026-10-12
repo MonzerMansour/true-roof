@@ -84,7 +84,7 @@ export function SettingsClient() {
         </CardHeader>
         <CardContent>
           <ReplayTourButton
-            role="seeker"
+            tour="seeker"
             audience={{ signedIn: Boolean(session) }}
           />
         </CardContent>

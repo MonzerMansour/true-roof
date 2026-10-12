@@ -54,7 +54,7 @@ export default async function PortalSettingsPage() {
         </CardHeader>
         <CardContent>
           <ReplayTourButton
-            role="provider"
+            tour="provider"
             audience={{
               signedIn: true,
               isDirector: Boolean(context?.isDirector),

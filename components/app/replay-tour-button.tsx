@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { IconRoute } from "@tabler/icons-react"
 
 import { Button } from "@/components/ui/button"
-import { stepsForTour, type TourAudience, type TourRole } from "@/lib/tours/steps"
+import { stepsForTour, type TourAudience, type TourId } from "@/lib/tours/steps"
 import { replayTour } from "@/lib/tours/storage"
 
 /**
@@ -17,14 +17,16 @@ import { replayTour } from "@/lib/tours/storage"
  * where it was pressed.
  */
 export function ReplayTourButton({
-  role,
+  tour,
   audience,
+  label = "Replay the tour",
 }: {
-  role: TourRole
+  tour: TourId
   audience: TourAudience
+  label?: string
 }) {
   const router = useRouter()
-  const steps = stepsForTour(role, audience)
+  const steps = stepsForTour(tour, audience)
   const first = steps[0]
 
   if (!first) return null
@@ -36,12 +38,12 @@ export function ReplayTourButton({
       size="touch"
       className="w-fit"
       onClick={() => {
-        replayTour(role)
+        replayTour(tour)
         router.push(first.path)
       }}
     >
       <IconRoute />
-      Replay the tour
+      {label}
     </Button>
   )
 }

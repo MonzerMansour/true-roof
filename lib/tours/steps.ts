@@ -1,4 +1,8 @@
-// The two guided tours, one per role.
+// The three guided tours.
+//
+// Two are a walk through the pages one role can reach: the seeker app and the
+// staff portal. The third is the marketing feature pages, for somebody
+// deciding whether this is worth their time at all.
 //
 // A step is a page, in the order someone would actually meet it, with what
 // the page is for and the one thing to do there. The wording follows
@@ -8,7 +12,9 @@
 // Kept as data rather than JSX so the steps can be counted, filtered by what
 // the person can actually reach, and unit tested without rendering anything.
 
-export type TourRole = "seeker" | "provider"
+import { features } from "@/lib/features"
+
+export type TourId = "seeker" | "provider" | "features"
 
 export type TourStep = {
   id: string
@@ -159,9 +165,40 @@ const providerSteps: TourStep[] = [
   },
 ]
 
-export const tours: Record<TourRole, { label: string; steps: TourStep[] }> = {
+/** The tour of the marketing feature pages, built from the feature list
+ * itself rather than written out again here.
+ *
+ * Generated on purpose: a hand-written copy would quietly keep walking people
+ * through a feature after it was deleted, which is exactly what happened to
+ * the nav entries for Get Help, the income cliff check and quiet mode. There
+ * is one source of truth for what True Roof does, and this reads it. */
+const featureSteps: TourStep[] = [
+  {
+    id: "features",
+    path: "/features",
+    title: "What True Roof actually does",
+    body: "Every card on this page is a real part of the app, not a plan. The first one finds you somewhere to sleep; the rest are for after you have keys.",
+    action: "Press Next and this walks you through them one at a time.",
+  },
+  ...features.map((feature) => ({
+    id: `feature-${feature.slug}`,
+    path: `/features/${feature.slug}`,
+    title: feature.title,
+    body: feature.lede,
+  })),
+  {
+    id: "features-end",
+    path: "/places",
+    title: "That is all of it",
+    body: "This is the list those features are for: every shelter and safe parking lot we know about in Santa Clara County. Calling and directions need no account.",
+    action: "Have a look. Nothing here asks you to sign in first.",
+  },
+]
+
+export const tours: Record<TourId, { label: string; steps: TourStep[] }> = {
   seeker: { label: "Looking for a place", steps: seekerSteps },
   provider: { label: "Running a site", steps: providerSteps },
+  features: { label: "What True Roof does", steps: featureSteps },
 }
 
 export type TourAudience = {
@@ -180,7 +217,7 @@ export type TourAudience = {
  * counts only the steps they will really see.
  */
 export function stepsForTour(
-  role: TourRole,
+  role: TourId,
   audience: TourAudience
 ): TourStep[] {
   return tours[role].steps

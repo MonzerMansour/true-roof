@@ -27,7 +27,7 @@ export default async function PortalLayout({
       {/* The layout already has everything the provider steps depend on, so
           the tour is told rather than querying for it again. */}
       <GuidedTour
-        role="provider"
+        tour="provider"
         audience={{
           signedIn: true,
           isDirector: context.isDirector,

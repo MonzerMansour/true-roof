@@ -1,4 +1,4 @@
-import type { TourRole } from "./steps"
+import type { TourId } from "./steps"
 
 // Tour progress, per tour, on this device only.
 //
@@ -23,7 +23,7 @@ export const defaultTourProgress: TourProgress = {
   completed: false,
 }
 
-export function tourStorageKey(role: TourRole) {
+export function tourStorageKey(role: TourId) {
   return `true-roof:tour:${role}:v1`
 }
 
@@ -46,7 +46,7 @@ export function parseTourProgress(raw: unknown): TourProgress {
   }
 }
 
-export function loadTourProgress(role: TourRole): TourProgress {
+export function loadTourProgress(role: TourId): TourProgress {
   if (typeof window === "undefined") return defaultTourProgress
 
   try {
@@ -57,7 +57,7 @@ export function loadTourProgress(role: TourRole): TourProgress {
   }
 }
 
-export function saveTourProgress(role: TourRole, progress: TourProgress) {
+export function saveTourProgress(role: TourId, progress: TourProgress) {
   if (typeof window === "undefined") return
 
   try {
@@ -78,7 +78,7 @@ export const TOUR_CHANGE_EVENT = "true-roof:tour-change"
 
 /** Starts the tour over and clears the dismissal, which is what the Replay
  * control in settings does. */
-export function replayTour(role: TourRole) {
+export function replayTour(role: TourId) {
   saveTourProgress(role, defaultTourProgress)
 }
 
@@ -88,19 +88,21 @@ export function shouldOfferTour(progress: TourProgress) {
   return !progress.dismissed && !progress.completed
 }
 
-/** The old single-card welcome on /places, which the two tours replace. Read
- * once so somebody who already dismissed that card is not offered the seeker
- * tour as though they were new, then removed. */
+/** The old single-card welcome on /places, which the tours replace.
+ *
+ * Its dismissal used to be carried over, so anybody who had closed that card
+ * was never offered the seeker tour. That was wrong and it is why the seeker
+ * tour appeared not to exist: the old card was two lines naming two ways in,
+ * the tour is a walkthrough of nine pages, and closing the first is not a
+ * decision about the second. The key is only cleared now, never read. */
 export const LEGACY_TOUR_SEEN_KEY = "true-roof:tour-seen:v1"
 
-export function migrateLegacyTourSeen(): boolean {
-  if (typeof window === "undefined") return false
+export function clearLegacyTourSeen() {
+  if (typeof window === "undefined") return
 
   try {
-    const seen = window.localStorage.getItem(LEGACY_TOUR_SEEN_KEY) === "1"
-    if (seen) window.localStorage.removeItem(LEGACY_TOUR_SEEN_KEY)
-    return seen
+    window.localStorage.removeItem(LEGACY_TOUR_SEEN_KEY)
   } catch {
-    return false
+    // Nothing to do. It is a key nothing reads.
   }
 }

@@ -8,12 +8,12 @@ import { Button } from "@/components/ui/button"
 import {
   stepsForTour,
   type TourAudience,
-  type TourRole,
+  type TourId,
 } from "@/lib/tours/steps"
 import {
   TOUR_CHANGE_EVENT,
+  clearLegacyTourSeen,
   loadTourProgress,
-  migrateLegacyTourSeen,
   saveTourProgress,
   shouldOfferTour,
   type TourProgress,
@@ -21,7 +21,7 @@ import {
 import { cn } from "cn"
 
 /**
- * A step-by-step tour of the pages one role can reach, one step per page.
+ * A step-by-step tour of a set of pages, one step per page.
  *
  * Deliberately not a modal and deliberately not a spotlight over a target.
  * Someone opening this at night on a borrowed phone with a dying battery
@@ -49,11 +49,11 @@ import { cn } from "cn"
  *   it. It is a single column until 640px.
  */
 export function GuidedTour({
-  role,
+  tour,
   audience,
   className,
 }: {
-  role: TourRole
+  tour: TourId
   audience: TourAudience
   className?: string
 }) {
@@ -71,28 +71,22 @@ export function GuidedTour({
   const movedByTour = React.useRef(false)
 
   const steps = React.useMemo(
-    () => stepsForTour(role, audience),
-    [role, audience]
+    () => stepsForTour(tour, audience),
+    [tour, audience]
   )
 
   React.useEffect(() => {
-    const read = () => {
-      const stored = loadTourProgress(role)
-      // Somebody who dismissed the old single-card welcome is not new, so
-      // they are not offered the seeker tour unasked either.
-      if (role === "seeker" && migrateLegacyTourSeen() && !stored.dismissed) {
-        const dismissed = { ...stored, dismissed: true }
-        saveTourProgress(role, dismissed)
-        setProgress(dismissed)
-        return
-      }
-      setProgress(stored)
-    }
+    // Only swept up, never read. Carrying its dismissal across was what made
+    // the seeker tour look like it did not exist for anybody who had used the
+    // app before.
+    clearLegacyTourSeen()
+
+    const read = () => setProgress(loadTourProgress(tour))
 
     read()
     window.addEventListener(TOUR_CHANGE_EVENT, read)
     return () => window.removeEventListener(TOUR_CHANGE_EVENT, read)
-  }, [role])
+  }, [tour])
 
   const open = Boolean(progress && shouldOfferTour(progress) && steps.length > 0)
 
@@ -110,11 +104,11 @@ export function GuidedTour({
           dismissed: reason === "dismissed",
           completed: reason === "completed",
         }
-        saveTourProgress(role, next)
+        saveTourProgress(tour, next)
         return next
       })
     },
-    [role]
+    [tour]
   )
 
   React.useEffect(() => {
@@ -143,7 +137,7 @@ export function GuidedTour({
         dismissed: false,
         completed: current?.completed ?? false,
       }
-      saveTourProgress(role, next)
+      saveTourProgress(tour, next)
       return next
     })
 
@@ -226,7 +220,7 @@ export function GuidedTour({
       <section
         ref={panelRef}
         role="region"
-        aria-labelledby={`tour-${role}-heading`}
+        aria-labelledby={`tour-${tour}-heading`}
         className="mx-auto flex max-h-[50svh] max-w-2xl flex-col rounded-xl border bg-card p-4 shadow-lg sm:mx-0 sm:max-h-[70svh] sm:w-96 sm:p-5"
       >
         <div className="flex items-start justify-between gap-3">
@@ -247,7 +241,7 @@ export function GuidedTour({
 
         <div className="min-h-0 overflow-y-auto">
           <h2
-            id={`tour-${role}-heading`}
+            id={`tour-${tour}-heading`}
             ref={headingRef}
             tabIndex={-1}
             className="mt-1 font-heading text-lg font-semibold outline-none"
