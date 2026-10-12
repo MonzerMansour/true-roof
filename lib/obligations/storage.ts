@@ -28,12 +28,24 @@ function writeJSON(key: string, value: unknown) {
 
 export function loadProfile(): ObligationsProfile | null {
   resetDeadlinesOnce()
-  return readJSON<ObligationsProfile | null>(PROFILE_KEY, null)
+  const saved = readJSON<Partial<ObligationsProfile> | null>(PROFILE_KEY, null)
+  if (!saved || typeof saved !== "object" || Array.isArray(saved)) return null
+
+  // A plan saved by an older version, or damaged, can be missing fields. Fill
+  // them in here so nothing downstream has to wonder.
+  return {
+    ...emptyProfile,
+    ...saved,
+    programs: Array.isArray(saved.programs) ? saved.programs : [],
+    utilities: Array.isArray(saved.utilities) ? saved.utilities : [],
+    deadlines: Array.isArray(saved.deadlines) ? saved.deadlines : [],
+  }
 }
 
 function resetDeadlinesOnce() {
   if (typeof window === "undefined") return
-  if (readJSON<number>(DEADLINES_RESET_KEY, 0) >= DEADLINES_RESET_VERSION) return
+  if (readJSON<number>(DEADLINES_RESET_KEY, 0) >= DEADLINES_RESET_VERSION)
+    return
 
   const profile = readJSON<ObligationsProfile | null>(PROFILE_KEY, null)
   if (profile?.deadlines?.length) {
@@ -41,7 +53,9 @@ function resetDeadlinesOnce() {
   }
   writeJSON(
     COMPLETED_KEY,
-    readJSON<string[]>(COMPLETED_KEY, []).filter((id) => !id.startsWith("deadline-"))
+    readJSON<string[]>(COMPLETED_KEY, []).filter(
+      (id) => !id.startsWith("deadline-")
+    )
   )
   writeJSON(DEADLINES_RESET_KEY, DEADLINES_RESET_VERSION)
 }

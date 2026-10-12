@@ -7,6 +7,7 @@ import {
   IconBell,
   IconCalendar,
   IconCamera,
+  IconMail,
   IconPhoneCall,
 } from "@tabler/icons-react"
 import { toast } from "sonner"
@@ -22,6 +23,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { DeadlinesCard } from "@/components/dashboard/deadlines-card"
+import { ShowMoreDialog } from "@/components/dashboard/show-more-dialog"
 import { CalendarTab } from "@/components/dashboard/calendar-tab"
 import { ScannerTab } from "@/components/dashboard/scanner-tab"
 import { Input } from "@/components/ui/input"
@@ -74,6 +76,9 @@ export function DashboardClient() {
   const [payments, setPayments] = React.useState<Payment[]>([])
   const [loaded, setLoaded] = React.useState(false)
   const [initialTab, setInitialTab] = React.useState("calendar")
+  const [editingDeadlineId, setEditingDeadlineId] = React.useState<
+    string | null
+  >(null)
 
   React.useEffect(() => {
     const tab = new URLSearchParams(window.location.search).get("tab")
@@ -117,6 +122,18 @@ export function DashboardClient() {
     })
   }
 
+  function handleMarkAllDone(items: Occurrence[]) {
+    if (items.length === 0) return
+    const setAll = (done: boolean) => {
+      for (const item of items) setOccurrenceCompleted(item.id, done)
+      setCompletedIds(loadCompletedOccurrenceIds())
+    }
+    setAll(true)
+    toast.success(`Marked ${items.length} done: ${items[0].title}`, {
+      action: { label: "Undo", onClick: () => setAll(false) },
+    })
+  }
+
   function handleUndo(occurrence: Occurrence) {
     setDone(occurrence.id, false)
     toast.success(`Moved back to your list: ${occurrence.title}`)
@@ -128,9 +145,12 @@ export function DashboardClient() {
     toast.success("Payment logged.")
   }
 
+  // The handlers below read the saved plan, not this screen's copy of it. With
+  // the app open in two tabs, this screen's copy can be out of date, and
+  // writing it back would erase what the other tab saved.
   function handleAddSavings(amount: number) {
     const next = updateProfile({
-      savingsSaved: (profile?.savingsSaved ?? 0) + amount,
+      savingsSaved: (loadProfile()?.savingsSaved ?? 0) + amount,
     })
     if (next) setProfile(next)
   }
@@ -142,8 +162,9 @@ export function DashboardClient() {
   }
 
   function handleUpdateIncome(amount: number) {
+    if (!Number.isFinite(amount) || amount < 0) return
     const next = updateProfile({
-      previousMonthlyIncome: profile?.monthlyIncome ?? null,
+      previousMonthlyIncome: loadProfile()?.monthlyIncome ?? null,
       monthlyIncome: amount,
       incomeUpdatedAt: isoDate(new Date()),
     })
@@ -153,18 +174,27 @@ export function DashboardClient() {
 
   function handleAddDeadline(deadline: Deadline) {
     const next = updateProfile({
-      deadlines: [...(profile?.deadlines ?? []), deadline],
+      deadlines: [...(loadProfile()?.deadlines ?? []), deadline],
+    })
+    if (next) setProfile(next)
+  }
+
+  function handleUpdateDeadline(deadline: Deadline) {
+    const next = updateProfile({
+      deadlines: (loadProfile()?.deadlines ?? []).map((d) =>
+        d.id === deadline.id ? deadline : d
+      ),
     })
     if (next) setProfile(next)
   }
 
   // Removes the deadline and every date it repeats on. Undo puts it back.
   function handleRemoveDeadline(id: string) {
-    const removed = (profile?.deadlines ?? []).find((d) => d.id === id)
+    const removed = (loadProfile()?.deadlines ?? []).find((d) => d.id === id)
     if (!removed) return
 
     const next = updateProfile({
-      deadlines: (profile?.deadlines ?? []).filter((d) => d.id !== id),
+      deadlines: (loadProfile()?.deadlines ?? []).filter((d) => d.id !== id),
     })
     if (next) setProfile(next)
 
@@ -210,12 +240,16 @@ export function DashboardClient() {
     }
 
     setSkipped((dates) => [...new Set([...dates, occurrence.date])])
-    toast.success(`Deleted ${occurrence.title} on ${occurrence.date}. Other dates stay.`, {
-      action: {
-        label: "Undo",
-        onClick: () => setSkipped((dates) => dates.filter((d) => d !== occurrence.date)),
-      },
-    })
+    toast.success(
+      `Deleted ${occurrence.title} on ${occurrence.date}. Other dates stay.`,
+      {
+        action: {
+          label: "Undo",
+          onClick: () =>
+            setSkipped((dates) => dates.filter((d) => d !== occurrence.date)),
+        },
+      }
+    )
   }
 
   function handleLogShutoffNotice() {
@@ -227,7 +261,7 @@ export function DashboardClient() {
 
   if (!profile) {
     return (
-      <Card className="mx-auto max-w-md">
+      <Card className="mx-auto w-full max-w-md">
         <CardHeader>
           <CardTitle>Set up your plan first</CardTitle>
           <CardDescription className="text-base">
@@ -299,7 +333,7 @@ export function DashboardClient() {
                       { month: "short", day: "numeric" }
                     )}
                   </p>
-                  <p className="text-sm">
+                  <p className="text-sm [overflow-wrap:anywhere]">
                     {nextDueOverdue ? "Overdue: " : ""}
                     {nextDue.title}
                   </p>
@@ -370,9 +404,11 @@ export function DashboardClient() {
                   occurrences={occurrences}
                   done={schedule.done}
                   onMarkDone={handleMarkDone}
+                  onMarkAllDone={handleMarkAllDone}
                   onUndo={handleUndo}
                   onRemoveDeadline={handleRemoveDeadline}
                   onDeleteOne={handleDeleteOne}
+                  onEditDeadline={setEditingDeadlineId}
                   onAddDeadline={handleAddDeadline}
                 />
               </TabsContent>
@@ -400,6 +436,9 @@ export function DashboardClient() {
             deadlines={profile.deadlines ?? []}
             completedIds={completedIds}
             onAdd={handleAddDeadline}
+            onUpdate={handleUpdateDeadline}
+            editingId={editingDeadlineId}
+            onEditingIdChange={setEditingDeadlineId}
             onRemove={handleRemoveDeadline}
           />
         </div>
@@ -463,7 +502,9 @@ function CheckInRow({
       <p className="text-sm text-muted-foreground">
         {daysSince === null
           ? "You have not checked in yet."
-          : `Last check-in: ${daysSince} day${daysSince === 1 ? "" : "s"} ago.`}{" "}
+          : daysSince <= 0
+            ? "Last check-in: today."
+            : `Last check-in: ${daysSince} day${daysSince === 1 ? "" : "s"} ago.`}{" "}
         Has anything changed? Update your income, savings, or deadlines.
       </p>
       <Button type="button" size="sm" className="w-fit" onClick={onCheckIn}>
@@ -485,7 +526,9 @@ function IncomeStat({
   return (
     <Stat label="Monthly income">
       <p className="font-heading text-3xl font-semibold tracking-tight">
-        {monthlyIncome != null ? `$${monthlyIncome.toLocaleString()}` : "Not set"}
+        {monthlyIncome != null
+          ? `$${monthlyIncome.toLocaleString()}`
+          : "Not set"}
       </p>
       <div className="grid gap-2">
         <Input
@@ -502,7 +545,7 @@ function IncomeStat({
           variant="outline"
           size="sm"
           className="w-fit"
-          disabled={!value}
+          disabled={value === "" || !(Number(value) >= 0)}
           onClick={() => {
             onUpdate(Number(value))
             setValue("")
@@ -515,6 +558,44 @@ function IncomeStat({
   )
 }
 
+// The setup asks for "phone or email", so the button has to work for either.
+function caseManagerAction(contact: string) {
+  const value = contact.trim()
+  if (!value) return null
+  if (value.includes("@")) {
+    return { href: `mailto:${value}`, email: true }
+  }
+  const digits = value.replace(/[^0-9+]/g, "")
+  return digits.length >= 3 ? { href: `tel:${digits}`, email: false } : null
+}
+
+function ReasonList({
+  reasons,
+  level,
+}: {
+  reasons: string[]
+  level: RiskLevel
+}) {
+  return (
+    <ul className="grid divide-y">
+      {reasons.map((reason) => (
+        <li key={reason} className="flex items-start gap-2 py-2 first:pt-0">
+          <IconAlertTriangle
+            className={cn(
+              "mt-0.5 size-4 shrink-0",
+              level === "act" ? "text-destructive" : "text-warning-text"
+            )}
+          />
+          <p className="text-sm [overflow-wrap:anywhere]">{reason}</p>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+// Warnings arrive most serious first, so the first few are the ones that matter.
+const REASON_LIMIT = 4
+
 function AttentionPanel({
   risk,
   profile,
@@ -524,6 +605,9 @@ function AttentionPanel({
   profile: ObligationsProfile
   className?: string
 }) {
+  const hidden = risk.reasons.length - REASON_LIMIT
+  const contactAction = caseManagerAction(profile.caseManagerContact)
+
   return (
     <Card className={className}>
       <CardHeader>
@@ -543,22 +627,20 @@ function AttentionPanel({
             No warnings right now. Check back after your next due date.
           </p>
         ) : (
-          <ul className="grid divide-y">
-            {risk.reasons.map((reason) => (
-              <li key={reason} className="flex items-start gap-2 py-2 first:pt-0">
-                <IconAlertTriangle
-                  className={cn(
-                    "mt-0.5 size-4 shrink-0",
-                    risk.level === "act"
-                      ? "text-destructive"
-                      : "text-warning-text"
-                  )}
-                />
-                <p className="text-sm">{reason}</p>
-              </li>
-            ))}
-          </ul>
+          <ReasonList
+            reasons={risk.reasons.slice(0, REASON_LIMIT)}
+            level={risk.level}
+          />
         )}
+
+        {hidden > 0 ? (
+          <ShowMoreDialog
+            label={`Show ${hidden} more`}
+            title={`Needs attention (${risk.reasons.length})`}
+          >
+            {() => <ReasonList reasons={risk.reasons} level={risk.level} />}
+          </ShowMoreDialog>
+        ) : null}
 
         {risk.level === "act" ? (
           <div className="grid gap-3 rounded-lg border p-3">
@@ -579,13 +661,14 @@ function AttentionPanel({
                 <IconPhoneCall />
                 Call 211
               </a>
-              {profile.caseManagerContact ? (
+              {contactAction ? (
                 <a
-                  href={`tel:${profile.caseManagerContact.replace(/[^0-9+]/g, "")}`}
+                  href={contactAction.href}
                   className={cn(buttonVariants({ variant: "outline" }))}
                 >
-                  <IconPhoneCall />
-                  Call {profile.caseManagerName || "case manager"}
+                  {contactAction.email ? <IconMail /> : <IconPhoneCall />}
+                  {contactAction.email ? "Email" : "Call"}{" "}
+                  {profile.caseManagerName || "case manager"}
                 </a>
               ) : null}
             </div>

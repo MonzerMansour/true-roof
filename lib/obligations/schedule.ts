@@ -1,5 +1,11 @@
 import { programCadenceMonths } from "./program-rules"
-import { addDays, dueDatesBetween, isoDate, parseLocalDate, repeatLabel } from "./recurrence"
+import {
+  addDays,
+  dueDatesBetween,
+  isoDate,
+  parseLocalDate,
+  repeatLabel,
+} from "./recurrence"
 import {
   billFrequencyLabel,
   billFrequencyMonths,
@@ -20,6 +26,7 @@ const DAY_OF_MONTH_ANCHOR = "2024-01"
 // One repeating thing (rent, a bill, a program, a typed deadline) and the
 // earliest date that can still show as to-do.
 type Series = {
+  key: string
   firstDueDate: string
   repeat: Repeat | null
   showFrom: string
@@ -44,6 +51,7 @@ function buildSeries(profile: ObligationsProfile, today: string): Series[] {
 
   if (profile.rentAmount > 0) {
     series.push({
+      key: "rent",
       firstDueDate: dayOfMonthAnchor(profile.rentDueDay),
       repeat: { every: 1, unit: "month" },
       showFrom: today,
@@ -51,7 +59,9 @@ function buildSeries(profile: ObligationsProfile, today: string): Series[] {
         id: `rent-${date}`,
         date,
         title: `Pay rent, $${profile.rentAmount.toLocaleString()}`,
-        detail: profile.landlordName ? `To ${profile.landlordName}` : "Rent is due",
+        detail: profile.landlordName
+          ? `To ${profile.landlordName}`
+          : "Rent is due",
         kind: "rent",
         amount: profile.rentAmount,
       }),
@@ -60,8 +70,12 @@ function buildSeries(profile: ObligationsProfile, today: string): Series[] {
 
   for (const utility of profile.utilities) {
     series.push({
+      key: `utility-${utility.id}`,
       firstDueDate: dayOfMonthAnchor(utility.dueDay),
-      repeat: { every: billFrequencyMonths[utility.frequency] ?? 1, unit: "month" },
+      repeat: {
+        every: billFrequencyMonths[utility.frequency] ?? 1,
+        unit: "month",
+      },
       showFrom: today,
       make: (date) => ({
         id: `utility-${utility.id}-${date}`,
@@ -82,6 +96,7 @@ function buildSeries(profile: ObligationsProfile, today: string): Series[] {
     if (!parseLocalDate(program.nextRecertDate)) continue
     const months = programCadenceMonths[program.kind]
     series.push({
+      key: `recert-${program.kind}`,
       firstDueDate: program.nextRecertDate,
       repeat: months ? { every: months, unit: "month" } : null,
       showFrom: program.nextRecertDate,
@@ -97,20 +112,32 @@ function buildSeries(profile: ObligationsProfile, today: string): Series[] {
   }
 
   for (const deadline of profile.deadlines ?? []) {
-    // A missed one shows for 30 days so it can count as overdue, but never
-    // one from before she added it.
+    // A repeating one shows missed dates for 30 days so they can count as
+    // overdue, but never one from before it was added. A one-time deadline
+    // shows until it is done: the person typed that date, so a date that has
+    // already passed is something to catch up on, not something to hide.
     const lookback = addDays(today, -30)
-    const added = deadline.createdAt.slice(0, 10)
+    // The day it was added in the person's own calendar. createdAt is a UTC
+    // timestamp, so slicing it gives tomorrow's date in the evening west of
+    // Greenwich and hid anything due today.
+    const added = isoDate(new Date(deadline.createdAt))
     series.push({
+      key: `deadline-${deadline.id}`,
       firstDueDate: deadline.firstDueDate,
       repeat: deadline.repeat,
-      showFrom: added > lookback ? added : lookback,
+      showFrom: deadline.repeat
+        ? added > lookback
+          ? added
+          : lookback
+        : deadline.firstDueDate,
       skip: deadline.skippedDates,
       make: (date) => ({
         id: `deadline-${deadline.id}-${date}`,
         date,
         title: deadline.title,
-        detail: deadline.whatToBring ? `Bring: ${deadline.whatToBring}` : repeatLabel(deadline.repeat),
+        detail: deadline.whatToBring
+          ? `Bring: ${deadline.whatToBring}`
+          : repeatLabel(deadline.repeat),
         kind: "deadline",
         amount: null,
         time: deadline.dueTime ?? null,
@@ -122,6 +149,7 @@ function buildSeries(profile: ObligationsProfile, today: string): Series[] {
 
   if (parseLocalDate(profile.leaseEndDate)) {
     series.push({
+      key: "lease",
       firstDueDate: profile.leaseEndDate,
       repeat: null,
       showFrom: profile.leaseEndDate,
@@ -138,6 +166,7 @@ function buildSeries(profile: ObligationsProfile, today: string): Series[] {
 
   if (parseLocalDate(profile.voucherInspectionDate)) {
     series.push({
+      key: "voucher-inspection",
       firstDueDate: profile.voucherInspectionDate,
       repeat: null,
       showFrom: profile.voucherInspectionDate,
@@ -176,21 +205,39 @@ export function buildSchedule(
   for (const s of buildSeries(profile, today)) {
     const searchFrom = s.showFrom < doneFrom ? s.showFrom : doneFrom
     const skipped = new Set(s.skip ?? [])
-    const occurrences = dueDatesBetween(s.firstDueDate, s.repeat, searchFrom, searchEnd)
+    const occurrences = dueDatesBetween(
+      s.firstDueDate,
+      s.repeat,
+      searchFrom,
+      searchEnd
+    )
       .filter((date) => !skipped.has(date))
-      .map(s.make)
+      .map((date) => ({
+        ...s.make(date),
+        seriesId: s.key,
+        recurring: Boolean(s.repeat),
+      }))
 
     const showable = occurrences.filter((o) => o.date >= s.showFrom)
-    const perYear = Math.max(1, showable.filter((o) => o.date <= yearEnd).length)
+    const perYear = Math.max(
+      1,
+      showable.filter((o) => o.date <= yearEnd).length
+    )
 
-    upcoming.push(...showable.filter((o) => !completed.has(o.id)).slice(0, perYear))
-    done.push(...occurrences.filter((o) => completed.has(o.id) && o.date >= doneFrom))
+    upcoming.push(
+      ...showable.filter((o) => !completed.has(o.id)).slice(0, perYear)
+    )
+    done.push(
+      ...occurrences.filter((o) => completed.has(o.id) && o.date >= doneFrom)
+    )
   }
 
   return {
     // By day, then by time within a day. Untimed items come first.
     upcoming: upcoming.sort(
-      (a, b) => a.date.localeCompare(b.date) || (a.time ?? "").localeCompare(b.time ?? "")
+      (a, b) =>
+        a.date.localeCompare(b.date) ||
+        (a.time ?? "").localeCompare(b.time ?? "")
     ),
     done: done.sort((a, b) => b.date.localeCompare(a.date)),
   }
@@ -217,9 +264,18 @@ type RiskSignals = Pick<
   | "lastCheckInAt"
 >
 
+// "Oct 6", in the person's own language, for warnings.
+function shortDate(iso: string) {
+  const date = parseLocalDate(iso)
+  return date
+    ? date.toLocaleDateString(undefined, { month: "short", day: "numeric" })
+    : iso
+}
+
 function daysSince(iso: string, today: Date) {
   return Math.round(
-    (today.getTime() - (parseLocalDate(iso) ?? today).getTime()) / (1000 * 60 * 60 * 24)
+    (today.getTime() - (parseLocalDate(iso) ?? today).getTime()) /
+      (1000 * 60 * 60 * 24)
   )
 }
 
@@ -232,7 +288,18 @@ export function assessRisk(
   const today = startOfDay(now)
   const completed = new Set(completedIds)
   let score = 0
-  const reasons: string[] = []
+  // Each reason carries the points it added, so the list can lead with the
+  // most serious ones.
+  const found: { text: string; points: number }[] = []
+  const add = (text: string, points: number) => {
+    score += points
+    found.push({ text, points })
+  }
+
+  // A repeating item that was missed several times is one warning, not one
+  // per missed date.
+  const overdueSeries = new Map<string, Occurrence[]>()
+  const dueSoonSeries = new Set<string>()
 
   for (const occurrence of occurrences) {
     if (completed.has(occurrence.id)) continue
@@ -245,16 +312,41 @@ export function assessRisk(
 
     if (daysUntil < 0) {
       score += 40
-      reasons.push(
-        `${occurrence.title} was due ${occurrence.date} and is not marked done`
-      )
-    } else if (daysUntil <= 3) {
-      score += 20
-      reasons.push(`${occurrence.title} is due in ${daysUntil} day(s)`)
+      if (occurrence.recurring && occurrence.seriesId) {
+        const list = overdueSeries.get(occurrence.seriesId) ?? []
+        list.push(occurrence)
+        overdueSeries.set(occurrence.seriesId, list)
+      } else {
+        found.push({
+          text: `${occurrence.title}: overdue since ${shortDate(occurrence.date)}`,
+          points: 40,
+        })
+      }
     } else if (daysUntil <= 7) {
-      score += 10
-      reasons.push(`${occurrence.title} is due in ${daysUntil} day(s)`)
+      // A repeating item only needs its soonest date mentioned.
+      if (occurrence.recurring && occurrence.seriesId) {
+        if (dueSoonSeries.has(occurrence.seriesId)) continue
+        dueSoonSeries.add(occurrence.seriesId)
+      }
+      const when =
+        daysUntil === 0
+          ? "today"
+          : daysUntil === 1
+            ? "tomorrow"
+            : `in ${daysUntil} days`
+      add(`${occurrence.title}: due ${when}`, daysUntil <= 3 ? 20 : 10)
     }
+  }
+
+  for (const items of overdueSeries.values()) {
+    const oldest = items[0]
+    found.push({
+      text:
+        items.length === 1
+          ? `${oldest.title}: overdue since ${shortDate(oldest.date)}`
+          : `${oldest.title}: missed ${items.length} times, since ${shortDate(oldest.date)}`,
+      points: 40,
+    })
   }
 
   if (
@@ -264,9 +356,9 @@ export function assessRisk(
     signals.monthlyIncome < signals.previousMonthlyIncome * 0.9 &&
     daysSince(signals.incomeUpdatedAt, today) <= 30
   ) {
-    score += 15
-    reasons.push(
-      `Income dropped from $${signals.previousMonthlyIncome.toLocaleString()} to $${signals.monthlyIncome.toLocaleString()}`
+    add(
+      `Income dropped from $${signals.previousMonthlyIncome.toLocaleString()} to $${signals.monthlyIncome.toLocaleString()}`,
+      15
     )
   }
 
@@ -274,9 +366,9 @@ export function assessRisk(
     signals.lastShutoffNoticeAt &&
     daysSince(signals.lastShutoffNoticeAt, today) <= 14
   ) {
-    score += 25
-    reasons.push(
-      `A shutoff or disconnection notice was logged on ${signals.lastShutoffNoticeAt}`
+    add(
+      `Shutoff or disconnection notice logged on ${shortDate(signals.lastShutoffNoticeAt)}`,
+      25
     )
   }
 
@@ -284,15 +376,21 @@ export function assessRisk(
     ? daysSince(signals.lastCheckInAt, today)
     : null
   if (daysSinceCheckIn === null || daysSinceCheckIn > 7) {
-    score += 10
-    reasons.push(
+    add(
       daysSinceCheckIn === null
         ? "You have not checked in yet"
-        : `No check-in in ${daysSinceCheckIn} days`
+        : `No check-in for ${daysSinceCheckIn} days`,
+      10
     )
   }
 
-  const level: RiskLevel = score >= 40 ? "act" : score >= 10 ? "watch" : "steady"
+  const level: RiskLevel =
+    score >= 40 ? "act" : score >= 10 ? "watch" : "steady"
+
+  // Array.sort is stable, so reasons with equal points keep their date order.
+  const reasons = found
+    .sort((a, b) => b.points - a.points)
+    .map((reason) => reason.text)
 
   return { level, score, reasons }
 }
