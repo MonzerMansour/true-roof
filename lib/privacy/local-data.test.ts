@@ -55,6 +55,7 @@ describe("the list keeps up with the app", () => {
       [
         "../matching/storage",
         "../obligations/storage",
+        "../obligations/alert-email",
         "../listings/activity",
         "../listings/place-filters",
       ].map(async (path) => {

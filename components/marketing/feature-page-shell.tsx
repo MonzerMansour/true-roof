@@ -1,22 +1,34 @@
 import Link from "next/link"
 
-import { Container } from "@/components/marketing/container"
-import { MarketingHero } from "@/components/marketing/marketing-hero"
+import { FeatureDetailHero } from "@/components/marketing/feature-detail-hero"
+import { PortalTimeline } from "@/components/marketing/portal-timeline"
 import { Reveal } from "@/components/marketing/reveal"
+import { Container } from "@/components/marketing/container"
 import { SignInButton } from "@/components/marketing/sign-in-button"
 import { buttonVariants } from "@/components/ui/button"
 import { cn } from "cn"
 import { features, type Feature } from "@/lib/features"
 
 export function FeaturePageShell({ feature }: { feature: Feature }) {
+  const chips =
+    feature.sections.find((section) => section.bullets?.length)?.bullets ??
+    feature.sections.slice(0, 3).map((section) => section.title)
+
+  const timelineSteps = feature.sections.map((section) => ({
+    title: section.title,
+    body: section.bullets?.length
+      ? `${section.body} ${section.bullets.join(" · ")}`
+      : section.body,
+  }))
+
   return (
     <>
-      <MarketingHero
+      <FeatureDetailHero
         photo={feature.photo}
         eyebrow={feature.eyebrow}
         title={feature.title}
         lede={feature.lede}
-        compact
+        chips={chips}
         actions={
           <>
             <SignInButton>Get started</SignInButton>
@@ -33,48 +45,32 @@ export function FeaturePageShell({ feature }: { feature: Feature }) {
         }
       />
 
-      <section className="border-b bg-primary/[0.03] py-16">
-        <Container className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_16rem]">
-          <div className="grid gap-12">
-            {feature.sections.map((section) => (
-              <Reveal key={section.title}>
-                <section className="max-w-2xl">
-                  <h2 className="font-heading text-2xl font-semibold tracking-tight">
-                    {section.title}
-                  </h2>
-                  <p className="mt-3 text-base leading-relaxed text-muted-foreground">
-                    {section.body}
-                  </p>
-                  {section.bullets ? (
-                    <ul className="mt-4 grid gap-2 text-sm leading-relaxed">
-                      {section.bullets.map((bullet) => (
-                        <li
-                          key={bullet}
-                          className="rounded-xl border bg-card px-3 py-2 ring-1 ring-primary/10"
-                        >
-                          {bullet}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : null}
-                </section>
-              </Reveal>
-            ))}
-          </div>
+      <PortalTimeline
+        heading="How this part works"
+        lede="Scroll through each piece. Same facts as before, shown as a path instead of a long wall of text."
+        steps={timelineSteps}
+      />
 
+      <section className="border-t py-16">
+        <Container>
           <Reveal>
-            <aside className="h-fit rounded-2xl border bg-card p-4 ring-1 ring-primary/10 lg:sticky lg:top-24">
+            <aside className="rounded-2xl border bg-card p-5 ring-1 ring-primary/10">
               <p className="text-sm font-medium">More from True Roof</p>
-              <ul className="mt-3 grid gap-2">
+              <ul className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 {features
                   .filter((item) => item.slug !== feature.slug)
                   .map((item) => (
                     <li key={item.slug}>
                       <Link
                         href={`/features/${item.slug}`}
-                        className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                        className="block rounded-xl border px-3 py-3 text-sm transition-all hover:border-primary/30 hover:bg-muted/40"
                       >
-                        {item.title}
+                        <span className="font-medium text-foreground">
+                          {item.title}
+                        </span>
+                        <span className="mt-1 block text-muted-foreground">
+                          {item.eyebrow}
+                        </span>
                       </Link>
                     </li>
                   ))}

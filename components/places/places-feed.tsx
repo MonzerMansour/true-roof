@@ -2,9 +2,10 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { IconFilter, IconX } from "@tabler/icons-react"
+import { IconFilter, IconMapPin, IconSearch, IconX } from "@tabler/icons-react"
 
 import { PlaceCard } from "@/components/places/place-card"
+import { PlaceCardEntrance } from "@/components/places/place-card-entrance"
 import { Badge } from "@/components/ui/badge"
 import { Button, buttonVariants } from "@/components/ui/button"
 import {
@@ -56,6 +57,9 @@ const distanceOptions: { value: DistanceMiles | null; label: string }[] = [
   { value: 10, label: "10 mi" },
   { value: 20, label: "20 mi" },
 ]
+
+/** Signed-out preview: about two rows on a three-column grid. */
+const PREVIEW_LIMIT = 6
 
 type FilterTag = {
   id: string
@@ -283,39 +287,63 @@ export function PlacesFeed({
     setFilters(defaultPlaceFilters)
   }
 
+  const previewOnly = !session
+  const shown = previewOnly ? visible.slice(0, PREVIEW_LIMIT) : visible
+  const hiddenCount = previewOnly
+    ? Math.max(0, visible.length - PREVIEW_LIMIT)
+    : 0
+
   return (
     <div>
-      <div className="flex flex-wrap items-center gap-2">
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          onClick={() => setFiltersOpen(true)}
-        >
-          <IconFilter />
-          Filters
-          {activeCount > 0 ? (
-            <Badge variant="secondary" className="ml-0.5">
-              {activeCount}
-            </Badge>
+      <div className="animate-in fade-in slide-in-from-top-2 rounded-2xl border bg-card/80 p-2 shadow-sm ring-1 ring-primary/10 duration-500 backdrop-blur-sm">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setFiltersOpen(true)}
+            className="flex min-h-11 min-w-0 flex-1 items-center gap-3 rounded-xl bg-muted/60 px-3 py-2 text-left transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 outline-none"
+            aria-label="Open filters"
+          >
+            <IconSearch className="size-4 shrink-0 text-muted-foreground" />
+            <span className="min-w-0 flex-1 truncate text-sm text-muted-foreground">
+              {activeCount > 0
+                ? `${activeCount} filter${activeCount === 1 ? "" : "s"} · ${visible.length} sites`
+                : "Filter shelters and safe parking…"}
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-lg bg-background px-2 py-1 text-xs font-medium text-foreground ring-1 ring-border">
+              <IconFilter className="size-3.5" />
+              Filters
+              {activeCount > 0 ? (
+                <Badge variant="secondary" className="ml-0.5 h-5 px-1.5">
+                  {activeCount}
+                </Badge>
+              ) : null}
+            </span>
+          </button>
+          <Button
+            type="button"
+            size="sm"
+            variant={origin.label === "Near me" ? "default" : "outline"}
+            onClick={useMyLocation}
+            className="min-h-11"
+          >
+            <IconMapPin />
+            Near me
+          </Button>
+        </div>
+        <div className="mt-2 flex flex-wrap items-center gap-2 px-1 pb-1">
+          <p className="text-sm text-muted-foreground">
+            {previewOnly && hiddenCount > 0
+              ? `Showing ${shown.length} of ${visible.length} sites`
+              : `${visible.length} ${visible.length === 1 ? "site" : "sites"}`}
+            {" · "}
+            {rankedBy === "match_listings"
+              ? "Best match first"
+              : "Nearest first"}
+          </p>
+          {rankedBy === "match_listings" ? (
+            <Badge variant="outline">Also ranked by your answers</Badge>
           ) : null}
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant={origin.label === "Near me" ? "default" : "outline"}
-          onClick={useMyLocation}
-        >
-          Near me
-        </Button>
-        <p className="text-sm text-muted-foreground">
-          {visible.length} {visible.length === 1 ? "site" : "sites"}
-          {" · "}
-          {rankedBy === "match_listings" ? "Best match first" : "Nearest first"}
-        </p>
-        {rankedBy === "match_listings" ? (
-          <Badge variant="outline">Also ranked by your answers</Badge>
-        ) : null}
+        </div>
       </div>
 
       {geoError ? (
@@ -349,28 +377,7 @@ export function PlacesFeed({
         </div>
       ) : null}
 
-      {/* Narrowing the list is account-only, so a signed-out person gets the
-          offer rather than a link into a redirect. The list above stays whole
-          either way: this is an offer, not a wall. */}
-      {!session ? (
-        <Card className="mt-4 ring-1 ring-primary/10">
-          <CardHeader>
-            <CardTitle className="text-lg">Sign in to get matched</CardTitle>
-            <CardDescription className="text-base">
-              Answer ten quick questions and every place gets a match score, the
-              closest fits move to the top, and places that cannot take your pet,
-              your partner or your van drop out. Your answers are saved to your
-              account, so a borrowed phone still has them. The full list below
-              needs no account.
-            </CardDescription>
-            <div className="mt-3">
-              <SignInButton size="touch" next={FIND_A_PLACE_PATH}>
-                Sign in to get matched
-              </SignInButton>
-            </div>
-          </CardHeader>
-        </Card>
-      ) : !needs ? (
+      {session && !needs ? (
         <Card className="mt-4 ring-1 ring-primary/10">
           <CardHeader>
             <CardTitle className="text-lg">
@@ -676,26 +683,57 @@ export function PlacesFeed({
           </CardHeader>
         </Card>
       ) : (
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {visible.map(({ listing, fit, miles }) => (
-            <PlaceCard
-              key={listing.id}
-              listing={listing}
-              fit={needs ? fit : undefined}
-              miles={miles}
-              matchPercent={
-                rankedBy === "match_listings"
-                  ? similarity?.[listing.id]
-                  : undefined
-              }
-              matchDetail={
-                rankedBy === "match_listings"
-                  ? matchDetails?.[listing.id]
-                  : undefined
-              }
-            />
-          ))}
-        </div>
+        <>
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {shown.map(({ listing, fit, miles }, index) => (
+              <PlaceCardEntrance key={listing.id} index={index}>
+                <PlaceCard
+                  listing={listing}
+                  fit={needs ? fit : undefined}
+                  miles={miles}
+                  matchPercent={
+                    rankedBy === "match_listings"
+                      ? similarity?.[listing.id]
+                      : undefined
+                  }
+                  matchDetail={
+                    rankedBy === "match_listings"
+                      ? matchDetails?.[listing.id]
+                      : undefined
+                  }
+                />
+              </PlaceCardEntrance>
+            ))}
+          </div>
+
+          {previewOnly && hiddenCount > 0 ? (
+            <div className="relative mt-8">
+              <div
+                className="pointer-events-none absolute inset-x-0 -top-16 h-16 bg-gradient-to-b from-transparent to-background"
+                aria-hidden
+              />
+              <Card className="overflow-hidden ring-1 ring-primary/15">
+                <CardHeader className="gap-4 sm:flex-row sm:items-end sm:justify-between">
+                  <div className="max-w-xl">
+                    <CardTitle className="text-lg">
+                      Sign in to see the rest
+                    </CardTitle>
+                    <CardDescription className="mt-2 text-base">
+                      {hiddenCount} more{" "}
+                      {hiddenCount === 1 ? "site is" : "sites are"} waiting.
+                      An account also unlocks matching: ten quick questions,
+                      scores on every place, and sites that cannot take you drop
+                      out. Calling and directions on the preview still work.
+                    </CardDescription>
+                  </div>
+                  <SignInButton size="touch" next="/places">
+                    Sign in to load more
+                  </SignInButton>
+                </CardHeader>
+              </Card>
+            </div>
+          ) : null}
+        </>
       )}
 
       {householdSplit && visible.length === 0 ? (

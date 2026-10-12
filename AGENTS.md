@@ -45,6 +45,10 @@ Do not build a second matcher. An earlier distance-plus-freshness ranker (`score
 
 Sign-in dialog: password, magic link, Google (`/auth/callback`). Session cookies refresh in `proxy.ts`. Profiles are created by `handle_new_user`. Google still needs the provider turned on in the Supabase dashboard.
 
+## Gmail late alerts (Financials)
+
+Plan A: opt-in emails when a signed-in person opens Financials/home and risk is Act or critically overdue. Uses Gmail SMTP via `nodemailer` (`lib/email/gmail.ts`, `POST /api/alerts/email`). **Not Supabase SMTP.** Setup and publish checklist: `docs/gmail-alerts-setup.md`. Env: `GMAIL_USER`, `GMAIL_APP_PASSWORD`, optional `ALERT_EMAIL_FROM`, and `NEXT_PUBLIC_APP_URL` (localhost in `.env.local` for now; set the real public URL on the host when you publish).
+
 ## UI
 
 Use shadcn components in `components/ui`. Add with `npx shadcn@latest add`. If a primitive does not exist, create one in that folder in the Nova/Base UI style. Tabler icons only. Theme tokens only.

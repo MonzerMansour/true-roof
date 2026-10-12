@@ -261,6 +261,15 @@ html[data-contrast="high"] *::after {
     }
   }
 
+  @keyframes marquee {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .reveal-block {
       opacity: 1;
@@ -275,6 +284,15 @@ html[data-contrast="high"] *::after {
       }
       to {
         opacity: 1;
+        transform: none;
+      }
+    }
+
+    @keyframes marquee {
+      from {
+        transform: none;
+      }
+      to {
         transform: none;
       }
     }

@@ -25,6 +25,8 @@ export const DEVICE_ONLY_KEYS = [
   "true-roof:favorites:v1",
   "true-roof:recent-places:v1",
   "true-roof:place-filters:v1",
+  "true-roof:alert-email-opt-in:v1",
+  "true-roof:alert-email-sent:v1",
 ] as const
 
 /**

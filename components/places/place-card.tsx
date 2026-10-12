@@ -122,13 +122,15 @@ export function PlaceCard({
     setShowBreakdown((prev) => !prev)
   }
 
+  const matchScore = matchDetail?.score ?? matchPercent ?? null
+
   return (
     <Link href={`/places/${listing.id}`} className="block h-full">
-      <Card className="relative h-full overflow-hidden ring-1 ring-primary/10 transition-colors hover:bg-muted/40">
+      <Card className="group relative h-full overflow-hidden ring-1 ring-primary/10 transition-all hover:border-primary/30 hover:bg-muted/30 hover:shadow-sm">
         <div className="relative">
           <MarketingPhoto
             photo={photo}
-            className="h-44"
+            className="h-40"
             sizes="(min-width: 1024px) 33vw, 100vw"
           />
           <Button
@@ -146,13 +148,31 @@ export function PlaceCard({
               <IconHeart />
             )}
           </Button>
+          {matchScore != null ? (
+            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-3 pt-8 pb-2">
+              <div className="flex items-center justify-between gap-2 text-xs font-medium text-white">
+                <span>Match</span>
+                <span className="tabular-nums">
+                  {formatPercent(matchScore)}
+                </span>
+              </div>
+              <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-white/25">
+                <div
+                  className="h-full rounded-full bg-primary transition-all duration-500"
+                  style={{
+                    width: `${Math.max(6, Math.round(matchScore * 100))}%`,
+                  }}
+                />
+              </div>
+            </div>
+          ) : null}
         </div>
         <CardHeader>
           <div className="flex flex-wrap items-center gap-2">
             <Badge
               className={cn(
-                tone === "live" && "bg-emerald-600 text-white",
-                tone === "recent" && "bg-amber-500 text-white",
+                tone === "live" && "bg-success text-success-foreground",
+                tone === "recent" && "bg-warning text-warning-foreground",
                 tone === "call" && "bg-muted text-foreground"
               )}
             >

@@ -1,8 +1,7 @@
 import type { Metadata } from "next"
 
 import { Container } from "@/components/marketing/container"
-import { MarketingPhoto } from "@/components/marketing/marketing-photo"
-import { Reveal } from "@/components/marketing/reveal"
+import { PlacesHero } from "@/components/marketing/places-hero"
 import { PlacesFeed } from "@/components/places/places-feed"
 import { getPublishedListings } from "@/lib/listings/queries"
 import { withReviewStats } from "@/lib/listings/reviews"
@@ -59,32 +58,19 @@ export default async function PlacesPage() {
 
   return (
     <>
-      <section className="relative isolate overflow-hidden">
-        <MarketingPhoto
-          photo={photos.parking}
-          priority
-          sizes="100vw"
-          className="absolute inset-0 opacity-40"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/50 via-background/88 to-background" />
-        <Container className="relative pt-6 pb-12 sm:pt-8">
-          <Reveal>
-            <p className="text-sm font-medium text-primary">Places</p>
-            <h1 className="mt-2 max-w-3xl font-heading text-3xl font-semibold tracking-tight sm:text-5xl">
-              Shelters and safe parking, side by side
-            </h1>
-            <p className="mt-3 max-w-2xl text-lg text-muted-foreground">
-              Closest and most recently confirmed first.
+      <PlacesHero
+        photo={photos.parking}
+        title="Shelters and safe parking, side by side"
+        lede="Closest and most recently confirmed first."
+        footnote={
+          source === "seed" ? (
+            <p className="mt-3 text-sm text-muted-foreground">
+              Showing sample sites because the listings table was not
+              reachable.
             </p>
-            {source === "seed" ? (
-              <p className="mt-3 text-sm text-muted-foreground">
-                Showing sample sites because the listings table was not
-                reachable.
-              </p>
-            ) : null}
-          </Reveal>
-        </Container>
-      </section>
+          ) : null
+        }
+      />
 
       <section className="border-t bg-primary/[0.03] py-10 sm:py-12">
         <Container>

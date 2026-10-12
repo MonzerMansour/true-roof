@@ -202,8 +202,10 @@ export function SignInDialog() {
             {next?.includes("intent=")
               ? "Joining a waitlist or asking for a bed sends your name to the site, so it needs an account."
               : next?.startsWith("/get-started/find-a-place")
-                ? "Matching needs an account, because your answers are saved to it and used to score each place. Browsing the full list needs nothing."
-                : "One account works on this phone or a borrowed one. You can export or delete your data later in one tap."}
+                ? "Matching needs an account, because your answers are saved to it and used to score each place. A short preview of Places is open without one."
+                : next === "/places" || next?.startsWith("/places?")
+                  ? "Sign in to see every site on Places, and to answer the questions that score them for you."
+                  : "One account works on this phone or a borrowed one. You can export or delete your data later in one tap."}
           </DialogDescription>
         </DialogHeader>
 

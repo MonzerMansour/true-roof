@@ -45,7 +45,7 @@ const seekerSteps: TourStep[] = [
     id: "places",
     path: "/places",
     title: "Every place we know about",
-    body: "Shelters and safe parking in one list, closest and most recently confirmed first. Calling and directions never need an account.",
+    body: "Shelters and safe parking in one list, closest and most recently confirmed first. Without an account you see a short preview. Calling and directions on those cards still work.",
     action: "Tap Near me to sort by how far away each one is.",
   },
   {
@@ -74,8 +74,8 @@ const seekerSteps: TourStep[] = [
     id: "signed-out",
     path: "/places",
     title: "What an account adds",
-    body: "Signing in lets you answer ten questions once and have every place scored against them, with the ones that cannot take you removed. Your answers follow you to a borrowed phone. Everything else works without one.",
-    action: "Sign in from the card on this page, or carry on browsing.",
+    body: "Signing in opens the full Places list and lets you answer ten questions so every place is scored, with the ones that cannot take you removed. Your answers follow you to a borrowed phone.",
+    action: "Sign in from the card under the preview, or keep looking at the sample.",
   },
   {
     id: "home",

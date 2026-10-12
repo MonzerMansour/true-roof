@@ -151,8 +151,8 @@ export function SettingsClient() {
           ) : (
             <p className="text-sm text-muted-foreground">
               Matching needs an account, because your answers are saved to it
-              and used to score each place. Browsing the full list on Places
-              needs nothing.
+              and used to score each place. Places shows a short preview without
+              one; sign in to see the rest.
             </p>
           )}
         </CardContent>

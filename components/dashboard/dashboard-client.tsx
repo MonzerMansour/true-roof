@@ -12,8 +12,10 @@ import {
 } from "@tabler/icons-react"
 import { toast } from "sonner"
 
+import { useSession } from "@/components/auth/session-provider"
 import { Badge } from "@/components/ui/badge"
 import { Button, buttonVariants } from "@/components/ui/button"
+import { Switch } from "@/components/ui/switch"
 import {
   Card,
   CardAction,
@@ -29,6 +31,13 @@ import { ScannerTab } from "@/components/dashboard/scanner-tab"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from "cn"
+import {
+  criticallyOverdueIds,
+  loadAlertEmailOptIn,
+  maybeSendLateAlertEmail,
+  overdueOccurrenceIds,
+  saveAlertEmailOptIn,
+} from "@/lib/obligations/alert-email"
 import {
   assessRisk,
   buildSchedule,
@@ -51,31 +60,40 @@ import type {
 
 const riskCopy: Record<
   RiskLevel,
-  { label: string; text: string; helper: string }
+  { label: string; text: string; helper: string; shell: string; dot: string }
 > = {
   steady: {
     label: "Steady",
     text: "text-success-text",
     helper: "Nothing is overdue and nothing is due in the next week.",
+    shell: "border-success/25 bg-success/5",
+    dot: "bg-success",
   },
   watch: {
     label: "Watch",
     text: "text-warning-text",
     helper: "Something is due soon. Pay it down or mark it handled below.",
+    shell: "border-warning/30 bg-warning/5",
+    dot: "bg-warning",
   },
   act: {
     label: "Act",
     text: "text-destructive",
-    helper: "Something is overdue. The crisis numbers at the top of this page reach a person if you cannot cover it.",
+    helper:
+      "Something is overdue. The crisis numbers at the top of this page reach a person if you cannot cover it.",
+    shell: "border-destructive/35 bg-destructive/5",
+    dot: "bg-destructive",
   },
 }
 
 export function DashboardClient() {
+  const { session } = useSession()
   const [profile, setProfile] = React.useState<ObligationsProfile | null>(null)
   const [completedIds, setCompletedIds] = React.useState<string[]>([])
   const [payments, setPayments] = React.useState<Payment[]>([])
   const [loaded, setLoaded] = React.useState(false)
   const [initialTab, setInitialTab] = React.useState("calendar")
+  const [emailAlerts, setEmailAlerts] = React.useState(false)
   const [editingDeadlineId, setEditingDeadlineId] = React.useState<
     string | null
   >(null)
@@ -86,6 +104,7 @@ export function DashboardClient() {
     setProfile(loadProfile())
     setCompletedIds(loadCompletedOccurrenceIds())
     setPayments(loadPayments())
+    setEmailAlerts(loadAlertEmailOptIn())
     setLoaded(true)
   }, [])
 
@@ -109,6 +128,26 @@ export function DashboardClient() {
       }),
     [occurrences, completedIds, profile]
   )
+
+  React.useEffect(() => {
+    if (!loaded || !session || !profile || !emailAlerts) return
+    const criticalIds = criticallyOverdueIds(occurrences, completedIds)
+    const overdueIds = overdueOccurrenceIds(occurrences, completedIds)
+    void maybeSendLateAlertEmail({
+      level: risk.level,
+      reasons: risk.reasons,
+      occurrenceIds: criticalIds.length > 0 ? criticalIds : overdueIds,
+    })
+  }, [
+    loaded,
+    session,
+    profile,
+    emailAlerts,
+    risk.level,
+    risk.reasons,
+    occurrences,
+    completedIds,
+  ])
 
   function setDone(id: string, done: boolean) {
     setOccurrenceCompleted(id, done)
@@ -295,11 +334,21 @@ export function DashboardClient() {
 
   return (
     <div className="grid gap-6">
-      <Card>
+      <Card className={cn("overflow-hidden ring-1", copy.shell)}>
         <CardContent className="grid gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-0">
           <div className="grid content-between gap-6 lg:pr-8">
             <div>
-              <p className="text-sm text-muted-foreground">Status</p>
+              <p className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span
+                  className={cn(
+                    "size-2 rounded-full",
+                    copy.dot,
+                    risk.level === "act" && "animate-pulse"
+                  )}
+                  aria-hidden
+                />
+                Status
+              </p>
               <p
                 className={cn(
                   "mt-1 font-heading text-5xl font-semibold tracking-tight",
@@ -311,11 +360,45 @@ export function DashboardClient() {
               <p className="mt-2 max-w-sm text-sm text-muted-foreground">
                 {copy.helper}
               </p>
+              {risk.level !== "steady" ? (
+                <a
+                  href="#financials-calendar"
+                  className={cn(
+                    buttonVariants({ size: "sm", variant: "outline" }),
+                    "mt-4 w-fit"
+                  )}
+                >
+                  <IconCalendar />
+                  Open calendar
+                </a>
+              ) : null}
             </div>
             <CheckInRow
               lastCheckInAt={profile.lastCheckInAt}
               onCheckIn={handleCheckIn}
             />
+            {session ? (
+              <label className="flex min-h-11 items-start justify-between gap-3 border-t pt-4">
+                <span className="grid gap-1">
+                  <span className="text-sm font-medium">
+                    Email me when something important is late
+                  </span>
+                  <span className="text-sm text-muted-foreground">
+                    Sends to {session.email} when you open True Roof and
+                    something is overdue. Off by default. Plans stay on this
+                    phone.
+                  </span>
+                </span>
+                <Switch
+                  checked={emailAlerts}
+                  onCheckedChange={(checked) => {
+                    setEmailAlerts(checked)
+                    saveAlertEmailOptIn(checked)
+                  }}
+                  aria-label="Email me when something important is late"
+                />
+              </label>
+            ) : null}
           </div>
 
           <div className="grid divide-y border-t sm:grid-cols-3 sm:divide-x sm:divide-y-0 lg:border-t-0 lg:border-l">
@@ -385,7 +468,10 @@ export function DashboardClient() {
       </Card>
 
       <div className="grid gap-6 lg:grid-cols-3 lg:grid-rows-[auto_1fr] lg:items-start">
-        <Card className="order-2 lg:order-1 lg:col-span-2 lg:row-span-2">
+        <Card
+          id="financials-calendar"
+          className="order-2 scroll-mt-24 lg:order-1 lg:col-span-2 lg:row-span-2"
+        >
           <CardContent>
             <Tabs defaultValue={initialTab}>
               <TabsList>
@@ -607,17 +693,59 @@ function AttentionPanel({
 }) {
   const hidden = risk.reasons.length - REASON_LIMIT
   const contactAction = caseManagerAction(profile.caseManagerContact)
+  const copy = riskCopy[risk.level]
 
   return (
-    <Card className={className}>
-      <CardHeader>
+    <Card
+      className={cn(
+        "overflow-hidden ring-1",
+        risk.level === "act"
+          ? "border-destructive/35 ring-destructive/20"
+          : risk.level === "watch"
+            ? "border-warning/30 ring-warning/15"
+            : "ring-primary/10",
+        className
+      )}
+    >
+      <CardHeader
+        className={cn(
+          risk.level === "act" && "bg-destructive/5",
+          risk.level === "watch" && "bg-warning/5"
+        )}
+      >
         <CardTitle className="flex items-center gap-2">
-          <IconBell className="size-4" />
-          Needs attention
+          <span
+            className={cn(
+              "flex size-8 items-center justify-center rounded-lg",
+              risk.level === "act"
+                ? "bg-destructive/15 text-destructive"
+                : risk.level === "watch"
+                  ? "bg-warning/15 text-warning-text"
+                  : "bg-muted text-muted-foreground"
+            )}
+          >
+            <IconBell className="size-4" />
+          </span>
+          <span className="flex flex-col gap-0.5">
+            <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+              {risk.level === "act"
+                ? "Needs action now"
+                : risk.level === "watch"
+                  ? "Due soon"
+                  : "All clear"}
+            </span>
+            <span className={cn("font-heading text-xl", copy.text)}>
+              {copy.label}
+            </span>
+          </span>
         </CardTitle>
         {risk.reasons.length > 0 ? (
           <CardAction>
-            <Badge variant="secondary">{risk.reasons.length}</Badge>
+            <Badge
+              variant={risk.level === "act" ? "destructive" : "secondary"}
+            >
+              {risk.reasons.length}
+            </Badge>
           </CardAction>
         ) : null}
       </CardHeader>
@@ -642,8 +770,18 @@ function AttentionPanel({
           </ShowMoreDialog>
         ) : null}
 
+        {risk.level !== "steady" ? (
+          <a
+            href="#financials-calendar"
+            className={cn(buttonVariants({ variant: "default" }), "w-full")}
+          >
+            <IconCalendar />
+            Open calendar
+          </a>
+        ) : null}
+
         {risk.level === "act" ? (
-          <div className="grid gap-3 rounded-lg border p-3">
+          <div className="grid gap-3 rounded-xl border border-destructive/20 bg-destructive/5 p-3">
             {/* What survives of the Get Help feature: plain phone links and
                 nothing else. There is no data bundle and no handoff, so the
                 heading no longer promises one. */}

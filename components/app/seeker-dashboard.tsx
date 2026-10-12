@@ -29,6 +29,12 @@ import type { InterestRow } from "@/lib/listings/interest"
 import { photoForListing } from "@/lib/listings/photos"
 import { interestLabel, type Listing } from "@/lib/listings/types"
 import { loadNeeds } from "@/lib/matching/storage"
+import {
+  criticallyOverdueIds,
+  loadAlertEmailOptIn,
+  maybeSendLateAlertEmail,
+  overdueOccurrenceIds,
+} from "@/lib/obligations/alert-email"
 import { assessRisk, buildSchedule } from "@/lib/obligations/schedule"
 import {
   loadCompletedOccurrenceIds,
@@ -42,18 +48,23 @@ const riskCopy = {
     label: "Steady",
     tone: "text-success-text",
     bar: "bg-success",
+    track: "bg-success/15",
   },
   watch: {
     label: "Due soon",
     tone: "text-warning-text",
     bar: "bg-warning",
+    track: "bg-warning/15",
   },
   act: {
     label: "Needs action",
     tone: "text-destructive",
     bar: "bg-destructive",
+    track: "bg-destructive/15",
   },
 } as const
+
+const riskLevels = ["steady", "watch", "act"] as const
 
 function firstNameFromEmail(email: string | null | undefined) {
   if (!email) return null
@@ -108,19 +119,34 @@ export function SeekerDashboard({ listings }: { listings: Listing[] }) {
     void loadMyInterests().then(setAsks)
   }, [])
 
+  const risk = React.useMemo(() => {
+    if (!profile) return null
+    return assessRisk(
+      buildSchedule(profile, completedIds).upcoming,
+      completedIds,
+      profile
+    )
+  }, [profile, completedIds])
+
+  React.useEffect(() => {
+    if (!ready || !session || !profile || !risk) return
+    if (!loadAlertEmailOptIn()) return
+    const scheduleUpcoming = buildSchedule(profile, completedIds).upcoming
+    const criticalIds = criticallyOverdueIds(scheduleUpcoming, completedIds)
+    const overdueIds = overdueOccurrenceIds(scheduleUpcoming, completedIds)
+    void maybeSendLateAlertEmail({
+      level: risk.level,
+      reasons: risk.reasons,
+      occurrenceIds: criticalIds.length > 0 ? criticalIds : overdueIds,
+    })
+  }, [ready, session, profile, risk, completedIds])
+
   if (!ready) return null
 
   const favoriteListings = favorites
     .map((id) => listings.find((item) => item.id === id))
     .filter((item): item is Listing => Boolean(item))
 
-  const risk = profile
-    ? assessRisk(
-        buildSchedule(profile, completedIds).upcoming,
-        completedIds,
-        profile
-      )
-    : null
   const riskUi = risk ? riskCopy[risk.level] : null
   const nextDue = upcoming[0] ?? null
   const name = firstNameFromEmail(session?.email)
@@ -282,6 +308,10 @@ export function SeekerDashboard({ listings }: { listings: Listing[] }) {
         </div>
       </section>
 
+      {risk ? (
+        <StatusRail level={risk.level} reasons={risk.reasons.slice(0, 2)} />
+      ) : null}
+
       {/* Was the same two-card "pick one" chooser as the deleted hub page.
           A first-time person gets one thing to do, and the quieter path for
           someone who already has a place sits under it as a sentence rather
@@ -333,6 +363,7 @@ export function SeekerDashboard({ listings }: { listings: Listing[] }) {
               ? "Filters use what you told us"
               : "One minute, then a better list"
           }
+          delay={0}
         />
         <StatTile
           href={asks[0] ? `/places/${asks[0].listingId}` : "/places"}
@@ -340,6 +371,7 @@ export function SeekerDashboard({ listings }: { listings: Listing[] }) {
           label="Your asks"
           value={`${asks.length} open`}
           detail="Not an approval. Staff can see these."
+          delay={1}
         />
         <StatTile
           href="/financials"
@@ -353,6 +385,7 @@ export function SeekerDashboard({ listings }: { listings: Listing[] }) {
                 : "Set up"
           }
           detail={nextDue?.title ?? "Rent, bills, and recerts"}
+          delay={2}
         />
         <StatTile
           href="/places"
@@ -360,6 +393,7 @@ export function SeekerDashboard({ listings }: { listings: Listing[] }) {
           label="Saved places"
           value={`${favoriteListings.length}`}
           detail="Tap Save on any site page"
+          delay={3}
         />
       </section>
 
@@ -379,7 +413,7 @@ export function SeekerDashboard({ listings }: { listings: Listing[] }) {
                 <li key={row.id}>
                   <Link
                     href={`/places/${row.listingId}`}
-                    className="flex items-center justify-between gap-3 rounded-xl border px-3 py-3 text-sm transition-colors hover:bg-muted/50"
+                    className="group flex items-center justify-between gap-3 rounded-xl border px-3 py-3 text-sm transition-all hover:border-primary/25 hover:bg-muted/40"
                   >
                     <div>
                       <p className="font-medium">{row.listingName}</p>
@@ -414,7 +448,7 @@ export function SeekerDashboard({ listings }: { listings: Listing[] }) {
               {upcoming.map((item) => (
                 <li
                   key={item.id}
-                  className="flex items-start justify-between gap-3 rounded-xl border px-3 py-3 text-sm"
+                  className="flex items-start justify-between gap-3 rounded-xl border px-3 py-3 text-sm transition-colors hover:border-primary/20 hover:bg-muted/30"
                 >
                   <div>
                     <p className="font-medium">{item.title}</p>
@@ -574,6 +608,64 @@ export function SeekerDashboard({ listings }: { listings: Listing[] }) {
   )
 }
 
+function StatusRail({
+  level,
+  reasons,
+}: {
+  level: keyof typeof riskCopy
+  reasons: string[]
+}) {
+  return (
+    <section
+      className={cn(
+        "animate-in fade-in slide-in-from-bottom-2 rounded-2xl border p-4 duration-500",
+        riskCopy[level].track
+      )}
+      aria-label={`Housing status: ${riskCopy[level].label}`}
+    >
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          {riskLevels.map((key) => {
+            const on = key === level
+            const copy = riskCopy[key]
+            return (
+              <span
+                key={key}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ring-1 transition-colors",
+                  on
+                    ? cn(copy.tone, "bg-background/80 ring-primary/20")
+                    : "bg-background/40 text-muted-foreground ring-transparent"
+                )}
+              >
+                {on && key === "act" ? (
+                  <span className="size-1.5 animate-pulse rounded-full bg-destructive" />
+                ) : on ? (
+                  <span className={cn("size-1.5 rounded-full", copy.bar)} />
+                ) : null}
+                {copy.label}
+              </span>
+            )
+          })}
+        </div>
+        {level !== "steady" ? (
+          <Link
+            href="/financials"
+            className={cn(buttonVariants({ size: "sm", variant: "outline" }))}
+          >
+            Open Financials
+          </Link>
+        ) : null}
+      </div>
+      {reasons.length > 0 ? (
+        <p className="mt-3 text-sm text-muted-foreground">
+          {reasons.join(" · ")}
+        </p>
+      ) : null}
+    </section>
+  )
+}
+
 function HeroMetric({
   label,
   value,
@@ -586,19 +678,25 @@ function HeroMetric({
   accent?: string
 }) {
   return (
-    <div className="rounded-2xl border bg-background/60 px-4 py-3 backdrop-blur-sm">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="mt-1 font-heading text-2xl font-semibold tracking-tight">
-        {value}
-      </p>
-      <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
-        {detail}
-      </p>
-      {accent ? (
-        <div className="mt-3 h-1 overflow-hidden rounded-full bg-muted">
-          <div className={cn("h-full w-2/3 rounded-full", accent)} />
-        </div>
-      ) : null}
+    <div className="group relative overflow-hidden rounded-2xl border bg-background/60 px-4 py-3 backdrop-blur-sm transition-colors hover:border-primary/25">
+      <div
+        className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+        aria-hidden
+      />
+      <div className="relative">
+        <p className="text-xs text-muted-foreground">{label}</p>
+        <p className="mt-1 font-heading text-2xl font-semibold tracking-tight">
+          {value}
+        </p>
+        <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
+          {detail}
+        </p>
+        {accent ? (
+          <div className="mt-3 h-1 overflow-hidden rounded-full bg-muted">
+            <div className={cn("h-full w-2/3 rounded-full", accent)} />
+          </div>
+        ) : null}
+      </div>
     </div>
   )
 }
@@ -609,28 +707,42 @@ function StatTile({
   label,
   value,
   detail,
+  delay = 0,
 }: {
   href: string
   icon: React.ComponentType<{ className?: string }>
   label: string
   value: string
   detail: string
+  delay?: number
 }) {
   return (
     <Link
       href={href}
-      className="rounded-2xl border bg-card p-4 transition-colors hover:bg-muted/40"
+      className="group relative animate-in fade-in slide-in-from-bottom-3 overflow-hidden rounded-2xl border bg-card p-4 duration-500 fill-mode-both transition-all hover:border-primary/30 hover:bg-muted/30"
+      style={{ animationDelay: `${delay * 80}ms` }}
     >
-      <div className="flex items-center gap-2 text-muted-foreground">
-        <Icon className="size-4" />
-        <span className="text-xs font-medium tracking-wide uppercase">
-          {label}
-        </span>
+      <div
+        className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+        aria-hidden
+      />
+      <div className="relative">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <span className="flex size-8 items-center justify-center rounded-lg bg-secondary transition-colors group-hover:bg-primary/10">
+              <Icon className="size-4 transition-colors group-hover:text-primary" />
+            </span>
+            <span className="text-xs font-medium tracking-wide uppercase">
+              {label}
+            </span>
+          </div>
+          <IconArrowRight className="size-4 text-muted-foreground opacity-0 transition-all group-hover:translate-x-0.5 group-hover:opacity-100" />
+        </div>
+        <p className="mt-3 font-heading text-xl font-semibold tracking-tight">
+          {value}
+        </p>
+        <p className="mt-1 text-sm text-muted-foreground">{detail}</p>
       </div>
-      <p className="mt-3 font-heading text-xl font-semibold tracking-tight">
-        {value}
-      </p>
-      <p className="mt-1 text-sm text-muted-foreground">{detail}</p>
     </Link>
   )
 }
