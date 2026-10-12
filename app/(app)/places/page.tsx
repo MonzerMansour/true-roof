@@ -3,7 +3,6 @@ import type { Metadata } from "next"
 import { Container } from "@/components/marketing/container"
 import { MarketingPhoto } from "@/components/marketing/marketing-photo"
 import { Reveal } from "@/components/marketing/reveal"
-import { FirstVisitTour } from "@/components/app/first-visit-tour"
 import { PlacesFeed } from "@/components/places/places-feed"
 import { getPublishedListings } from "@/lib/listings/queries"
 import { withReviewStats } from "@/lib/listings/reviews"
@@ -75,8 +74,7 @@ export default async function PlacesPage() {
               Shelters and safe parking, side by side
             </h1>
             <p className="mt-3 max-w-2xl text-lg text-muted-foreground">
-              Closest and most recently confirmed first. Tap Near me to use your
-              location. Calling and directions need no account.
+              Closest and most recently confirmed first.
             </p>
             {source === "seed" ? (
               <p className="mt-3 text-sm text-muted-foreground">
@@ -90,12 +88,6 @@ export default async function PlacesPage() {
 
       <section className="border-t bg-primary/[0.03] py-10 sm:py-12">
         <Container>
-          {/* First visit only, and never in the way: it sits above the list
-              rather than over it, so the list stays usable with it on screen. */}
-          <div className="mb-8">
-            <FirstVisitTour />
-          </div>
-
           <PlacesFeed
             listings={withStats}
             rankedBy={ranked.rankedBy}

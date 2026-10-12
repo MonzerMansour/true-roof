@@ -29,7 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { VoiceTextarea } from "@/components/voice/voice-textarea"
+import { Textarea } from "@/components/ui/textarea"
 
 // "new-org" creates an organization and its first site. "add-site" adds
 // another site to the organization the person already manages.
@@ -136,19 +136,14 @@ export function CreateSiteForm({
           <FieldLabel htmlFor="siteDescription">
             About this site (optional)
           </FieldLabel>
-          <VoiceTextarea
-            label="About this site"
+          <Textarea
             id="siteDescription"
             name="siteDescription"
             rows={4}
             maxLength={1000}
             placeholder="What it is like to stay here, what is nearby, and what to expect at intake."
           />
-          <FieldDescription>
-            Shown on this site&apos;s page. People looking for a place read it,
-            and it helps match them to sites like this one. Up to 1,000
-            characters.
-          </FieldDescription>
+          <FieldDescription>Up to 1,000 characters.</FieldDescription>
         </Field>
 
         <Field>

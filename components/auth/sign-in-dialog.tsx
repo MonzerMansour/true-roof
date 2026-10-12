@@ -22,7 +22,6 @@ import {
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { GUEST_COOKIE, GUEST_MAX_AGE } from "@/lib/guest"
 import { safeNextPath } from "@/lib/auth/next-path"
 import { audienceFromPath } from "@/lib/site"
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/client"
@@ -154,15 +153,6 @@ export function SignInDialog() {
     }
   }
 
-  function onGuest() {
-    document.cookie = `${GUEST_COOKIE}=1; path=/; max-age=${GUEST_MAX_AGE}; samesite=lax`
-
-    toast.success("You are in as a guest.")
-    setOpen(false)
-    reset()
-    afterAuth()
-  }
-
   async function onMagicLink() {
     if (!email) {
       toast.error("Enter your email first.")
@@ -210,8 +200,10 @@ export function SignInDialog() {
           <DialogTitle>Sign in to True Roof</DialogTitle>
           <DialogDescription>
             {next?.includes("intent=")
-              ? "Sign in or create an account to join a waitlist or ask for a bed. Guest mode cannot send that."
-              : "One account works on this phone or a borrowed one. You can export or delete your data later in one tap."}
+              ? "Joining a waitlist or asking for a bed sends your name to the site, so it needs an account."
+              : next?.startsWith("/get-started/find-a-place")
+                ? "Matching needs an account, because your answers are saved to it and used to score each place. Browsing the full list needs nothing."
+                : "One account works on this phone or a borrowed one. You can export or delete your data later in one tap."}
           </DialogDescription>
         </DialogHeader>
 
@@ -236,8 +228,6 @@ export function SignInDialog() {
               onSubmit={onPasswordSubmit}
               onMagicLink={onMagicLink}
               onGoogle={onGoogle}
-              onGuest={onGuest}
-              hideGuest={Boolean(next?.includes("intent="))}
             />
           </TabsContent>
 
@@ -253,8 +243,6 @@ export function SignInDialog() {
               onSubmit={onPasswordSubmit}
               onMagicLink={onMagicLink}
               onGoogle={onGoogle}
-              onGuest={onGuest}
-              hideGuest={Boolean(next?.includes("intent="))}
             />
           </TabsContent>
         </Tabs>
@@ -281,8 +269,6 @@ function AuthForm({
   onSubmit,
   onMagicLink,
   onGoogle,
-  onGuest,
-  hideGuest,
 }: {
   email: string
   password: string
@@ -294,8 +280,6 @@ function AuthForm({
   onSubmit: (event: React.FormEvent<HTMLFormElement>) => void
   onMagicLink: () => void
   onGoogle: () => void
-  onGuest: () => void
-  hideGuest?: boolean
 }) {
   return (
     <form onSubmit={onSubmit}>
@@ -354,23 +338,6 @@ function AuthForm({
           >
             Email me a sign-in link
           </Button>
-          {hideGuest ? null : (
-            <>
-              <Button
-                type="button"
-                variant="ghost"
-                disabled={pending}
-                className="w-full"
-                onClick={onGuest}
-              >
-                Continue as a guest
-              </Button>
-              <p className="text-center text-xs text-muted-foreground">
-                Guest access lasts 30 days on this phone. Clear this browser or switch
-                phones and it is gone.
-              </p>
-            </>
-          )}
         </div>
       </FieldGroup>
     </form>

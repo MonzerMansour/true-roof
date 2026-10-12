@@ -90,23 +90,8 @@ export const featureNav: NavItem[] = [
     description: "Save toward a month of rent. The cushion is for real life.",
   },
   {
-    href: "/features/help",
-    label: "Get help",
-    description: "Warnings you can act on. One tap to a person.",
-  },
-  {
-    href: "/features/income",
-    label: "Will this job hurt me?",
-    description: "See rent, CalFresh, and Medi-Cal before you say yes.",
-  },
-  {
     href: "/features/privacy",
     label: "Cheap phone & privacy",
     description: "Works offline. Photos are read, then deleted.",
-  },
-  {
-    href: "/features/quiet",
-    label: "Quiet mode",
-    description: "Six steady months, and the app gets out of the way.",
   },
 ]

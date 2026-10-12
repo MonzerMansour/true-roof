@@ -64,7 +64,7 @@ const riskCopy: Record<
   act: {
     label: "Act",
     text: "text-destructive",
-    helper: "Something is overdue. Use Get Help below if you cannot cover it.",
+    helper: "Something is overdue. The crisis numbers at the top of this page reach a person if you cannot cover it.",
   },
 }
 
@@ -562,10 +562,13 @@ function AttentionPanel({
 
         {risk.level === "act" ? (
           <div className="grid gap-3 rounded-lg border p-3">
+            {/* What survives of the Get Help feature: plain phone links and
+                nothing else. There is no data bundle and no handoff, so the
+                heading no longer promises one. */}
             <div>
-              <p className="font-medium">Get Help</p>
+              <p className="font-medium">Numbers that reach a person</p>
               <p className="text-sm text-muted-foreground">
-                Pick a door. This does not send anything until you tap one.
+                Tapping one calls it. Nothing is sent and nothing is shared.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">

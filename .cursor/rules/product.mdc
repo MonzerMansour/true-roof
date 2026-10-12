@@ -24,7 +24,7 @@ Marketing pages, sign-in, the seeker app (Dashboard `/home`, Places `/places`, F
 - Hard constraints (pets, cars, intake closed) **remove** a listing. Zero fits → Here4You. If a couple cannot stay together, `lib/matching/household-split.ts` can surface **two** listings that each take one person. It reuses `listingFitsNeeds`. It is not a fifth matcher.
 - Freshness is one badge for the whole listing: Live / Recent / Call first. Confidence decays on a curve; conflicting reports lower confidence, they do not overwrite.
 - Vehicle intake is first-class: car/RV questions, then shelters **and** safe parking side by side.
-- After housing: deadlines, letter-to-task, rent cushion, Get Help, income cliffs, quiet mode.
+- After housing: deadlines, letter-to-task, rent cushion. Get Help, income cliffs and quiet mode were removed; do not re-add them.
 - Privacy default: local-first, photo parse-then-discard, export & delete, crisis path that skips the data bundle.
 
 ## Stack

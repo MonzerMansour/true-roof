@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 
 import { DisplaySettings } from "@/components/app/display-settings"
+import { ReplayTourButton } from "@/components/app/replay-tour-button"
 import { SignOutButton } from "@/components/auth/sign-out-button"
 import {
   Card,
@@ -36,12 +37,33 @@ export default async function PortalSettingsPage() {
       <div>
         <h1 className="font-heading text-2xl font-semibold">Settings</h1>
         <p className="mt-1 text-muted-foreground">
-          Make the text bigger, turn on voice typing, and see your account and
-          where you work.
+          Make the text bigger, turn up the contrast, and see your account
+          and where you work.
         </p>
       </div>
 
       <DisplaySettings />
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Tour of the portal</CardTitle>
+          <CardDescription>
+            A walk through each page, what it is for, and the one thing to do
+            there. You can close it at any point and it never covers the page.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ReplayTourButton
+            role="provider"
+            audience={{
+              signedIn: true,
+              isDirector: Boolean(context?.isDirector),
+              hasOrganization: Boolean(context?.organization),
+              primaryListingId: context?.listings[0]?.id ?? null,
+            }}
+          />
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

@@ -106,7 +106,7 @@ export function ScannerTab({
 
     if (isShutoffNotice) {
       onLogShutoffNotice()
-      toast.warning("Flagged as a shutoff notice. Get Help will show it as a warning.")
+      toast.warning("Flagged as a shutoff notice. It is marked urgent in your deadlines.")
     }
 
     setAmount("")

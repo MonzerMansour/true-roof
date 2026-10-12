@@ -9,7 +9,7 @@ const MAX_LENGTH = 400
 
 // Reads one typed sentence into deadline fields and runs the program rules on
 // the result. Saves nothing: the deadline list lives on the phone, and the
-// person confirms the fields before it is added. Guests can use it, like the
+// person confirms the fields before it is added. It needs no account, like the
 // rest of Financials. The sentence is not logged.
 export async function POST(request: Request) {
   if (!isReaderConfigured()) {

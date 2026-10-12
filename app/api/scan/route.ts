@@ -11,8 +11,8 @@ const MAX_DATA_URL_LENGTH = 4_000_000
 const IMAGE_DATA_URL = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/
 
 // Reads one photo only when she taps Read it. The photo is passed to the
-// reader and dropped: it is not stored, logged, or returned. Guests can use
-// it, like the rest of Financials.
+// reader and dropped: it is not stored, logged, or returned. It needs no
+// account, like the rest of Financials.
 export async function POST(request: Request) {
   if (!isReaderConfigured()) {
     return NextResponse.json({ reason: "not_configured" }, { status: 503 })

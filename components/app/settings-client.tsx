@@ -22,6 +22,8 @@ import {
 } from "@/components/ui/field"
 import { Switch } from "@/components/ui/switch"
 import { useSession } from "@/components/auth/session-provider"
+import { ReplayTourButton } from "@/components/app/replay-tour-button"
+import { FIND_A_PLACE_PATH } from "@/lib/matching/paths"
 import { setDeveloperMode, useDeveloperMode } from "@/lib/dev-mode"
 import { clearNeeds, loadNeeds } from "@/lib/matching/storage"
 import { clearAllData, loadProfile } from "@/lib/obligations/storage"
@@ -64,8 +66,7 @@ export function SettingsClient() {
           Settings
         </h1>
         <p className="mt-2 text-muted-foreground">
-          Change what you told us, make the text bigger, or delete everything
-          off this phone.
+          Your answers, your plan, and your account.
         </p>
       </div>
 
@@ -75,9 +76,27 @@ export function SettingsClient() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Signed in</CardTitle>
+          <CardTitle>Tour of the app</CardTitle>
           <CardDescription>
-            {session?.email ?? "This session has no email on file."}
+            A walk through each page, what it is for, and the one thing to do
+            there. You can close it at any point and it never covers the page.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ReplayTourButton
+            role="seeker"
+            audience={{ signedIn: Boolean(session) }}
+          />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{session ? "Signed in" : "Not signed in"}</CardTitle>
+          <CardDescription>
+            {session
+              ? (session.email ?? "This session has no email on file.")
+              : "You are browsing without an account, which most of True Roof does not need."}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -87,7 +106,8 @@ export function SettingsClient() {
             </Button>
           ) : (
             <p className="text-sm text-muted-foreground">
-              You are using this phone as a guest.
+              An account adds one thing: the questions that score each place
+              against what you need, saved so they follow you to another phone.
             </p>
           )}
         </CardContent>
@@ -106,18 +126,24 @@ export function SettingsClient() {
         <CardContent>
           {needs ? (
             <NeedsSummary needs={needs} onClear={handleClearNeeds} />
-          ) : (
+          ) : session ? (
             <div className="flex flex-col gap-3">
               <p className="text-sm text-muted-foreground">
                 You have not answered the place questions yet.
               </p>
               <Link
-                href="/get-started/find-a-place"
+                href={FIND_A_PLACE_PATH}
                 className={buttonVariants({ variant: "outline" })}
               >
                 Answer a few questions
               </Link>
             </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Matching needs an account, because your answers are saved to it
+              and used to score each place. Browsing the full list on Places
+              needs nothing.
+            </p>
           )}
         </CardContent>
       </Card>

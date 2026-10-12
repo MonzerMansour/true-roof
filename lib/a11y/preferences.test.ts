@@ -17,7 +17,6 @@ describe("parseA11yPreferences", () => {
     expect(parseA11yPreferences({ textSize: "larger", contrast: "high" })).toEqual({
       textSize: "larger",
       contrast: "high",
-      voiceTyping: false,
     })
   })
 
@@ -28,7 +27,6 @@ describe("parseA11yPreferences", () => {
     expect(parseA11yPreferences({ textSize: "huge", contrast: "high" })).toEqual({
       textSize: "normal",
       contrast: "high",
-      voiceTyping: false,
     })
     expect(parseA11yPreferences(null)).toEqual(defaultA11yPreferences)
     expect(parseA11yPreferences("nonsense")).toEqual(defaultA11yPreferences)
@@ -94,18 +92,5 @@ describe("a11yBootScript", () => {
     for (const value of [...textSizeValues, ...contrastValues]) {
       expect(a11yBootScript).toContain(value)
     }
-  })
-})
-
-describe("voiceTyping", () => {
-  it("is off unless it was saved as exactly true", () => {
-    expect(parseA11yPreferences({}).voiceTyping).toBe(false)
-    expect(parseA11yPreferences({ voiceTyping: "yes" }).voiceTyping).toBe(false)
-    expect(parseA11yPreferences({ voiceTyping: true }).voiceTyping).toBe(true)
-  })
-
-  it("keeps the other settings when only voice typing is saved", () => {
-    const parsed = parseA11yPreferences({ textSize: "large", voiceTyping: true })
-    expect(parsed).toEqual({ textSize: "large", contrast: "normal", voiceTyping: true })
   })
 })

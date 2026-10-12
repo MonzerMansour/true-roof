@@ -52,6 +52,7 @@ import {
 } from "@/lib/listings/types"
 import { listingFitsNeeds, type FitResult } from "@/lib/matching/hard-filters"
 import { loadNeeds } from "@/lib/matching/storage"
+import { FIND_A_PLACE_PATH } from "@/lib/matching/paths"
 
 export function PlaceDetail({
   listing,
@@ -289,15 +290,17 @@ export function PlaceDetail({
                 </>
               )}
             </div>
-          ) : (
+          ) : signedIn ? (
             <p className="mt-4 text-sm">
-              <Link
-                href="/get-started/find-a-place"
-                className="font-medium underline"
-              >
+              <Link href={FIND_A_PLACE_PATH} className="font-medium underline">
                 Answer a few questions
               </Link>{" "}
               so we can mark what fits.
+            </p>
+          ) : (
+            <p className="mt-4 text-sm text-muted-foreground">
+              Sign in and answer a few questions, and we can mark what fits
+              here. Everything above needs no account.
             </p>
           )}
 
