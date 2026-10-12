@@ -443,8 +443,12 @@ export function PlaceDetail({
           reading it, and the call button scrolls away exactly while someone is
           reading the rules that make them want to call. This keeps it under a
           thumb. Phone only, and only when there is a number to ring. */}
+      {/* Lifts above the guided tour rather than hiding under it. This is the
+          one bottom bar that must never be covered: it is the phone number,
+          for somebody who may be reading this at night with a dying battery.
+          Every other bar stands down instead. */}
       {contact ? (
-        <div className="sticky bottom-0 z-20 -mx-4 mt-8 border-t bg-background/95 px-4 py-3 backdrop-blur sm:hidden">
+        <div className="sticky bottom-[var(--tour-inset,0px)] z-20 -mx-4 mt-8 border-t bg-background/95 px-4 py-3 backdrop-blur sm:hidden">
           <a
             href={`tel:${contact.tel}`}
             className={cn(buttonVariants({ size: "touch" }), "w-full")}

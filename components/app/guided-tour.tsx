@@ -64,6 +64,7 @@ export function GuidedTour({
   // tour flashes on screen for somebody who dismissed it weeks ago.
   const [progress, setProgress] = React.useState<TourProgress | null>(null)
   const headingRef = React.useRef<HTMLHeadingElement>(null)
+  const panelRef = React.useRef<HTMLElement>(null)
   // Set when this component is the reason the page changed. Focus is only
   // taken when the person pressed Next or Back, never when they navigated the
   // page themselves and the tour happens to be open.
@@ -156,23 +157,45 @@ export function GuidedTour({
     headingRef.current?.focus()
   }, [open, index, pathname])
 
-  // Marks the document while the tour is up, so a page can stand its own
-  // bottom-pinned controls down rather than have them sit under the panel.
+  // Tells the page the tour is up, two ways, because its bottom-pinned
+  // controls are not all the same kind of thing.
   //
-  // Lifting them clear was tried first and was worse: on a 375 by 812 phone
-  // at the largest text size the panel is around 400px, and pushing a second
-  // bar above it left a strip of the actual page visible between the two.
+  // data-tour-open is for a control that can stand down while the tour is
+  // open, because the page offers it somewhere else too: the Filters bar on
+  // Places, the Find a place bar on the dashboard. Hiding those is better
+  // than stacking two bars and leaving a strip of page between them.
+  //
+  // --tour-inset is for a control that must stay on screen no matter what.
+  // There is one: the Call button on a site page. Hiding a phone number
+  // behind a walkthrough, for somebody looking for a bed tonight, is the
+  // worst thing this component could do. That bar lifts above the tour
+  // instead, so the height has to be measured rather than guessed: it moves
+  // with the text-size setting and with each step's length.
   React.useEffect(() => {
     const root = document.documentElement
+    const panel = panelRef.current
 
-    if (!open) {
+    if (!open || !panel) {
       root.removeAttribute("data-tour-open")
+      root.style.removeProperty("--tour-inset")
       return
     }
 
     root.setAttribute("data-tour-open", "")
-    return () => root.removeAttribute("data-tour-open")
-  }, [open])
+
+    const publish = () =>
+      root.style.setProperty("--tour-inset", `${panel.offsetHeight + 24}px`)
+
+    publish()
+    const observer = new ResizeObserver(publish)
+    observer.observe(panel)
+
+    return () => {
+      observer.disconnect()
+      root.removeAttribute("data-tour-open")
+      root.style.removeProperty("--tour-inset")
+    }
+  }, [open, index])
 
   if (!open || !step) return null
 
@@ -183,7 +206,16 @@ export function GuidedTour({
       className={cn(
         // Fixed, so the tour follows the person from page to page rather than
         // scrolling away mid-step. pb-safe keeps it off an iPhone home bar.
-        "fixed inset-x-0 bottom-0 z-40 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:p-4",
+        //
+        // Bottom left from 640px up, so the page it is describing stays
+        // visible beside it rather than behind it, and so it never lands on
+        // the theme button, which is pinned bottom right.
+        //
+        // Full width at the bottom below that. A card tucked into the corner
+        // of a 375px screen is a full-width bar with wasted margin, and the
+        // one-handed pass put every primary control along the bottom edge,
+        // which is where a thumb already is.
+        "fixed bottom-0 left-0 z-40 w-full p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:w-auto sm:p-4",
         className
       )}
     >
@@ -192,9 +224,10 @@ export function GuidedTour({
           step counter, the close button and the controls never do, so the way
           out is always on screen. */}
       <section
+        ref={panelRef}
         role="region"
         aria-labelledby={`tour-${role}-heading`}
-        className="mx-auto flex max-h-[50svh] max-w-2xl flex-col rounded-xl border bg-card p-4 shadow-lg sm:p-5"
+        className="mx-auto flex max-h-[50svh] max-w-2xl flex-col rounded-xl border bg-card p-4 shadow-lg sm:mx-0 sm:max-h-[70svh] sm:w-96 sm:p-5"
       >
         <div className="flex items-start justify-between gap-3">
           <p className="text-sm font-medium text-primary">

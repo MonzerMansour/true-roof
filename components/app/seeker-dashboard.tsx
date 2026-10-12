@@ -558,7 +558,10 @@ export function SeekerDashboard({ listings }: { listings: Listing[] }) {
           out of reach within one swipe. This keeps the one thing worth doing
           under a thumb the whole way down. Phone only: on a wider screen the
           hero is already visible and a fixed bar would just cover content. */}
-      <div className="sticky bottom-0 z-20 -mx-4 border-t bg-background/95 px-4 py-3 backdrop-blur sm:hidden">
+      {/* Stands down while the guided tour is open. Find a place is already
+          a button in the hero above, so nothing is lost by hiding the
+          thumb-reachable copy of it for the length of the walkthrough. */}
+      <div className="sticky bottom-0 z-20 -mx-4 border-t bg-background/95 px-4 py-3 backdrop-blur sm:hidden [:root[data-tour-open]_&]:hidden">
         <Link
           href="/places"
           className={cn(buttonVariants({ size: "touch" }), "w-full")}
