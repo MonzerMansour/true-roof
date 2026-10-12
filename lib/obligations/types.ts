@@ -116,6 +116,12 @@ export type Occurrence = {
   deadlineId?: string
   // True when that deadline repeats, so "delete all" means something.
   repeats?: boolean
+  // Which item this date belongs to ("rent", "utility-<id>", "deadline-<id>"),
+  // so a repeating item's many dates can be shown as one.
+  seriesId?: string
+  // True for anything that comes back on a schedule: rent, bills, program
+  // renewals, repeating deadlines. False for one-off dates.
+  recurring?: boolean
 }
 
 export const emptyProfile: ObligationsProfile = {
