@@ -6,6 +6,7 @@ import { toast } from "sonner"
 
 import { AddDeadlineForm } from "@/components/dashboard/deadlines-card"
 import { PhotoCapture } from "@/components/dashboard/photo-capture"
+import { ShowMoreDialog } from "@/components/dashboard/show-more-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -237,28 +238,55 @@ export function ScannerTab({
         <div>
           <p className="mb-2 text-sm font-medium text-muted-foreground">Recent</p>
           <ul className="grid gap-2">
-            {payments.map((payment) => (
+            {payments.slice(0, RECENT_LIMIT).map((payment) => (
               <li key={payment.id}>
-                <Card className="flex-row items-center justify-between px-4">
-                  <div>
-                    <p className="font-medium">
-                      ${payment.amount.toLocaleString()}
-                      {payment.paidTo ? ` to ${payment.paidTo}` : ""}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {payment.note || "No note"}
-                    </p>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {new Date(payment.loggedAt).toLocaleDateString()}
-                  </p>
-                </Card>
+                <PaymentRow payment={payment} />
               </li>
             ))}
           </ul>
+          {payments.length > RECENT_LIMIT ? (
+            <div className="mt-2">
+              <ShowMoreDialog
+                label={`Show ${payments.length - RECENT_LIMIT} more`}
+                title={`Payments (${payments.length})`}
+              >
+                {() => (
+                  <ul className="grid gap-2">
+                    {payments.map((payment) => (
+                      <li key={payment.id}>
+                        <PaymentRow payment={payment} />
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </ShowMoreDialog>
+            </div>
+          ) : null}
         </div>
       ) : null}
     </div>
+  )
+}
+
+// Newest first, so these are the latest. The rest sit behind "Show more".
+const RECENT_LIMIT = 4
+
+function PaymentRow({ payment }: { payment: Payment }) {
+  return (
+    <Card className="flex-row items-center justify-between px-4">
+      <div>
+        <p className="font-medium">
+          ${payment.amount.toLocaleString()}
+          {payment.paidTo ? ` to ${payment.paidTo}` : ""}
+        </p>
+        <p className="text-sm text-muted-foreground">
+          {payment.note || "No note"}
+        </p>
+      </div>
+      <p className="text-xs text-muted-foreground">
+        {new Date(payment.loggedAt).toLocaleDateString()}
+      </p>
+    </Card>
   )
 }
 

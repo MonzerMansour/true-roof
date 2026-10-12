@@ -20,6 +20,14 @@ import {
   FieldDescription,
   FieldLabel,
 } from "@/components/ui/field"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { Switch } from "@/components/ui/switch"
 import { useSession } from "@/components/auth/session-provider"
 import { setDeveloperMode, useDeveloperMode } from "@/lib/dev-mode"
@@ -34,6 +42,7 @@ export function SettingsClient() {
   const [needs, setNeeds] = React.useState<SeekerNeeds | null>(null)
   const [plan, setPlan] = React.useState<ObligationsProfile | null>(null)
   const [ready, setReady] = React.useState(false)
+  const [confirmingDelete, setConfirmingDelete] = React.useState(false)
   const developerMode = useDeveloperMode()
 
   React.useEffect(() => {
@@ -51,6 +60,7 @@ export function SettingsClient() {
   function handleClearPlan() {
     clearAllData()
     setPlan(null)
+    setConfirmingDelete(false)
     toast.success("Your housing plan was deleted from this device.")
   }
 
@@ -155,9 +165,35 @@ export function SettingsClient() {
               >
                 Edit my plan
               </Link>
-              <Button variant="destructive" onClick={handleClearPlan}>
+              <Button
+                variant="destructive"
+                onClick={() => setConfirmingDelete(true)}
+              >
                 Delete my plan
               </Button>
+              <Dialog open={confirmingDelete} onOpenChange={setConfirmingDelete}>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Delete your plan?</DialogTitle>
+                    <DialogDescription>
+                      This erases your rent, bills, deadlines, and payment log
+                      from this phone. It cannot be undone.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <DialogFooter>
+                    <Button
+                      variant="outline"
+                      autoFocus
+                      onClick={() => setConfirmingDelete(false)}
+                    >
+                      Keep my plan
+                    </Button>
+                    <Button variant="destructive" onClick={handleClearPlan}>
+                      Delete everything
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </>
           ) : (
             <Link

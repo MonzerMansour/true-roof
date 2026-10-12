@@ -28,6 +28,7 @@ import { Input } from "@/components/ui/input"
 import { Progress } from "@/components/ui/progress"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { programCadenceNote, suggestRecertDate } from "@/lib/obligations/program-rules"
+import { isoDate } from "@/lib/obligations/recurrence"
 import { loadProfile, saveProfile } from "@/lib/obligations/storage"
 import {
   billFrequencyLabel,
@@ -79,7 +80,7 @@ function emptyProgramState(): Record<ProgramKind, ProgramState> {
 
 function validDay(value: string) {
   const day = Number(value)
-  return Number.isInteger(day) && day >= 1 && day <= 28
+  return Number.isInteger(day) && day >= 1 && day <= 31
 }
 
 function Question({
@@ -249,16 +250,20 @@ export function FinancialHelpForm() {
     if (rentAmount !== "" && !(Number(rentAmount) > 0)) {
       error = "Enter your monthly rent as a number above zero."
     } else if (!validDay(rentDueDay)) {
-      error = "Pick a due day from 1 to 28."
+      error = "Pick a due day from 1 to 31."
     }
   }
 
   if (step === "utilities") {
     if (utilities.some((u) => u.name.trim() && !validDay(u.dueDay))) {
-      error = "Each bill needs a due day from 1 to 28."
+      error = "Each bill needs a due day from 1 to 31."
     } else if (utilities.some((u) => u.amount !== "" && Number(u.amount) < 0)) {
       error = "A bill amount cannot be negative."
     }
+  }
+
+  if (step === "income" && monthlyIncome !== "" && !(Number(monthlyIncome) >= 0)) {
+    error = "Income cannot be below zero."
   }
 
   const canContinue = answered && !error
@@ -311,7 +316,9 @@ export function FinancialHelpForm() {
       previousMonthlyIncome: existing?.previousMonthlyIncome ?? null,
       incomeUpdatedAt: existing?.incomeUpdatedAt ?? null,
       lastShutoffNoticeAt: existing?.lastShutoffNoticeAt ?? null,
-      lastCheckInAt: existing?.lastCheckInAt ?? null,
+      // Setting up counts as the first visit, so a new person is not warned
+      // about a check-in they have had no chance to make.
+      lastCheckInAt: existing?.lastCheckInAt ?? isoDate(new Date()),
       deadlines: existing?.deadlines ?? [],
     }
 
@@ -401,7 +408,7 @@ export function FinancialHelpForm() {
                   type="number"
                   inputMode="numeric"
                   min={1}
-                  max={28}
+                  max={31}
                   className="h-12 text-base"
                   aria-invalid={Boolean(error)}
                   value={rentDueDay}
@@ -577,7 +584,7 @@ export function FinancialHelpForm() {
                           id={`utility-due-day-${utility.id}`}
                           type="number"
                           min={1}
-                          max={28}
+                          max={31}
                           className="w-20"
                           value={utility.dueDay}
                           onChange={(e) =>

@@ -1,9 +1,16 @@
 "use client"
 
 import * as React from "react"
-import { IconPlus, IconSparkles, IconTrash, IconX } from "@tabler/icons-react"
+import {
+  IconPencil,
+  IconPlus,
+  IconSparkles,
+  IconTrash,
+  IconX,
+} from "@tabler/icons-react"
 import { toast } from "sonner"
 
+import { ShowMoreDialog } from "@/components/dashboard/show-more-dialog"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -101,34 +108,128 @@ function formatDay(iso: string) {
     : iso
 }
 
+// Past this many, the rest sit behind "Show more" so the card stays short.
+const ROW_LIMIT = 5
+
+function draftFrom(deadline: Deadline): DeadlineDraft {
+  return {
+    title: deadline.title,
+    category: deadline.category,
+    program: deadline.program,
+    firstDueDate: deadline.firstDueDate,
+    dueTime: deadline.dueTime ?? null,
+    repeat: deadline.repeat,
+    whatToBring: deadline.whatToBring,
+  }
+}
+
+function DeadlineRow({
+  deadline,
+  next,
+  overdueSince,
+  onEdit,
+  onRemove,
+}: {
+  deadline: Deadline
+  next: string | null
+  // A one-time deadline whose date has passed and is not done.
+  overdueSince?: string | null
+  onEdit: () => void
+  onRemove: () => void
+}) {
+  return (
+    <Card size="sm" className="flex-row items-start justify-between gap-3 px-4">
+      <div className="min-w-0">
+        <p className="text-xs font-medium text-primary">
+          {next
+            ? `Next: ${formatDay(next)}`
+            : overdueSince
+              ? `Overdue since ${formatDay(overdueSince)}`
+              : "Nothing left to do"}
+        </p>
+        <p className="font-medium [overflow-wrap:anywhere]">{deadline.title}</p>
+        <p className="text-sm text-muted-foreground [overflow-wrap:anywhere]">
+          {repeatLabel(deadline.repeat)}
+          {deadline.whatToBring ? `. Bring: ${deadline.whatToBring}` : ""}
+        </p>
+      </div>
+      <div className="flex shrink-0 items-center">
+        <Button type="button" variant="ghost" size="icon-sm" onClick={onEdit}>
+          <IconPencil />
+          <span className="sr-only">Edit {deadline.title}</span>
+        </Button>
+        <Button type="button" variant="ghost" size="icon-sm" onClick={onRemove}>
+          <IconTrash />
+          <span className="sr-only">Remove {deadline.title}</span>
+        </Button>
+      </div>
+    </Card>
+  )
+}
+
 export function DeadlinesCard({
   deadlines,
   completedIds,
   onAdd,
+  onUpdate,
   onRemove,
+  editingId,
+  onEditingIdChange,
 }: {
   deadlines: Deadline[]
   completedIds: string[]
   onAdd: (deadline: Deadline) => void
+  onUpdate: (deadline: Deadline) => void
   onRemove: (id: string) => void
+  // Which entry's edit form is open. The calendar can open it too.
+  editingId: string | null
+  onEditingIdChange: (id: string | null) => void
 }) {
   const today = isoDate(new Date())
   const completed = new Set(completedIds)
   const [adding, setAdding] = React.useState(false)
+  const setEditingId = onEditingIdChange
+
+  // Opening an edit (from here or the calendar) closes the add form and
+  // brings the edit form into view.
+  React.useEffect(() => {
+    if (!editingId) return
+    setAdding(false)
+    const timer = window.setTimeout(() => {
+      document
+        .getElementById(`edit-${editingId}-title`)
+        ?.scrollIntoView({ behavior: "smooth", block: "center" })
+    }, 100)
+    return () => window.clearTimeout(timer)
+  }, [editingId])
 
   const rows = deadlines
-    .map((deadline) => ({
-      deadline,
-      next: nextDueDate(
+    .map((deadline) => {
+      const isDone = (date: string) =>
+        completed.has(`deadline-${deadline.id}-${date}`) ||
+        Boolean(deadline.skippedDates?.includes(date))
+      const next = nextDueDate(
         deadline.firstDueDate,
         deadline.repeat,
         today,
-        (date) =>
-          completed.has(`deadline-${deadline.id}-${date}`) ||
-          Boolean(deadline.skippedDates?.includes(date))
-      ),
-    }))
-    .sort((a, b) => (a.next ?? "9999").localeCompare(b.next ?? "9999"))
+        isDone
+      )
+      // A one-time deadline whose date has passed stays on the list until it
+      // is done, so say so instead of "Nothing left to do".
+      const overdueSince =
+        !next &&
+        !deadline.repeat &&
+        deadline.firstDueDate < today &&
+        !isDone(deadline.firstDueDate)
+          ? deadline.firstDueDate
+          : null
+      return { deadline, next, overdueSince }
+    })
+    .sort((a, b) =>
+      (a.overdueSince ?? a.next ?? "9999").localeCompare(
+        b.overdueSince ?? b.next ?? "9999"
+      )
+    )
 
   return (
     <Card>
@@ -143,7 +244,10 @@ export function DeadlinesCard({
             variant={adding ? "secondary" : "default"}
             aria-expanded={adding}
             aria-controls="add-deadline-panel"
-            onClick={() => setAdding((open) => !open)}
+            onClick={() => {
+              setAdding((open) => !open)
+              setEditingId(null)
+            }}
           >
             {adding ? <IconX /> : <IconPlus />}
             {adding ? "Close" : "Add a deadline"}
@@ -163,37 +267,64 @@ export function DeadlinesCard({
 
         {rows.length > 0 ? (
           <ul className="grid gap-2">
-            {rows.map(({ deadline, next }) => (
-              <li key={deadline.id}>
-                <Card
-                  size="sm"
-                  className="flex-row items-start justify-between gap-3 px-4"
-                >
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium text-primary">
-                      {next ? `Next: ${formatDay(next)}` : "Nothing left to do"}
-                    </p>
-                    <p className="font-medium">{deadline.title}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {repeatLabel(deadline.repeat)}
-                      {deadline.whatToBring
-                        ? `. Bring: ${deadline.whatToBring}`
-                        : ""}
-                    </p>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={() => onRemove(deadline.id)}
-                  >
-                    <IconTrash />
-                    <span className="sr-only">Remove {deadline.title}</span>
-                  </Button>
-                </Card>
-              </li>
-            ))}
+            {rows
+              .filter(
+                (row, index) =>
+                  index < ROW_LIMIT || row.deadline.id === editingId
+              )
+              .map((row) => (
+                <li key={row.deadline.id}>
+                  {editingId === row.deadline.id ? (
+                    <div className="rounded-lg border p-4">
+                      <p className="mb-3 font-medium">Edit deadline</p>
+                      <AddDeadlineForm
+                        today={today}
+                        editing={row.deadline}
+                        showSentence={false}
+                        idPrefix={`edit-${row.deadline.id}`}
+                        onAdd={onUpdate}
+                        onAdded={() => setEditingId(null)}
+                        onCancel={() => setEditingId(null)}
+                      />
+                    </div>
+                  ) : (
+                    <DeadlineRow
+                      deadline={row.deadline}
+                      next={row.next}
+                      overdueSince={row.overdueSince}
+                      onEdit={() => setEditingId(row.deadline.id)}
+                      onRemove={() => onRemove(row.deadline.id)}
+                    />
+                  )}
+                </li>
+              ))}
           </ul>
+        ) : null}
+
+        {rows.length > ROW_LIMIT ? (
+          <ShowMoreDialog
+            label={`Show ${rows.length - ROW_LIMIT} more`}
+            title={`Your deadlines (${rows.length})`}
+          >
+            {(close) => (
+              <ul className="grid gap-2">
+                {rows.map((row) => (
+                  <li key={row.deadline.id}>
+                    <DeadlineRow
+                      deadline={row.deadline}
+                      next={row.next}
+                      overdueSince={row.overdueSince}
+                      onEdit={() => {
+                        close()
+                        setEditingId(row.deadline.id)
+                      }}
+                      onRemove={() => onRemove(row.deadline.id)}
+                    />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </ShowMoreDialog>
         ) : null}
 
         {rows.length === 0 && !adding ? (
@@ -216,19 +347,25 @@ export function AddDeadlineForm({
   showSentence = true,
   idPrefix = "deadline",
   onAdded,
+  editing,
+  onCancel,
 }: {
   today: string
+  // Receives a brand-new deadline, or the edited one when `editing` is set.
   onAdd: (deadline: Deadline) => void
   initial?: DeadlineCheck
   showSentence?: boolean
   idPrefix?: string
-  // Called after a deadline is added, so a parent can close the form.
+  // Called after a deadline is saved, so a parent can close the form.
   onAdded?: () => void
+  // The deadline being changed. Its id, creation time and deleted dates carry over.
+  editing?: Deadline
+  onCancel?: () => void
 }) {
   const [sentence, setSentence] = React.useState("")
   const [reading, setReading] = React.useState(false)
   const [draft, setDraft] = React.useState<DeadlineDraft>(
-    initial?.draft ?? emptyDraft
+    initial?.draft ?? (editing ? draftFrom(editing) : emptyDraft)
   )
   const [notes, setNotes] = React.useState<string[]>(initial?.notes ?? [])
   const [problems, setProblems] = React.useState<string[]>(
@@ -284,7 +421,7 @@ export function AddDeadlineForm({
     }
 
     onAdd({
-      id: crypto.randomUUID(),
+      id: editing?.id ?? crypto.randomUUID(),
       title: result.draft.title,
       category: result.draft.category,
       program: result.draft.program,
@@ -292,15 +429,20 @@ export function AddDeadlineForm({
       dueTime: result.draft.dueTime ?? null,
       repeat: result.draft.repeat,
       whatToBring: result.draft.whatToBring,
-      createdAt: new Date().toISOString(),
+      createdAt: editing?.createdAt ?? new Date().toISOString(),
+      skippedDates: editing?.skippedDates,
     })
     toast.success(
-      result.draft.repeat
-        ? `Added. Repeats ${repeatLabel(result.draft.repeat).toLowerCase()}.`
-        : "Added."
+      editing
+        ? "Saved your changes."
+        : result.draft.repeat
+          ? `Added. Repeats ${repeatLabel(result.draft.repeat).toLowerCase()}.`
+          : "Added."
     )
-    setSentence("")
-    setDraft(emptyDraft)
+    if (!editing) {
+      setSentence("")
+      setDraft(emptyDraft)
+    }
     setNotes(result.notes)
     setProblems([])
     onAdded?.()
@@ -318,7 +460,7 @@ export function AddDeadlineForm({
   }))
 
   return (
-    <form onSubmit={handleSave}>
+    <form onSubmit={handleSave} className="@container">
       <FieldGroup>
         {showSentence ? (
           <Field>
@@ -332,9 +474,9 @@ export function AddDeadlineForm({
               onValueChange={setSentence}
             />
             <FieldDescription>
-              Type it, or tap Say it instead and speak, then tap Fill in for
-              me. Only what is in the box is sent to our reader to fill the
-              boxes below. It is not saved anywhere but this phone.
+              Write it in your own words, then tap Fill in for me. Only what is
+              in the box is sent to our reader to fill the boxes below. It is
+              not saved anywhere but this phone.
             </FieldDescription>
             <Button
               type="button"
@@ -359,7 +501,7 @@ export function AddDeadlineForm({
           />
         </Field>
 
-        <div className="grid items-start gap-4 sm:grid-cols-2">
+        <div className="grid items-start gap-4 @lg:grid-cols-2">
           <Field>
             <FieldLabel htmlFor={id("category")}>Type</FieldLabel>
             <Select
@@ -412,10 +554,14 @@ export function AddDeadlineForm({
           ) : null}
         </div>
 
-        <div className="grid items-start gap-4 sm:grid-cols-3">
+        <div className="grid items-start gap-4 @lg:grid-cols-3">
           <Field>
             <FieldLabel htmlFor={id("date")}>
-              {draft.repeat ? "Next due date" : "Due date"}
+              {draft.repeat
+                ? editing
+                  ? "First due date"
+                  : "Next due date"
+                : "Due date"}
             </FieldLabel>
             <Input
               id={id("date")}
@@ -489,9 +635,16 @@ export function AddDeadlineForm({
           </ul>
         ) : null}
 
-        <Button type="submit" className="w-fit">
-          Add deadline
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button type="submit" className="w-fit">
+            {editing ? "Save changes" : "Add deadline"}
+          </Button>
+          {onCancel ? (
+            <Button type="button" variant="outline" onClick={onCancel}>
+              Cancel
+            </Button>
+          ) : null}
+        </div>
       </FieldGroup>
     </form>
   )
