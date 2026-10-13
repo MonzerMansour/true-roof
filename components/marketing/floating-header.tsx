@@ -8,6 +8,7 @@ import { useSession } from "@/components/auth/session-provider"
 import { SignInDialog } from "@/components/auth/sign-in-dialog"
 import { useSignIn } from "@/components/auth/sign-in-provider"
 import { Logo } from "@/components/marketing/logo"
+import { VoiceTypingToggle } from "@/components/voice/voice-typing-toggle"
 import { cn } from "cn"
 
 const links = [
@@ -71,6 +72,7 @@ export function FloatingHeader() {
           </nav>
 
           <div className="hidden items-center gap-2 md:flex">
+            <VoiceTypingToggle />
             {session ? (
               <Link
                 href={session.role === "provider" ? "/portal" : "/home"}
@@ -117,6 +119,10 @@ export function FloatingHeader() {
                   {link.label}
                 </Link>
               ))}
+              <VoiceTypingToggle
+                showLabel
+                onToggled={() => setIsMenuOpen(false)}
+              />
               <button
                 type="button"
                 className="mt-1 rounded-full bg-primary px-5 py-3 text-center text-sm font-medium text-primary-foreground"

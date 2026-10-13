@@ -37,8 +37,8 @@ export default async function PortalSettingsPage() {
       <div>
         <h1 className="font-heading text-2xl font-semibold">Settings</h1>
         <p className="mt-1 text-muted-foreground">
-          Make the text bigger, turn up the contrast, and see your account
-          and where you work.
+          Make the text bigger, turn up the contrast, turn on voice typing,
+          and see your account and where you work.
         </p>
       </div>
 
