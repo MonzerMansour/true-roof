@@ -73,18 +73,16 @@ export function StandInPhotoBadge({ className }: { className?: string }) {
   )
 }
 
-/** The longer version, for a page with room for a sentence. */
-export function StandInPhotoNote({
-  photo,
-  className,
-}: {
-  photo: Photo
-  className?: string
-}) {
+/** The longer version, for a page with room for a sentence.
+ *
+ * No credit line: the drawing is ours and there is no photographer to name.
+ * Saying where a picture came from was the old behaviour and it was the
+ * problem, because a credit reads as provenance for a real photo. */
+export function StandInPhotoNote({ className }: { className?: string }) {
   return (
     <p className={cn("text-[11px] text-muted-foreground", className)}>
-      This is a stand-in picture, not a photo of this site. Nobody who runs it
-      has sent one in. Photo: {photo.credit}.
+      This is a drawing, not a photo of this site. Nobody who runs it has sent
+      a photo in yet.
     </p>
   )
 }

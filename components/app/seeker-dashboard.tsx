@@ -26,7 +26,7 @@ import {
 } from "@/lib/listings/activity"
 import { loadMyInterests } from "@/lib/listings/interest-actions"
 import type { InterestRow } from "@/lib/listings/interest"
-import { photoForListing } from "@/lib/listings/photos"
+import { ListingImage } from "@/components/places/listing-image"
 import { interestLabel, type Listing } from "@/lib/listings/types"
 import { loadNeeds } from "@/lib/matching/storage"
 import {
@@ -478,21 +478,17 @@ export function SeekerDashboard({ listings }: { listings: Listing[] }) {
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {favoriteListings.slice(0, 6).map((listing) => {
-              const photo = photoForListing(listing)
               return (
                 <Link
                   key={listing.id}
                   href={`/places/${listing.id}`}
                   className="group overflow-hidden rounded-2xl border bg-card transition-colors hover:bg-muted/30"
                 >
-                  <div className="relative">
-                    <MarketingPhoto
-                      photo={photo}
-                      className="aspect-[16/10]"
-                      sizes="(min-width: 1024px) 33vw, 50vw"
-                    />
-                    {photo.ofThisPlace ? null : <StandInPhotoBadge />}
-                  </div>
+                  <ListingImage
+                    listing={listing}
+                    className="aspect-[16/10]"
+                    sizes="(min-width: 1024px) 33vw, 50vw"
+                  />
                   <div className="p-4">
                     <div className="flex flex-wrap items-center gap-2">
                       <Badge variant="outline">

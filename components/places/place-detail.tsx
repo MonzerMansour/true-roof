@@ -15,6 +15,7 @@ import {
   PhotoCredit,
   StandInPhotoNote,
 } from "@/components/marketing/marketing-photo"
+import { ListingImage } from "@/components/places/listing-image"
 import { PlaceIntake } from "@/components/places/place-intake"
 import { PlaceReviews } from "@/components/places/place-reviews"
 import { StarRating } from "@/components/places/star-rating"
@@ -26,7 +27,7 @@ import {
   recordPlaceView,
   toggleFavorite,
 } from "@/lib/listings/activity"
-import { photoForListing } from "@/lib/listings/photos"
+import { uploadedPhotoFor } from "@/lib/listings/photos"
 import { contactForListing } from "@/lib/listings/contacts"
 import {
   coverageNote,
@@ -70,7 +71,7 @@ export function PlaceDetail({
   ownReview?: ListingReview | null
   signedIn?: boolean
 }) {
-  const photo = photoForListing(listing)
+  const photo = uploadedPhotoFor(listing)
   const contact = contactForListing(listing)
   const isLot = listing.kind === "parking" && listing.parkingStatus
   const status = isLot
@@ -221,18 +222,15 @@ export function PlaceDetail({
 
       <div className="grid gap-10 lg:grid-cols-[1.15fr_0.85fr]">
         <div>
-          <MarketingPhoto
-            photo={photo}
+          <ListingImage
+            listing={listing}
             className="aspect-[16/10] rounded-2xl ring-1 ring-primary/15"
             sizes="(min-width: 1024px) 55vw, 100vw"
             priority
+            showBadge={false}
           />
           <div className="mt-2">
-            {photo.ofThisPlace ? (
-              <PhotoCredit photo={photo} />
-            ) : (
-              <StandInPhotoNote photo={photo} />
-            )}
+            {photo ? <PhotoCredit photo={photo} /> : <StandInPhotoNote />}
           </div>
         </div>
 

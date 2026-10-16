@@ -33,7 +33,8 @@ import {
 } from "@/lib/listings/activity"
 import { contactForListing } from "@/lib/listings/contacts"
 import { formatMiles } from "@/lib/listings/geo"
-import { photoForListing } from "@/lib/listings/photos"
+import { ListingImage } from "@/components/places/listing-image"
+import { uploadedPhotoFor } from "@/lib/listings/photos"
 import { StarRating } from "@/components/places/star-rating"
 import {
   couplesLabel,
@@ -85,7 +86,6 @@ export function PlaceCard({
    */
   matchDetail?: MatchDetail
 }) {
-  const photo = photoForListing(listing)
   const contact = contactForListing(listing)
   const tone = freshnessTone(listing)
   const status =
@@ -123,18 +123,20 @@ export function PlaceCard({
     setShowBreakdown((prev) => !prev)
   }
 
+  // Only to decide whether there is anyone to credit. The picture itself is
+  // ListingImage's business.
+  const photo = uploadedPhotoFor(listing)
   const matchScore = matchDetail?.score ?? matchPercent ?? null
 
   return (
     <Link href={`/places/${listing.id}`} className="block h-full">
       <Card className="group relative h-full overflow-hidden ring-1 ring-primary/10 transition-all hover:border-primary/30 hover:bg-muted/30 hover:shadow-sm">
         <div className="relative">
-          <MarketingPhoto
-            photo={photo}
+          <ListingImage
+            listing={listing}
             className="h-40"
             sizes="(min-width: 1024px) 33vw, 100vw"
           />
-          {photo.ofThisPlace ? null : <StandInPhotoBadge />}
           <Button
             type="button"
             variant="secondary"
@@ -299,7 +301,7 @@ export function PlaceCard({
               ) : null}
             </div>
           ) : null}
-          <PhotoCredit photo={photo} />
+          {photo ? <PhotoCredit photo={photo} /> : null}
         </CardContent>
       </Card>
     </Link>
