@@ -12,15 +12,9 @@ import {
   IconLayoutGrid,
   IconLayoutList,
   IconPencil,
-  IconPlus,
   IconTrash,
-  IconX,
 } from "@tabler/icons-react"
 
-import {
-  AddDeadlineForm,
-  emptyDraft,
-} from "@/components/dashboard/deadlines-card"
 import {
   PanelDialog,
   ShowMoreDialog,
@@ -31,7 +25,7 @@ import { Card } from "@/components/ui/card"
 import { cn } from "cn"
 import { summarizeForList } from "@/lib/obligations/list-summary"
 import { isoDate, parseLocalDate } from "@/lib/obligations/recurrence"
-import type { Deadline, Occurrence } from "@/lib/obligations/types"
+import type { Occurrence } from "@/lib/obligations/types"
 
 type Handlers = {
   onMarkDone: (occurrence: Occurrence) => void
@@ -85,13 +79,11 @@ export function CalendarTab({
   onRemoveDeadline,
   onDeleteOne,
   onEditDeadline,
-  onAddDeadline,
 }: Handlers & {
   occurrences: Occurrence[]
   done: Occurrence[]
   onMarkAllDone: (occurrences: Occurrence[]) => void
   onUndo: (occurrence: Occurrence) => void
-  onAddDeadline: (deadline: Deadline) => void
 }) {
   const [view, setView] = React.useState<"list" | "month">("list")
   const today = isoDate(new Date())
@@ -164,7 +156,6 @@ export function CalendarTab({
           onRemoveDeadline={onRemoveDeadline}
           onDeleteOne={onDeleteOne}
           onEditDeadline={onEditDeadline}
-          onAddDeadline={onAddDeadline}
         />
       )}
 
@@ -448,15 +439,12 @@ function OccurrenceItem({
         <p className="text-base font-medium [overflow-wrap:anywhere]">
           {occurrence.title}
         </p>
-        <p className="flex flex-wrap items-center gap-x-2 text-sm text-muted-foreground">
-          {occurrence.time ? (
-            <span className="inline-flex items-center gap-1 font-medium text-foreground">
-              <IconClock className="size-3.5" />
-              {formatTime(occurrence.time)}
-            </span>
-          ) : null}
-          <span className="[overflow-wrap:anywhere]">{occurrence.detail}</span>
-        </p>
+        {occurrence.time ? (
+          <p className="inline-flex items-center gap-1 text-sm font-medium text-foreground">
+            <IconClock className="size-3.5" />
+            {formatTime(occurrence.time)}
+          </p>
+        ) : null}
       </div>
       <div className="flex shrink-0 items-center gap-1">
         {deadlineId ? (
@@ -560,21 +548,18 @@ function MonthCalendar({
   onRemoveDeadline,
   onDeleteOne,
   onEditDeadline,
-  onAddDeadline,
 }: Handlers & {
   byDate: Map<string, Occurrence[]>
   // Items already marked done, by the date they were due.
   doneByDate: Map<string, Occurrence[]>
   today: string
   onUndo: (occurrence: Occurrence) => void
-  onAddDeadline: (deadline: Deadline) => void
 }) {
   const now = new Date()
   const [cursor, setCursor] = React.useState(
     () => new Date(now.getFullYear(), now.getMonth(), 1)
   )
   const [selected, setSelected] = React.useState(today)
-  const [adding, setAdding] = React.useState(false)
   // A tap on a day opens that day in a panel, so nobody has to scroll below
   // the grid to find it.
   const [open, setOpen] = React.useState(false)
@@ -608,7 +593,6 @@ function MonthCalendar({
 
   function selectDay(iso: string) {
     setSelected(iso)
-    setAdding(false)
   }
 
   function openDay(iso: string) {
@@ -787,39 +771,10 @@ function MonthCalendar({
         }
       >
         <div className="grid gap-4">
-          <Button
-            type="button"
-            size="sm"
-            variant={adding ? "secondary" : "outline"}
-            className="w-fit"
-            aria-expanded={adding}
-            onClick={() => setAdding((isAdding) => !isAdding)}
-          >
-            {adding ? <IconX /> : <IconPlus />}
-            {adding ? "Close" : "Add a deadline on this day"}
-          </Button>
-
-          {adding ? (
-            <AddDeadlineForm
-              key={selected}
-              today={today}
-              onAdd={onAddDeadline}
-              onAdded={() => setAdding(false)}
-              initial={{
-                draft: { ...emptyDraft, firstDueDate: selected },
-                notes: [],
-                problems: [],
-              }}
-              idPrefix="day"
-            />
-          ) : null}
-
           {selectedItems.length === 0 && selectedDone.length === 0 ? (
-            adding ? null : (
-              <p className="text-base text-muted-foreground">
-                Nothing due this day.
-              </p>
-            )
+            <p className="text-base text-muted-foreground">
+              Nothing due this day.
+            </p>
           ) : null}
 
           {selectedItems.length > 0 ? (

@@ -63,4 +63,4 @@ Guest mode is gone. There is no `true-roof-guest` cookie and no "Continue as a g
 
 Signing out asks whether to keep or remove what is on the phone. `lib/privacy/local-data.ts` owns the list of keys, split into the ones the account also holds and the ones only the phone holds. A feature that writes a new `true-roof:*` key belongs in that list.
 
-Voice typing was removed too: there is no `/api/voice`, no transcription helper and no `TRANSCRIBE_MODEL`. `OPENAI_API_KEY` stays, because the scan reader, the deadline reader and the embeddings all use it.
+Voice typing is back, as an accessibility setting only, off by default. Turning it on in Settings puts a mic in the bottom right corner that types speech into whichever text box is focused (`components/voice/voice-typing-button.tsx`), and adds a quick off switch to the seeker and portal sidebars. Four text boxes also have a "Say it instead" button (`components/voice/voice-textarea.tsx`). `/api/voice` only returns the words; it never proposes questionnaire answers, so `lib/voice/answer-rules.ts` stays removed. Transcription uses `OPENAI_API_KEY` with `TRANSCRIBE_MODEL` (default `whisper-1`).

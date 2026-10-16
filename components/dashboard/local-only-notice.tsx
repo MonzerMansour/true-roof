@@ -17,15 +17,12 @@ import Link from "next/link"
  */
 export function LocalOnlyNotice({ className }: { className?: string }) {
   return (
-    <p className={className}>
-      Saved on this phone only, and you do not need an account. Nothing is sent
-      anywhere unless you tap Fill in for me or Read it, which sends just that
-      sentence or photo to be read and keeps nothing. Clearing your browser
-      erases it, and you can delete it yourself any time in{" "}
+    <span className={className}>
+      Saved on this phone only.{" "}
       <Link href="/settings" className="font-medium underline">
         Settings
-      </Link>
-      .
-    </p>
+      </Link>{" "}
+      can delete it.
+    </span>
   )
 }

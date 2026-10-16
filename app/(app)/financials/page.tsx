@@ -24,26 +24,21 @@ export default function FinancialsPage() {
           Rent, bills, and the renewal dates that are easy to miss.
         </p>
 
-        <LocalOnlyNotice className="mt-4 max-w-2xl rounded-xl border bg-card p-3 text-sm ring-1 ring-primary/10" />
-
-        {/* Get Help lived under Financials and was never built past a page
-            saying so. Its only working content was these three numbers, so
-            they stay here as plain links. They are in the footer of every app
-            page too. */}
-        <p className="mt-4 max-w-2xl text-sm text-muted-foreground">
-          Need a person right now? Call{" "}
+        <p className="mt-3 max-w-2xl text-sm text-muted-foreground">
+          <LocalOnlyNotice />{" "}
+          Crisis:{" "}
           <a className="font-medium underline" href="tel:911">
             911
           </a>
-          , crisis or thoughts of suicide{" "}
+          ,{" "}
           <a className="font-medium underline" href="tel:988">
             988
           </a>
-          , domestic violence{" "}
+          , DV{" "}
           <a className="font-medium underline" href="tel:+18007997233">
             1-800-799-7233
           </a>
-          . None of these need an account and nothing here is sent with them.
+          .
         </p>
 
         <div className="mt-8 grid gap-8">

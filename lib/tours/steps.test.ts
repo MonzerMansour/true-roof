@@ -35,7 +35,7 @@ describe("every step is well formed", () => {
     // The tour is the one place in the app that describes every page in
     // order, so it is the easiest place for a removed feature to survive as
     // copy that promises something that is not there.
-    const gone = /voice|quiet mode|income cliff|hurt me|get help/i
+    const gone = /quiet mode|income cliff|hurt me|get help/i
 
     for (const role of roles) {
       for (const step of tours[role].steps) {

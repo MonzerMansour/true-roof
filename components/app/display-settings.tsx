@@ -66,10 +66,11 @@ export function DisplaySettings() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Theme, text, and contrast</CardTitle>
+        <CardTitle>Theme, text, and voice</CardTitle>
         <CardDescription className="text-base">
-          Pick light or dark, make the words bigger, or turn up the contrast.
-          This changes straight away and stays set on this phone.
+          Pick light or dark, make the words bigger, turn up the contrast, or
+          speak instead of typing. This changes straight away and stays set on
+          this phone.
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-6">
@@ -158,6 +159,40 @@ export function DisplaySettings() {
                 }
               >
                 {contrastLabel[value]}
+              </Button>
+            ))}
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend className="text-sm font-medium">Voice typing</legend>
+          <p className="mt-1 text-sm text-muted-foreground" id="voice-typing-help">
+            Puts a microphone in the bottom right corner. Tap any text box, then
+            tap the microphone and speak. Your words go into that box for you to
+            check. Recording only starts when you tap it.
+          </p>
+          <div
+            className="mt-3 flex flex-wrap gap-3"
+            role="group"
+            aria-describedby="voice-typing-help"
+          >
+            {[false, true].map((on) => (
+              <Button
+                key={String(on)}
+                type="button"
+                size="touch"
+                variant={preferences.voiceTyping === on ? "default" : "outline"}
+                aria-pressed={ready && preferences.voiceTyping === on}
+                onClick={() =>
+                  update(
+                    { voiceTyping: on },
+                    on
+                      ? "Voice typing on. The microphone is in the bottom right corner."
+                      : "Voice typing off"
+                  )
+                }
+              >
+                {on ? "On" : "Off"}
               </Button>
             ))}
           </div>

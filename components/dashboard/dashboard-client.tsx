@@ -65,22 +65,21 @@ const riskCopy: Record<
   steady: {
     label: "Steady",
     text: "text-success-text",
-    helper: "Nothing is overdue and nothing is due in the next week.",
+    helper: "Nothing due this week.",
     shell: "border-success/25 bg-success/5",
     dot: "bg-success",
   },
   watch: {
     label: "Watch",
     text: "text-warning-text",
-    helper: "Something is due soon. Pay it down or mark it handled below.",
+    helper: "Something is due soon.",
     shell: "border-warning/30 bg-warning/5",
     dot: "bg-warning",
   },
   act: {
     label: "Act",
     text: "text-destructive",
-    helper:
-      "Something is overdue. The crisis numbers at the top of this page reach a person if you cannot cover it.",
+    helper: "Something is overdue.",
     shell: "border-destructive/35 bg-destructive/5",
     dot: "bg-destructive",
   },
@@ -378,16 +377,9 @@ export function DashboardClient() {
               onCheckIn={handleCheckIn}
             />
             {session ? (
-              <label className="flex min-h-11 items-start justify-between gap-3 border-t pt-4">
-                <span className="grid gap-1">
-                  <span className="text-sm font-medium">
-                    Email me when something important is late
-                  </span>
-                  <span className="text-sm text-muted-foreground">
-                    Sends to {session.email} when you open True Roof and
-                    something is overdue. Off by default. Plans stay on this
-                    phone.
-                  </span>
+              <label className="flex min-h-11 items-center justify-between gap-3 border-t pt-4">
+                <span className="text-sm font-medium">
+                  Email me when something is late
                 </span>
                 <Switch
                   checked={emailAlerts}
@@ -395,7 +387,7 @@ export function DashboardClient() {
                     setEmailAlerts(checked)
                     saveAlertEmailOptIn(checked)
                   }}
-                  aria-label="Email me when something important is late"
+                  aria-label="Email me when something is late"
                 />
               </label>
             ) : null}
@@ -495,7 +487,6 @@ export function DashboardClient() {
                   onRemoveDeadline={handleRemoveDeadline}
                   onDeleteOne={handleDeleteOne}
                   onEditDeadline={setEditingDeadlineId}
-                  onAddDeadline={handleAddDeadline}
                 />
               </TabsContent>
 
@@ -583,15 +574,13 @@ function CheckInRow({
     : null
 
   return (
-    <div className="grid gap-2 border-t pt-4">
-      <p className="text-sm font-medium">Weekly check-in</p>
+    <div className="flex flex-wrap items-center justify-between gap-2 border-t pt-4">
       <p className="text-sm text-muted-foreground">
         {daysSince === null
-          ? "You have not checked in yet."
+          ? "No check-in yet"
           : daysSince <= 0
-            ? "Last check-in: today."
-            : `Last check-in: ${daysSince} day${daysSince === 1 ? "" : "s"} ago.`}{" "}
-        Has anything changed? Update your income, savings, or deadlines.
+            ? "Checked in today"
+            : `Last check-in: ${daysSince}d ago`}
       </p>
       <Button type="button" size="sm" className="w-fit" onClick={onCheckIn}>
         Check in
@@ -749,11 +738,9 @@ function AttentionPanel({
           </CardAction>
         ) : null}
       </CardHeader>
-      <CardContent className="grid gap-4">
+      <CardContent className="grid gap-3">
         {risk.reasons.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            No warnings right now. Check back after your next due date.
-          </p>
+          <p className="text-sm text-muted-foreground">Nothing needs you.</p>
         ) : (
           <ReasonList
             reasons={risk.reasons.slice(0, REASON_LIMIT)}
@@ -763,7 +750,7 @@ function AttentionPanel({
 
         {hidden > 0 ? (
           <ShowMoreDialog
-            label={`Show ${hidden} more`}
+            label={`${hidden} more`}
             title={`Needs attention (${risk.reasons.length})`}
           >
             {() => <ReasonList reasons={risk.reasons} level={risk.level} />}
@@ -781,35 +768,25 @@ function AttentionPanel({
         ) : null}
 
         {risk.level === "act" ? (
-          <div className="grid gap-3 rounded-xl border border-destructive/20 bg-destructive/5 p-3">
-            {/* What survives of the Get Help feature: plain phone links and
-                nothing else. There is no data bundle and no handoff, so the
-                heading no longer promises one. */}
-            <div>
-              <p className="font-medium">Numbers that reach a person</p>
-              <p className="text-sm text-muted-foreground">
-                Tapping one calls it. Nothing is sent and nothing is shared.
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2">
+            <a
+              href="tel:211"
+              className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+            >
+              <IconPhoneCall />
+              211
+            </a>
+            {contactAction ? (
               <a
-                href="tel:211"
-                className={cn(buttonVariants({ variant: "outline" }))}
+                href={contactAction.href}
+                className={cn(
+                  buttonVariants({ variant: "outline", size: "sm" })
+                )}
               >
-                <IconPhoneCall />
-                Call 211
+                {contactAction.email ? <IconMail /> : <IconPhoneCall />}
+                {profile.caseManagerName || "Case manager"}
               </a>
-              {contactAction ? (
-                <a
-                  href={contactAction.href}
-                  className={cn(buttonVariants({ variant: "outline" }))}
-                >
-                  {contactAction.email ? <IconMail /> : <IconPhoneCall />}
-                  {contactAction.email ? "Email" : "Call"}{" "}
-                  {profile.caseManagerName || "case manager"}
-                </a>
-              ) : null}
-            </div>
+            ) : null}
           </div>
         ) : null}
       </CardContent>

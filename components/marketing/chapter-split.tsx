@@ -161,7 +161,9 @@ function ChapterCard({
           href={href}
           className={cn(
             buttonVariants({ size: "sm" }),
-            "bg-white text-foreground hover:bg-white/90"
+            // Fixed dark text: text-foreground is near-white in dark mode, so
+            // bg-white + text-foreground reads as white on white.
+            "bg-white text-zinc-900 hover:bg-white/90 hover:text-zinc-900"
           )}
         >
           {cta}

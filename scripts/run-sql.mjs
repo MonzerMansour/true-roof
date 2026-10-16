@@ -91,10 +91,13 @@ async function configureAuth(token) {
     "http://127.0.0.1:3000",
     "http://127.0.0.1:3000/**",
     "http://127.0.0.1:3000/auth/callback",
+    "https://true-roof.vercel.app",
+    "https://true-roof.vercel.app/**",
+    "https://true-roof.vercel.app/auth/callback",
   ]
 
   const payload = {
-    SITE_URL: "http://localhost:3000",
+    SITE_URL: "https://true-roof.vercel.app",
     URI_ALLOW_LIST: redirects.join(","),
   }
 
