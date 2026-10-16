@@ -1,7 +1,6 @@
 import { MarketingPhoto, StandInPhotoBadge } from "@/components/marketing/marketing-photo"
-import { SiteArtwork } from "@/components/places/site-artwork"
 import { uploadedPhotoFor } from "@/lib/listings/photos"
-import { artworkForListing } from "@/lib/listings/site-artwork"
+import { standInPhotoFor } from "@/lib/listings/stand-in-photo"
 import type { Listing } from "@/lib/listings/types"
 
 /**
@@ -11,9 +10,9 @@ import type { Listing } from "@/lib/listings/types"
  * decision carries the "this is not the place" label with it and a surface
  * that forgot the label would be the whole problem again.
  *
- * A photo only ever appears here when the site's own staff uploaded one. Every
- * other site gets a drawing, which is different for every site and obviously
- * not a photograph of anywhere.
+ * A photograph of the actual site only ever appears when its own staff
+ * uploaded one. Everything else is a stand-in, picked from a pool chosen to
+ * match what the record says the place is.
  */
 export function ListingImage({
   listing,
@@ -30,12 +29,12 @@ export function ListingImage({
    * has room for the full sentence underneath. */
   showBadge?: boolean
 }) {
-  const photo = uploadedPhotoFor(listing)
+  const uploaded = uploadedPhotoFor(listing)
 
-  if (photo) {
+  if (uploaded) {
     return (
       <MarketingPhoto
-        photo={photo}
+        photo={uploaded}
         className={className}
         sizes={sizes}
         priority={priority}
@@ -43,17 +42,22 @@ export function ListingImage({
     )
   }
 
-  const { description } = artworkForListing(listing)
+  const standIn = standInPhotoFor(listing)
 
   return (
     <div className="relative">
-      <SiteArtwork listing={listing} className={className} />
-      {/* The drawing itself is aria-hidden, so this carries the whole message
-          for anybody who cannot see it. It says what it is before it says
-          what it shows, so the picture is never taken for the place. */}
-      <span className="sr-only">
-        {`Drawing, not a photo of ${listing.name}: ${description}.`}
-      </span>
+      <MarketingPhoto
+        photo={{
+          src: standIn.src,
+          // Says what it is before it says what it shows, so somebody using a
+          // screen reader is never told this is a picture of the site.
+          alt: `Stand-in picture, not ${listing.name}. Shows ${standIn.description}.`,
+          credit: `${standIn.author} / ${standIn.licence}`,
+        }}
+        className={className}
+        sizes={sizes}
+        priority={priority}
+      />
       {showBadge ? <StandInPhotoBadge /> : null}
     </div>
   )

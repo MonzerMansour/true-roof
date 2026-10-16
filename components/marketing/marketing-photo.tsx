@@ -78,11 +78,36 @@ export function StandInPhotoBadge({ className }: { className?: string }) {
  * No credit line: the drawing is ours and there is no photographer to name.
  * Saying where a picture came from was the old behaviour and it was the
  * problem, because a credit reads as provenance for a real photo. */
-export function StandInPhotoNote({ className }: { className?: string }) {
+export function StandInPhotoNote({
+  credit,
+  source,
+  className,
+}: {
+  /** Author and licence. Attribution is a condition of most of these
+   * licences, so it is rendered, not just stored. */
+  credit?: string
+  /** The image's page, which carries the full licence terms. */
+  source?: string
+  className?: string
+}) {
   return (
     <p className={cn("text-[11px] text-muted-foreground", className)}>
-      This is a drawing, not a photo of this site. Nobody who runs it has sent
-      a photo in yet.
+      This is a stand-in picture, not a photo of this site. Nobody who runs it
+      has sent one in yet.
+      {credit ? (
+        <>
+          {" "}
+          Photo:{" "}
+          {source ? (
+            <a className="underline" href={source} rel="nofollow noopener">
+              {credit}
+            </a>
+          ) : (
+            credit
+          )}
+          .
+        </>
+      ) : null}
     </p>
   )
 }

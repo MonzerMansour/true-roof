@@ -28,6 +28,7 @@ import {
   toggleFavorite,
 } from "@/lib/listings/activity"
 import { uploadedPhotoFor } from "@/lib/listings/photos"
+import { standInPhotoFor } from "@/lib/listings/stand-in-photo"
 import { contactForListing } from "@/lib/listings/contacts"
 import {
   coverageNote,
@@ -72,6 +73,8 @@ export function PlaceDetail({
   signedIn?: boolean
 }) {
   const photo = uploadedPhotoFor(listing)
+  // Only for the credit line under the picture. ListingImage draws it.
+  const standIn = standInPhotoFor(listing)
   const contact = contactForListing(listing)
   const isLot = listing.kind === "parking" && listing.parkingStatus
   const status = isLot
@@ -230,7 +233,14 @@ export function PlaceDetail({
             showBadge={false}
           />
           <div className="mt-2">
-            {photo ? <PhotoCredit photo={photo} /> : <StandInPhotoNote />}
+            {photo ? (
+              <PhotoCredit photo={photo} />
+            ) : (
+              <StandInPhotoNote
+                credit={`${standIn.author} / ${standIn.licence}`}
+                source={standIn.source}
+              />
+            )}
           </div>
         </div>
 
