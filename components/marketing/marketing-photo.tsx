@@ -46,3 +46,45 @@ export function PhotoCredit({
     </p>
   )
 }
+
+/**
+ * Says out loud that a picture is not the place it sits above.
+ *
+ * Sits on the image rather than under it, because the two are read together
+ * and a caption below a card gets skimmed past. It is a plain label, not a
+ * tooltip or an icon: somebody deciding where to sleep tonight should not
+ * have to hover anything to find out the picture is a stand-in.
+ *
+ * aria-hidden, and deliberately. The same fact is already the first thing in
+ * the image's alt text, so announcing it twice would just be noise for
+ * somebody using a screen reader.
+ */
+export function StandInPhotoBadge({ className }: { className?: string }) {
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        "pointer-events-none absolute bottom-2 left-2 rounded-md bg-background/90 px-2 py-1 text-[11px] font-medium text-foreground shadow-sm ring-1 ring-foreground/10 backdrop-blur-sm",
+        className
+      )}
+    >
+      Not this place
+    </span>
+  )
+}
+
+/** The longer version, for a page with room for a sentence. */
+export function StandInPhotoNote({
+  photo,
+  className,
+}: {
+  photo: Photo
+  className?: string
+}) {
+  return (
+    <p className={cn("text-[11px] text-muted-foreground", className)}>
+      This is a stand-in picture, not a photo of this site. Nobody who runs it
+      has sent one in. Photo: {photo.credit}.
+    </p>
+  )
+}

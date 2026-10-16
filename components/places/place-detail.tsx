@@ -13,6 +13,7 @@ import { toast } from "sonner"
 import {
   MarketingPhoto,
   PhotoCredit,
+  StandInPhotoNote,
 } from "@/components/marketing/marketing-photo"
 import { PlaceIntake } from "@/components/places/place-intake"
 import { PlaceReviews } from "@/components/places/place-reviews"
@@ -226,7 +227,11 @@ export function PlaceDetail({
             priority
           />
           <div className="mt-2">
-            <PhotoCredit photo={photo} />
+            {photo.ofThisPlace ? (
+              <PhotoCredit photo={photo} />
+            ) : (
+              <StandInPhotoNote photo={photo} />
+            )}
           </div>
         </div>
 

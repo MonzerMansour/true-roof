@@ -14,7 +14,7 @@ import {
 
 import { useSession } from "@/components/auth/session-provider"
 import { FIND_A_PLACE_PATH } from "@/lib/matching/paths"
-import { MarketingPhoto } from "@/components/marketing/marketing-photo"
+import { MarketingPhoto, StandInPhotoBadge } from "@/components/marketing/marketing-photo"
 import { Badge } from "@/components/ui/badge"
 import { buttonVariants } from "@/components/ui/button"
 import { cn } from "cn"
@@ -485,11 +485,14 @@ export function SeekerDashboard({ listings }: { listings: Listing[] }) {
                   href={`/places/${listing.id}`}
                   className="group overflow-hidden rounded-2xl border bg-card transition-colors hover:bg-muted/30"
                 >
-                  <MarketingPhoto
-                    photo={photo}
-                    className="aspect-[16/10]"
-                    sizes="(min-width: 1024px) 33vw, 50vw"
-                  />
+                  <div className="relative">
+                    <MarketingPhoto
+                      photo={photo}
+                      className="aspect-[16/10]"
+                      sizes="(min-width: 1024px) 33vw, 50vw"
+                    />
+                    {photo.ofThisPlace ? null : <StandInPhotoBadge />}
+                  </div>
                   <div className="p-4">
                     <div className="flex flex-wrap items-center gap-2">
                       <Badge variant="outline">

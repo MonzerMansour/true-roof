@@ -14,6 +14,7 @@ import { toast } from "sonner"
 import {
   MarketingPhoto,
   PhotoCredit,
+  StandInPhotoBadge,
 } from "@/components/marketing/marketing-photo"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -133,6 +134,7 @@ export function PlaceCard({
             className="h-40"
             sizes="(min-width: 1024px) 33vw, 100vw"
           />
+          {photo.ofThisPlace ? null : <StandInPhotoBadge />}
           <Button
             type="button"
             variant="secondary"
