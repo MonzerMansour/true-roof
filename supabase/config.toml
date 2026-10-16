@@ -158,15 +158,20 @@ enabled = true
 enabled = true
 # The base URL of your website. Used as an allow-list for redirects and for constructing URLs used
 # in emails.
-site_url = "http://localhost:3000"
+site_url = "https://true-roof.vercel.app"
 # The public URL that Auth serves on. Defaults to the API external URL with `/auth/v1` appended.
 # external_url = ""
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
+# Cloud project Auth URLs are edited in the Dashboard (or via Management API). Keep local
+# hosts here too so `supabase start` and local sign-in still work.
 additional_redirect_urls = [
   "http://localhost:3000",
   "http://localhost:3000/auth/callback",
   "http://127.0.0.1:3000",
   "http://127.0.0.1:3000/auth/callback",
+  "https://true-roof.vercel.app",
+  "https://true-roof.vercel.app/auth/callback",
+  "https://true-roof.vercel.app/**",
 ]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
