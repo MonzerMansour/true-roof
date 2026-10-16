@@ -142,15 +142,14 @@ function DeadlineRow({
       <div className="min-w-0">
         <p className="text-xs font-medium text-primary">
           {next
-            ? `Next: ${formatDay(next)}`
+            ? formatDay(next)
             : overdueSince
-              ? `Overdue since ${formatDay(overdueSince)}`
-              : "Nothing left to do"}
+              ? `Overdue · ${formatDay(overdueSince)}`
+              : "Done"}
         </p>
         <p className="font-medium [overflow-wrap:anywhere]">{deadline.title}</p>
-        <p className="text-sm text-muted-foreground [overflow-wrap:anywhere]">
+        <p className="text-sm text-muted-foreground">
           {repeatLabel(deadline.repeat)}
-          {deadline.whatToBring ? `. Bring: ${deadline.whatToBring}` : ""}
         </p>
       </div>
       <div className="flex shrink-0 items-center">

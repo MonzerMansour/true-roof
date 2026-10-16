@@ -448,15 +448,12 @@ function OccurrenceItem({
         <p className="text-base font-medium [overflow-wrap:anywhere]">
           {occurrence.title}
         </p>
-        <p className="flex flex-wrap items-center gap-x-2 text-sm text-muted-foreground">
-          {occurrence.time ? (
-            <span className="inline-flex items-center gap-1 font-medium text-foreground">
-              <IconClock className="size-3.5" />
-              {formatTime(occurrence.time)}
-            </span>
-          ) : null}
-          <span className="[overflow-wrap:anywhere]">{occurrence.detail}</span>
-        </p>
+        {occurrence.time ? (
+          <p className="inline-flex items-center gap-1 text-sm font-medium text-foreground">
+            <IconClock className="size-3.5" />
+            {formatTime(occurrence.time)}
+          </p>
+        ) : null}
       </div>
       <div className="flex shrink-0 items-center gap-1">
         {deadlineId ? (

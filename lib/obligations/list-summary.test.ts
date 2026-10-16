@@ -177,12 +177,12 @@ describe("assessRisk: shorter warnings", () => {
     )
     expect(about).toHaveLength(1)
     expect(about[0]).toContain(
-      `missed ${overdue.length} times, since ${short("2026-09-21")}`
+      `missed ${overdue.length} since ${short("2026-09-21")}`
     )
     expect(level).toBe("act")
   })
 
-  it("keeps the old wording when a repeating item was missed once", () => {
+  it("keeps a short line when a repeating item was missed once", () => {
     const { reasons } = assessRisk(
       [
         occurrence({
@@ -196,7 +196,7 @@ describe("assessRisk: shorter warnings", () => {
       noSignals,
       now
     )
-    expect(reasons).toContain(`Pay rent: overdue since ${short("2026-10-05")}`)
+    expect(reasons).toContain(`Pay rent · overdue ${short("2026-10-05")}`)
   })
 
   it("still lists every overdue one-time item on its own", () => {
@@ -210,8 +210,8 @@ describe("assessRisk: shorter warnings", () => {
       now
     )
     expect(reasons).toEqual([
-      `Dentist: overdue since ${short("2026-10-01")}`,
-      `DMV letter: overdue since ${short("2026-10-02")}`,
+      `Dentist · overdue ${short("2026-10-01")}`,
+      `DMV letter · overdue ${short("2026-10-02")}`,
     ])
   })
 
@@ -237,7 +237,7 @@ describe("assessRisk: shorter warnings", () => {
       noSignals,
       now
     )
-    expect(reasons).toEqual(["Check-in: due today"])
+    expect(reasons).toEqual(["Check-in · due today"])
   })
 
   it("leads with the most serious warnings", () => {

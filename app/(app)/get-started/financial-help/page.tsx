@@ -26,7 +26,9 @@ export default function FinancialHelpPage() {
         rent cushion, and are saved on this phone.
       </p>
 
-      <LocalOnlyNotice className="mt-4 max-w-xl rounded-lg border p-3 text-sm" />
+      <p className="mt-4 max-w-xl rounded-lg border p-3 text-sm">
+        <LocalOnlyNotice />
+      </p>
 
       <div className="mt-8">
         <FinancialHelpForm />

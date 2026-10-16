@@ -281,10 +281,20 @@ export function PlacesFeed({
   const activeCount = tags.length
   const nothingToClear = isDefaultFilters(filters)
 
-  // One function for both controls, which used to be two inline calls under
-  // two different labels.
+  // Fresh copy every time. Reusing the shared defaultPlaceFilters object made
+  // React skip updates when Clear all was tapped after Near me / a city chip,
+  // so linked locations looked stuck.
   function clearAll() {
-    setFilters(defaultPlaceFilters)
+    setFilters({
+      ...defaultPlaceFilters,
+      origin: { ...defaultOrigin },
+    })
+    setGeoError(null)
+  }
+
+  function clearLocations() {
+    patch({ origin: { ...defaultOrigin }, miles: null })
+    setGeoError(null)
   }
 
   const previewOnly = !session
@@ -448,14 +458,29 @@ export function PlacesFeed({
                   variant={
                     origin.label === defaultOrigin.label ? "default" : "outline"
                   }
-                  onClick={() => patch({ origin: defaultOrigin })}
+                  onClick={() => patch({ origin: { ...defaultOrigin } })}
                 >
                   Downtown San Jose
                 </Button>
               </div>
-              <p className="mt-2 text-xs text-muted-foreground">
-                Measuring from {origin.label}
-              </p>
+              <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+                <p className="text-xs text-muted-foreground">
+                  Measuring from {origin.label}
+                </p>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 px-2 text-xs"
+                  disabled={
+                    origin.label === defaultOrigin.label &&
+                    filters.miles == null
+                  }
+                  onClick={clearLocations}
+                >
+                  Clear all linked locations
+                </Button>
+              </div>
             </FilterSection>
 
             <FilterSection title="Distance">

@@ -211,6 +211,7 @@ export function PlaceDetail({
         variant="ghost"
         size="touch"
         className="mb-4 -ml-1"
+        nativeButton={false}
         render={<Link href="/places" />}
       >
         <IconArrowLeft />

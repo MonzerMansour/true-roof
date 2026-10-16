@@ -318,7 +318,7 @@ export function assessRisk(
         overdueSeries.set(occurrence.seriesId, list)
       } else {
         found.push({
-          text: `${occurrence.title}: overdue since ${shortDate(occurrence.date)}`,
+          text: `${occurrence.title} · overdue ${shortDate(occurrence.date)}`,
           points: 40,
         })
       }
@@ -333,8 +333,8 @@ export function assessRisk(
           ? "today"
           : daysUntil === 1
             ? "tomorrow"
-            : `in ${daysUntil} days`
-      add(`${occurrence.title}: due ${when}`, daysUntil <= 3 ? 20 : 10)
+            : `in ${daysUntil}d`
+      add(`${occurrence.title} · due ${when}`, daysUntil <= 3 ? 20 : 10)
     }
   }
 
@@ -343,8 +343,8 @@ export function assessRisk(
     found.push({
       text:
         items.length === 1
-          ? `${oldest.title}: overdue since ${shortDate(oldest.date)}`
-          : `${oldest.title}: missed ${items.length} times, since ${shortDate(oldest.date)}`,
+          ? `${oldest.title} · overdue ${shortDate(oldest.date)}`
+          : `${oldest.title} · missed ${items.length} since ${shortDate(oldest.date)}`,
       points: 40,
     })
   }
@@ -356,20 +356,14 @@ export function assessRisk(
     signals.monthlyIncome < signals.previousMonthlyIncome * 0.9 &&
     daysSince(signals.incomeUpdatedAt, today) <= 30
   ) {
-    add(
-      `Income dropped from $${signals.previousMonthlyIncome.toLocaleString()} to $${signals.monthlyIncome.toLocaleString()}`,
-      15
-    )
+    add("Income dropped this month", 15)
   }
 
   if (
     signals.lastShutoffNoticeAt &&
     daysSince(signals.lastShutoffNoticeAt, today) <= 14
   ) {
-    add(
-      `Shutoff or disconnection notice logged on ${shortDate(signals.lastShutoffNoticeAt)}`,
-      25
-    )
+    add(`Shutoff notice · ${shortDate(signals.lastShutoffNoticeAt)}`, 25)
   }
 
   const daysSinceCheckIn = signals.lastCheckInAt
@@ -378,8 +372,8 @@ export function assessRisk(
   if (daysSinceCheckIn === null || daysSinceCheckIn > 7) {
     add(
       daysSinceCheckIn === null
-        ? "You have not checked in yet"
-        : `No check-in for ${daysSinceCheckIn} days`,
+        ? "Check in"
+        : `No check-in · ${daysSinceCheckIn}d`,
       10
     )
   }
