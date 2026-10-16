@@ -487,7 +487,6 @@ export function DashboardClient() {
                   onRemoveDeadline={handleRemoveDeadline}
                   onDeleteOne={handleDeleteOne}
                   onEditDeadline={setEditingDeadlineId}
-                  onAddDeadline={handleAddDeadline}
                 />
               </TabsContent>
 
