@@ -131,6 +131,13 @@ const providerSteps: TourStep[] = [
     action: "Add a site here when you run more than one address.",
   },
   {
+    id: "claim-site",
+    path: "/portal/sites/claim",
+    title: "A site that is changing hands",
+    body: "If another organization ran a site and you are taking it on, their director gives you a code and the listing moves to you, keeping its saved places, requests and reviews. Starting it again from scratch would lose all of that.",
+    action: "Use this only for a site already on True Roof.",
+  },
+  {
     id: "site-settings",
     path: "/portal/sites",
     title: "What seekers actually read",

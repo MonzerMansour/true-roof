@@ -48,7 +48,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { VoiceTextarea } from "@/components/voice/voice-textarea"
+import { Textarea } from "@/components/ui/textarea"
 
 /** Renders the options for an enum from its option map, so a value can never
  * exist in the database with no way for staff to pick it. */
@@ -116,8 +116,7 @@ export function OptionalSiteFields({
                   <FieldLabel htmlFor="orgDescription">
                     Short note (optional)
                   </FieldLabel>
-                  <VoiceTextarea
-                    label="Organization short note"
+                  <Textarea
                     id="orgDescription"
                     name="orgDescription"
                     defaultValue={orgDescription ?? ""}

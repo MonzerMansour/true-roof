@@ -73,13 +73,20 @@ export default async function PortalHomePage() {
                 draft, and you publish it when its details are in.
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex flex-wrap gap-2">
               <Link
                 href="/portal/sites/new"
                 className={cn(buttonVariants({ variant: "outline" }))}
               >
                 <IconPlus />
                 Add another site
+              </Link>
+              <Link
+                href="/portal/sites/claim"
+                className={cn(buttonVariants({ variant: "ghost" }))}
+              >
+                <IconKey />
+                Add one with a code
               </Link>
             </CardContent>
           </Card>
@@ -93,13 +100,17 @@ export default async function PortalHomePage() {
                 Add the first physical address for this organization.
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <Link
-                href="/portal/sites/new"
-                className={cn(buttonVariants())}
-              >
+            <CardContent className="flex flex-wrap gap-2">
+              <Link href="/portal/sites/new" className={cn(buttonVariants())}>
                 <IconPlus />
                 Create a site
+              </Link>
+              <Link
+                href="/portal/sites/claim"
+                className={cn(buttonVariants({ variant: "outline" }))}
+              >
+                <IconKey />
+                Add one with a code
               </Link>
             </CardContent>
           </Card>

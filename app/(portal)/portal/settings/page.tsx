@@ -33,7 +33,7 @@ export default async function PortalSettingsPage() {
   const membership = context?.primaryMembership
 
   return (
-    <div className="flex max-w-2xl flex-col gap-6">
+    <div className="flex w-full flex-col gap-6">
       <div>
         <h1 className="font-heading text-2xl font-semibold">Settings</h1>
         <p className="mt-1 text-muted-foreground">

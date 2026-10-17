@@ -20,7 +20,7 @@ export default async function AccessPage() {
   const code = await fetchAccessCode(context.organization.id)
 
   return (
-    <div className="flex max-w-3xl flex-col gap-6">
+    <div className="flex w-full flex-col gap-6">
       <div>
         <h1 className="font-heading text-2xl font-semibold">
           Access and approvals

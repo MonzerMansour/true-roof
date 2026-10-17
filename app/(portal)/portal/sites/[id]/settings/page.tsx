@@ -4,6 +4,7 @@ import { ListingInterestPanel } from "@/components/portal/listing-interest-panel
 import { CustomerReviewsPanel } from "@/components/portal/customer-reviews-panel"
 import { ListingReviewsPanel } from "@/components/portal/listing-reviews-panel"
 import { ListingSettingsForm } from "@/components/portal/listing-settings-form"
+import { TransferSiteCard } from "@/components/portal/transfer-site-card"
 import { getInterestForListing } from "@/lib/listings/interest"
 import {
   getCustomerReportCounts,
@@ -11,7 +12,8 @@ import {
   getStaffCustomerReviewsForListing,
   getStaffReviewsForListing,
 } from "@/lib/listings/reviews"
-import { getListingForPortal } from "@/lib/portal/queries"
+import { fetchSiteTransferCode } from "@/lib/portal/actions"
+import { getListingForPortal, getPortalContext } from "@/lib/portal/queries"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 export const metadata: Metadata = {
@@ -25,6 +27,11 @@ export default async function SiteSettingsPage({
 }) {
   const { id } = await params
   const { listing, organization, canManage } = await getListingForPortal(id)
+  const context = await getPortalContext()
+  const isDirector = Boolean(context?.isDirector)
+  // Only a director can transfer, so only a director is shown the card or the
+  // code on it.
+  const transferCode = isDirector ? await fetchSiteTransferCode(id) : null
   const interest = await getInterestForListing(id)
   const reviews = await getStaffReviewsForListing(id)
   const reportMap = await getReportCountsForReviews(reviews.map((r) => r.id))
@@ -38,7 +45,7 @@ export default async function SiteSettingsPage({
   const count = (n: number) => (n > 0 ? ` (${n})` : "")
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex w-full flex-col gap-6">
       <div>
         <h1 className="font-heading text-2xl font-semibold">{listing.name}</h1>
         <p className="mt-1 text-muted-foreground">
@@ -75,6 +82,15 @@ export default async function SiteSettingsPage({
             organization={organization}
             canManage={canManage}
           />
+          {isDirector ? (
+            <div className="mt-8">
+              <TransferSiteCard
+                listingId={listing.id}
+                listingName={listing.name}
+                initialCode={transferCode}
+              />
+            </div>
+          ) : null}
         </TabsContent>
         <TabsContent value="requests" className="pt-4">
           <ListingInterestPanel rows={interest} />

@@ -43,7 +43,9 @@ export function PortalShell({
             <SeekerAccountMenu settingsHref="/portal/settings" />
           </div>
         </header>
-        <div className="flex flex-1 flex-col p-4 md:p-6">{children}</div>
+        <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col p-4 md:p-6">
+          {children}
+        </div>
       </SidebarInset>
     </SidebarProvider>
   )

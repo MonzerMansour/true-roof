@@ -657,3 +657,113 @@ export async function updateExternalRating(
   revalidatePath("/")
   return { ok: true }
 }
+
+// Site transfer by code.
+//
+// The organization access code means "let me work here". These mean "this one
+// site is yours now", which is a different and larger thing, so a director
+// issues them, they expire, and they work once.
+
+export async function createSiteTransferCode(
+  listingId: string
+): Promise<
+  { ok: true; code: string; expiresAt: string } | { ok: false; error: string }
+> {
+  const { supabase } = await requireProviderSession()
+
+  const { data, error } = await supabase
+    .rpc("create_site_transfer_code", { p_listing_id: listingId })
+    .single()
+
+  if (error) return { ok: false, error: error.message }
+
+  const row = data as { code: string; expires_at: string }
+  revalidatePath(`/portal/sites/${listingId}/settings`)
+  return { ok: true, code: row.code, expiresAt: row.expires_at }
+}
+
+export async function revokeSiteTransferCode(
+  listingId: string
+): Promise<ActionResult> {
+  const { supabase } = await requireProviderSession()
+
+  const { error } = await supabase.rpc("revoke_site_transfer_code", {
+    p_listing_id: listingId,
+  })
+
+  if (error) return { ok: false, error: error.message }
+
+  revalidatePath(`/portal/sites/${listingId}/settings`)
+  return { ok: true }
+}
+
+export async function fetchSiteTransferCode(listingId: string) {
+  const supabase = await createServerSupabaseClient()
+  if (!supabase) return null
+
+  const { data, error } = await supabase
+    .rpc("get_site_transfer_code", { p_listing_id: listingId })
+    .maybeSingle()
+
+  if (error || !data) return null
+  const row = data as { code: string; expires_at: string }
+  return { code: row.code, expiresAt: row.expires_at }
+}
+
+/** What a code is for, before anyone commits to using it. Lets the person see
+ * which site and which organization they are about to take it from. */
+export async function previewSiteTransferCode(
+  _prev: unknown,
+  formData: FormData
+): Promise<
+  | { ok: true; listingName: string; fromOrganization: string; expiresAt: string }
+  | { ok: false; error: string }
+> {
+  const code = String(formData.get("transferCode") ?? "").trim()
+  if (!code) return { ok: false, error: "Enter the code you were given." }
+
+  const { supabase } = await requireProviderSession()
+
+  const { data, error } = await supabase
+    .rpc("preview_site_transfer_code", { p_code: code })
+    .maybeSingle()
+
+  if (error) return { ok: false, error: error.message }
+  if (!data) {
+    return {
+      ok: false,
+      error: "That code does not match a site. It may have been used already, cancelled, or expired.",
+    }
+  }
+
+  const row = data as {
+    listing_name: string
+    from_organization: string
+    expires_at: string
+  }
+  return {
+    ok: true,
+    listingName: row.listing_name,
+    fromOrganization: row.from_organization,
+    expiresAt: row.expires_at,
+  }
+}
+
+export async function redeemSiteTransferCode(
+  code: string
+): Promise<
+  { ok: true; listingId: string; listingName: string } | { ok: false; error: string }
+> {
+  const { supabase } = await requireProviderSession()
+
+  const { data, error } = await supabase
+    .rpc("redeem_site_transfer_code", { p_code: code })
+    .single()
+
+  if (error) return { ok: false, error: error.message }
+
+  const row = data as { listing_id: string; listing_name: string }
+  revalidatePath("/portal")
+  revalidatePath("/places")
+  return { ok: true, listingId: row.listing_id, listingName: row.listing_name }
+}
