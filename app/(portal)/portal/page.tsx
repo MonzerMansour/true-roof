@@ -1,9 +1,10 @@
 import Link from "next/link"
-import { IconKey, IconPlus } from "@tabler/icons-react"
+import { IconArrowRight, IconKey, IconPlus } from "@tabler/icons-react"
 
 import { PendingMembershipBanner } from "@/components/portal/pending-membership-banner"
 import { PortalSiteCard } from "@/components/portal/portal-site-card"
 import { buttonVariants } from "@/components/ui/button"
+import { getInterestCounts } from "@/lib/listings/interest"
 import { getPortalContext } from "@/lib/portal/queries"
 import { cn } from "cn"
 
@@ -30,6 +31,16 @@ export default async function PortalHomePage() {
     )
   }
 
+  // Across every site at once. Requests used to live only inside a tab on
+  // one site's page, so the only way to find out somebody was waiting was to
+  // open each site and look. Waiting for a bed is the most time-sensitive
+  // thing in this app, so it goes at the top rather than two clicks in.
+  const all = [...listings, ...sharedListings]
+  const waiting = await getInterestCounts(all.map((listing) => listing.id))
+  const needsYou = all
+    .map((listing) => ({ listing, count: waiting.get(listing.id) ?? 0 }))
+    .filter((row) => row.count > 0)
+
   const heading = context.organization?.name ?? "Your sites"
 
   return (
@@ -41,6 +52,31 @@ export default async function PortalHomePage() {
           sleep. Only published sites are on that list.
         </p>
       </div>
+
+      {needsYou.length > 0 ? (
+        <section
+          className="rounded-xl border border-primary/30 bg-primary/[0.06] p-4"
+          aria-labelledby="needs-you"
+        >
+          <h2 id="needs-you" className="font-heading text-lg font-semibold">
+            Someone is waiting
+          </h2>
+          <ul className="mt-3 flex flex-col gap-2">
+            {needsYou.map(({ listing, count }) => (
+              <li key={listing.id}>
+                <Link
+                  href={`/portal/sites/${listing.id}`}
+                  className="flex flex-wrap items-center gap-x-2 gap-y-1 font-medium hover:underline"
+                >
+                  {count} {count === 1 ? "person has" : "people have"} asked
+                  about {listing.name}
+                  <IconArrowRight className="size-4" />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       {listings.length > 0 ? (
         <div className="grid gap-4 sm:grid-cols-2">

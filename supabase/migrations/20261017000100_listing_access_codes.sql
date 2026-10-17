@@ -221,3 +221,56 @@ grant execute on function public.get_listing_access_code(uuid) to authenticated;
 grant execute on function public.rotate_listing_access_code(uuid) to authenticated;
 grant execute on function public.join_listing_with_code(text) to authenticated;
 grant execute on function public.is_listing_member(uuid) to authenticated;
+
+-- Choosing a site's code rather than taking the generated one.
+--
+-- Validated here rather than trusted from the form: this code is the only
+-- thing standing between a stranger and editing what a shelter tells people
+-- about its beds, so "SHELTER1" cannot be allowed through just because
+-- somebody typed it.
+create or replace function public.set_listing_access_code(
+  p_listing_id uuid,
+  p_code text
+)
+returns text
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_org uuid;
+  v_code text := upper(regexp_replace(coalesce(p_code, ''), '\s', '', 'g'));
+begin
+  select l.organization_id into v_org from public.listings l where l.id = p_listing_id;
+  if v_org is null then
+    raise exception 'Site not found';
+  end if;
+
+  if not public.can_manage_org(v_org) then
+    raise exception 'Only the organization that runs this site can set its code';
+  end if;
+
+  if length(v_code) < 6 or length(v_code) > 16 then
+    raise exception 'A code needs between 6 and 16 characters';
+  end if;
+
+  if v_code !~ '^[A-Z0-9]+$' then
+    raise exception 'A code can only use letters and numbers';
+  end if;
+
+  if exists (
+    select 1 from public.listing_access_codes c
+    where c.code = v_code and c.listing_id <> p_listing_id
+  ) then
+    raise exception 'That code is already in use. Pick another';
+  end if;
+
+  insert into public.listing_access_codes (listing_id, code)
+  values (p_listing_id, v_code)
+  on conflict (listing_id) do update set code = excluded.code, created_at = now();
+
+  return v_code;
+end;
+$$;
+
+grant execute on function public.set_listing_access_code(uuid, text) to authenticated;

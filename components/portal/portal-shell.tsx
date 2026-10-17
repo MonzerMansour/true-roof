@@ -15,20 +15,17 @@ type PortalShellProps = {
   children: ReactNode
   title?: string
   primaryListingId: string | null
-  showAccess: boolean
 }
 
 export function PortalShell({
   children,
   title,
   primaryListingId,
-  showAccess,
 }: PortalShellProps) {
   return (
     <SidebarProvider>
       <PortalSidebar
         primaryListingId={primaryListingId}
-        showAccess={showAccess}
       />
       {/* This had no id at all, so the root skip link pointed at nothing on
           every portal page. */}

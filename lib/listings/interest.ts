@@ -149,3 +149,31 @@ export async function withdrawInterest(listingId: string, kind: InterestKind) {
 
   return { ok: true as const }
 }
+
+/** How many people are waiting on each of a set of sites.
+ *
+ * One query for the whole dashboard rather than one per site. A provider with
+ * five sites should not have to open five pages to find out that nobody is
+ * waiting on four of them.
+ */
+export async function getInterestCounts(
+  listingIds: string[]
+): Promise<Map<string, number>> {
+  const counts = new Map<string, number>()
+  if (listingIds.length === 0) return counts
+
+  const supabase = await createServerSupabaseClient()
+  if (!supabase) return counts
+
+  const { data } = await supabase
+    .from("listing_interest")
+    .select("listing_id")
+    .in("listing_id", listingIds)
+    .eq("status", "active")
+
+  for (const row of data ?? []) {
+    const id = row.listing_id as string
+    counts.set(id, (counts.get(id) ?? 0) + 1)
+  }
+  return counts
+}

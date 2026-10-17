@@ -68,6 +68,23 @@ handover, and there is no approval step, because one site is a far smaller
 thing to grant than the run of a whole organization, which is what the old
 approval guarded. Only the owning organization can rotate a code.
 
+The code is chosen when the site is made: the create form fills in a generated
+one and lets staff type their own, validated by `set_listing_access_code`
+(6 to 16 characters, letters and numbers, unique) with the same checks mirrored
+in `lib/portal/access-code.ts` for the form. A guessable code warns rather than
+being refused.
+
+There is no `/portal/access` page any more. A code belonged to an organization
+when there was one code; now it belongs to a site, so it is shown on that
+site's own page. Requests are not there either: open ones are summarised at the
+top of the portal dashboard across every site, and listed in full on each
+site's page.
+
+Pressing a site on the dashboard opens `/portal/sites/[id]`, the site as a
+seeker sees it, not the settings form. `PlaceDetail` takes a `preview` prop
+that drops the seeker's half: the match score, the fit against their answers
+and asking for a bed. Editing is a button from there.
+
 The code table has RLS on and no policies on purpose. `public.listings` is
 readable by anon for every published row, so a code column there would hand
 every site's key to anybody who asked PostgREST for it; everything goes

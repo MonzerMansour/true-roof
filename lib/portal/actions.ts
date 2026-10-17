@@ -1,6 +1,11 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
+
+import {
+  accessCodeProblem,
+  normalizeAccessCode,
+} from "@/lib/portal/access-code"
 import { after } from "next/server"
 
 import {
@@ -94,6 +99,30 @@ function isMissingColumn(error: { message?: string; code?: string } | null, colu
 const DESCRIPTION_NOT_READY =
   "Saved, except the site description. The database needs the listing_details migration first. Ask the project owner to apply it."
 
+
+/** Applies a code the person chose when creating the site.
+ *
+ * Not fatal if it fails: a trigger has already given the site a generated
+ * code, so the worst case is that the site has a code they did not pick,
+ * which the settings page shows them and lets them change. Losing the whole
+ * site over a code that was already taken would be worse.
+ */
+async function applyChosenAccessCode(
+  supabase: Awaited<ReturnType<typeof requireProviderSession>>["supabase"],
+  listingId: string,
+  formData: FormData
+) {
+  const chosen = normalizeAccessCode(String(formData.get("accessCode") ?? ""))
+  if (!chosen || accessCodeProblem(chosen)) return
+
+  const { error } = await supabase.rpc("set_listing_access_code", {
+    p_listing_id: listingId,
+    p_code: chosen,
+  })
+
+  if (error) console.warn("[portal] chosen site code not set:", error.message)
+}
+
 export async function createOrganizationWithSite(formData: FormData) {
   const orgName = String(formData.get("orgName") ?? "")
   // Named orgDescription, matching the settings form. Both write the same
@@ -138,6 +167,8 @@ export async function createOrganizationWithSite(formData: FormData) {
       )
     }
   }
+
+  if (listingId) await applyChosenAccessCode(supabase, listingId, formData)
 
   // Embed the new site after the response, so it can rank on Places
   // as soon as it is published. Never blocks or fails the create.
@@ -198,6 +229,7 @@ export async function addSiteToOrganization(formData: FormData) {
   }
 
   const listingId = data.id as string
+  await applyChosenAccessCode(supabase, listingId, formData)
   after(() => syncListingEmbedding(listingId))
 
   revalidatePath("/portal")

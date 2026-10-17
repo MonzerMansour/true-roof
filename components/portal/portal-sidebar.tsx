@@ -4,7 +4,6 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
   IconHome,
-  IconKey,
   IconSettings,
   IconUser,
 } from "@tabler/icons-react"
@@ -27,12 +26,10 @@ import { site } from "@/lib/site"
 
 type PortalSidebarProps = {
   primaryListingId: string | null
-  showAccess: boolean
 }
 
 export function PortalSidebar({
   primaryListingId,
-  showAccess,
 }: PortalSidebarProps) {
   const pathname = usePathname()
 
@@ -53,16 +50,6 @@ export function PortalSidebar({
       icon: IconSettings,
       active: pathname.startsWith("/portal/sites/"),
     },
-    ...(showAccess
-      ? [
-          {
-            href: "/portal/access",
-            label: "Access",
-            icon: IconKey,
-            active: pathname === "/portal/access",
-          },
-        ]
-      : []),
     {
       href: "/portal/settings",
       label: "Settings",

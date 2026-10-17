@@ -29,6 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { AccessCodeField } from "@/components/portal/access-code-field"
 import { Textarea } from "@/components/ui/textarea"
 
 // "new-org" creates an organization and its first site. "add-site" adds
@@ -145,6 +146,8 @@ export function CreateSiteForm({
           />
           <FieldDescription>Up to 1,000 characters.</FieldDescription>
         </Field>
+
+        <AccessCodeField />
 
         <Field>
           <FieldLabel htmlFor="kind">Site type</FieldLabel>

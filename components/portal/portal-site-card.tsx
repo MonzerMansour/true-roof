@@ -29,12 +29,14 @@ export function PortalSiteCard({
   shared?: boolean
 }) {
   return (
-    <Card className="overflow-hidden p-0">
-      <ListingImage
-        listing={listing}
-        className="h-36"
-        sizes="(min-width: 768px) 50vw, 100vw"
-      />
+    <Card className="relative overflow-hidden p-0 transition-colors hover:bg-muted/30">
+      <Link href={`/portal/sites/${listing.id}`} className="block">
+        <ListingImage
+          listing={listing}
+          className="h-36"
+          sizes="(min-width: 768px) 50vw, 100vw"
+        />
+      </Link>
 
       <div className="flex flex-1 flex-col gap-3 p-4">
         <div className="flex flex-wrap items-center gap-2">
@@ -48,7 +50,14 @@ export function PortalSiteCard({
         </div>
 
         <div>
-          <h3 className="font-heading text-lg font-semibold">{listing.name}</h3>
+          <h3 className="font-heading text-lg font-semibold">
+            <Link
+              href={`/portal/sites/${listing.id}`}
+              className="after:absolute after:inset-0 hover:underline"
+            >
+              {listing.name}
+            </Link>
+          </h3>
           <p className="text-sm text-muted-foreground">{listing.city}</p>
         </div>
 
@@ -58,10 +67,11 @@ export function PortalSiteCard({
           </p>
         )}
 
-        <div className="mt-auto flex flex-wrap gap-2 pt-1">
+        {/* relative + z-10 so these sit above the card-wide link above. */}
+        <div className="relative z-10 mt-auto flex flex-wrap gap-2 pt-1">
           <Link
             href={`/portal/sites/${listing.id}/settings`}
-            className={cn(buttonVariants({ size: "touch" }))}
+            className={cn(buttonVariants({ variant: "outline", size: "touch" }))}
           >
             <IconPencil />
             Edit details
@@ -75,7 +85,7 @@ export function PortalSiteCard({
               className={cn(buttonVariants({ variant: "ghost", size: "touch" }))}
             >
               <IconExternalLink />
-              View as a seeker
+              Open the real page
             </Link>
           ) : null}
         </div>

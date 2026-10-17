@@ -21,7 +21,6 @@ export default async function PortalLayout({
   return (
     <PortalShell
       primaryListingId={primaryListingId}
-      showAccess={context.isDirector}
     >
       {children}
       {/* The layout already has everything the provider steps depend on, so

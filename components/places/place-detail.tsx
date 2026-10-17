@@ -64,6 +64,7 @@ export function PlaceDetail({
   reviewStats = null,
   ownReview = null,
   signedIn = false,
+  preview = false,
 }: {
   listing: Listing
   intent?: string | null
@@ -71,6 +72,10 @@ export function PlaceDetail({
   reviewStats?: ListingReviewStats | null
   ownReview?: ListingReview | null
   signedIn?: boolean
+  /** Shown to the people who run this site, not to somebody looking for a
+   * bed. Drops the parts that only mean something to a seeker: how well it
+   * fits their answers, and asking for a place. */
+  preview?: boolean
 }) {
   const photo = uploadedPhotoFor(listing)
   // Only for the credit line under the picture. ListingImage draws it.
@@ -101,6 +106,7 @@ export function PlaceDetail({
   }, [listing])
 
   React.useEffect(() => {
+    if (preview) return
     const needs = loadNeeds()
     setFit(needs ? listingFitsNeeds(listing, needs) : null)
   }, [listing])
@@ -279,7 +285,7 @@ export function PlaceDetail({
             </div>
           ) : null}
 
-          {fit ? (
+          {preview ? null : fit ? (
             // FitResult is the two-value shape again: { fits, reasons }. The
             // three-value verdict belonged to the ranking approach that was
             // dropped in favour of the embeddings matcher.
@@ -318,20 +324,23 @@ export function PlaceDetail({
             </p>
           )}
 
-          <div className="mt-4">
-            <Button
-              type="button"
-              variant={saved ? "secondary" : "outline"}
-              size="touch"
-              aria-pressed={saved}
-              onClick={onToggleSave}
-            >
-              {saved ? <IconHeartFilled /> : <IconHeart />}
-              {saved ? "Saved" : "Save"}
-            </Button>
-          </div>
+          {preview ? null : (
+            <div className="mt-4">
+              <Button
+                type="button"
+                variant={saved ? "secondary" : "outline"}
+                size="touch"
+                aria-pressed={saved}
+                onClick={onToggleSave}
+              >
+                {saved ? <IconHeartFilled /> : <IconHeart />}
+                {saved ? "Saved" : "Save"}
+              </Button>
+            </div>
+          )}
 
-          <PlaceIntake listing={listing} intent={intent} />
+          {/* A provider cannot ask their own site for a bed. */}
+          {preview ? null : <PlaceIntake listing={listing} intent={intent} />}
 
           <dl className="mt-8 divide-y rounded-xl border bg-card">
             {rows.map((row) => {
