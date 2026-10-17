@@ -21,7 +21,11 @@ import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import { isoDate } from "@/lib/obligations/recurrence"
-import { scanKindLabel, type ScanResult } from "@/lib/obligations/scan-rules"
+import {
+  findDuplicatePayment,
+  scanKindLabel,
+  type ScanResult,
+} from "@/lib/obligations/scan-rules"
 import type { Deadline, Payment } from "@/lib/obligations/types"
 
 export function ScannerTab({
@@ -79,7 +83,7 @@ export function ScannerTab({
       if (scan.payment) {
         setAmount(scan.payment.amount != null ? String(scan.payment.amount) : "")
         setPaidTo(scan.payment.paidTo)
-        setNote(scan.summary)
+        setNote(scan.payment.note)
         setIsShutoffNotice(scan.isShutoffNotice)
       }
     } catch {
@@ -166,6 +170,7 @@ export function ScannerTab({
             <ScanResultCard
               key={scanId}
               result={result}
+              payments={payments}
               onAddDeadline={handleAddDeadline}
               onDismiss={() => setResult(null)}
             />
@@ -178,7 +183,9 @@ export function ScannerTab({
           <CardTitle>Log a payment or receipt</CardTitle>
           <CardDescription className="text-base">
             {result?.payment
-              ? "Filled in from your scan. Check it, then log it."
+              ? result.payment.status === "paid"
+                ? "Filled in from your receipt. Check it, then log it."
+                : "Filled in from the paper you scanned. This is not paid yet, so log it once you have paid."
               : "Or type one in yourself."}
           </CardDescription>
         </CardHeader>
@@ -292,14 +299,37 @@ function PaymentRow({ payment }: { payment: Payment }) {
 
 function ScanResultCard({
   result,
+  payments,
   onAddDeadline,
   onDismiss,
 }: {
   result: ScanResult
+  payments: Payment[]
   onAddDeadline: (deadline: Deadline) => void
   onDismiss: () => void
 }) {
   const today = isoDate(new Date())
+  // "Is this already logged" is the question somebody asks before logging it
+  // again, so answer it before they have to.
+  const alreadyLogged = result.payment
+    ? findDuplicatePayment(result.payment, payments)
+    : null
+
+  const facts: [string, string][] = []
+  if (result.facts.amount != null) {
+    facts.push([
+      result.payment?.status === "paid" ? "Amount paid" : "Amount",
+      `$${result.facts.amount.toLocaleString()}`,
+    ])
+  }
+  if (result.facts.payee) {
+    facts.push([
+      result.payment?.status === "paid" ? "Paid to" : "Owed to",
+      result.facts.payee,
+    ])
+  }
+  if (result.facts.dueDateText) facts.push(["Date on the paper", result.facts.dueDateText])
+  if (result.facts.whatToBring) facts.push(["What it asks for", result.facts.whatToBring])
 
   return (
     <Card className="ring-primary/30" aria-live="polite">
@@ -318,6 +348,30 @@ function ScanResultCard({
         </CardTitle>
       </CardHeader>
       <CardContent className="grid gap-4">
+        {/* What was read, before anything is asked of them. These were being
+            read off the paper and then only used to prefill a field, so the
+            person never saw what the reader had actually taken from it. */}
+        {facts.length > 0 ? (
+          <dl className="grid gap-2 rounded-lg border bg-muted/40 p-3 text-sm">
+            {facts.map(([label, value]) => (
+              <div key={label} className="flex flex-wrap gap-x-2">
+                <dt className="text-muted-foreground">{label}:</dt>
+                <dd className="font-medium">{value}</dd>
+              </div>
+            ))}
+          </dl>
+        ) : null}
+
+        {alreadyLogged ? (
+          <p className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
+            You already logged ${alreadyLogged.amount.toLocaleString()}
+            {alreadyLogged.paidTo ? ` to ${alreadyLogged.paidTo}` : ""} on{" "}
+            {new Date(alreadyLogged.loggedAt).toLocaleDateString()}. If this is
+            the same one, there is nothing to do. Log it again only if you paid
+            twice.
+          </p>
+        ) : null}
+
         {result.deadline ? (
           <>
             <p className="text-sm text-muted-foreground">
@@ -333,7 +387,9 @@ function ScanResultCard({
           </>
         ) : result.payment ? (
           <p className="text-sm text-muted-foreground">
-            We filled in the payment form below. Check it, then tap Log it.
+            {result.payment.status === "paid"
+              ? "We filled in the payment form below. Check it, then tap Log it."
+              : "We filled in the payment form below for when you pay this. Nothing is logged until you tap Log it."}
           </p>
         ) : (
           <p className="text-sm text-muted-foreground">
