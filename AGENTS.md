@@ -59,15 +59,21 @@ This phase includes marketing, sign-in, the seeker app (Dashboard, Places, Finan
 
 One-tap help, quiet mode, the income cliff check and the `/financials/letters` stub were removed, along with their marketing feature pages and nav entries. Do not re-add them. Reading a letter still works: `/api/scan` and `/api/deadlines/read` are the live path, reached from Financials. Crisis, DV and 988 numbers survive as plain `tel:` links in the app footer and on `/financials`; they are not a feature and they send nothing.
 
-A site can change hands. `supabase/migrations/20261017000000_site_transfer_codes.sql`
-adds per-site transfer codes: a director issues one for a single site, another
-organization's director or manager enters it at `/portal/sites/claim`, and the
-listing moves to them keeping its id, so its saved places, requests and reviews
-survive. Codes are single use, expire in seven days, and issuing a new one
-revokes the last. This is **not** the organization access code, which means
-"let me work here" and is unchanged. The table has RLS on and no policies on
-purpose: a table of live codes is a table of keys to other people's listings,
-so everything goes through `security definer` RPCs.
+Each site has its own access code, not each organization.
+`supabase/migrations/20261017000100_listing_access_codes.sql` adds
+`listing_access_codes` and `listing_members`: a trigger gives every site a code
+the moment it exists, and anyone entering that code at `/portal/join` can view
+and edit that one site and sees it on their dashboard. It is sharing, not a
+handover, and there is no approval step, because one site is a far smaller
+thing to grant than the run of a whole organization, which is what the old
+approval guarded. Only the owning organization can rotate a code.
+
+The code table has RLS on and no policies on purpose. `public.listings` is
+readable by anon for every published row, so a code column there would hand
+every site's key to anybody who asked PostgREST for it; everything goes
+through `security definer` RPCs instead. The organization access code, its
+card, and `requestJoinOrganization` are gone. `organization_members` stays: it
+is still how ownership and the director and manager roles work.
 
 Guest mode is gone. There is no `true-roof-guest` cookie and no "Continue as a guest": somebody signed out simply browses, and every page except the questionnaire works for them. Do not add a guest flag back to gate a page; gate on a real session or do not gate.
 

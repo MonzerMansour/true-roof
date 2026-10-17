@@ -16,7 +16,13 @@ import type { Listing } from "@/lib/listings/types"
  * has none at all because the city called the site unpermitted; a recognizable
  * picture of a place is its address.
  */
-export function uploadedPhotoFor(listing: Listing): Photo | null {
+/** Only what a credited photo needs. orgName is optional because the portal's
+ * own listing shape does not carry it, and the site's name stands in. */
+export type PhotoSubject = Pick<Listing, "name" | "photoUrl"> & {
+  orgName?: string | null
+}
+
+export function uploadedPhotoFor(listing: PhotoSubject): Photo | null {
   if (!listing.photoUrl) return null
 
   return {

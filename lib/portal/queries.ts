@@ -211,6 +211,7 @@ export async function getPortalContext(): Promise<PortalContext | null> {
   let organization: PortalOrganization | null = null
   let listings: PortalListing[] = []
   let pendingForDirector: PendingMemberRequest[] = []
+  let sharedListings: PortalListing[] = []
 
   if (primaryMembership) {
     const { data: orgRow } = await supabase
@@ -259,6 +260,29 @@ export async function getPortalContext(): Promise<PortalContext | null> {
     }
   }
 
+  // Sites shared with this person by code. Outside the membership block on
+  // purpose: somebody can hold a site code without belonging to any
+  // organization at all, and the portal has to show them their site.
+  const { data: sharedRows } = await supabase
+    .from("listing_members")
+    .select("listing_id")
+    .eq("user_id", user.id)
+
+  const sharedIds = (sharedRows ?? [])
+    .map((row) => row.listing_id as string)
+    .filter((id) => !listings.some((listing) => listing.id === id))
+
+  if (sharedIds.length > 0) {
+    const rows = await selectPortalListings((select) =>
+      supabase
+        .from("listings")
+        .select(select)
+        .in("id", sharedIds)
+        .order("created_at", { ascending: true })
+    )
+    sharedListings = ((rows as ListingRow[] | null) ?? []).map(mapListing)
+  }
+
   const isDirector = active?.role === "director"
   const canManage = active?.role === "director" || active?.role === "manager"
 
@@ -269,6 +293,7 @@ export async function getPortalContext(): Promise<PortalContext | null> {
     primaryMembership,
     organization,
     listings,
+    sharedListings,
     isDirector: Boolean(isDirector),
     canManage: Boolean(canManage),
     pendingForDirector,
@@ -296,7 +321,18 @@ export async function getListingForPortal(listingId: string) {
     .eq("status", "active")
     .maybeSingle()
 
-  if (!membership) {
+  // Somebody let in with the site's own code is not a member of the
+  // organization that runs it, but this is still their site to work on.
+  const { data: shared } = membership
+    ? { data: null }
+    : await supabase
+        .from("listing_members")
+        .select("listing_id")
+        .eq("listing_id", listingId)
+        .eq("user_id", user.id)
+        .maybeSingle()
+
+  if (!membership && !shared) {
     redirect("/portal")
   }
 
@@ -315,7 +351,12 @@ export async function getListingForPortal(listingId: string) {
           description: orgRow.description,
         }
       : null,
-    canManage: membership.role === "director" || membership.role === "manager",
-    role: membership.role as OrganizationMember["role"],
+    // A shared editor can change the site's details, which is the point of
+    // sharing it, but not the organization behind it or who else holds a key.
+    canManage:
+      membership?.role === "director" || membership?.role === "manager",
+    role: (membership?.role ?? "staff") as OrganizationMember["role"],
+    /** True when this site belongs to somebody else and was shared by code. */
+    isShared: !membership,
   }
 }

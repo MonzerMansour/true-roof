@@ -1,28 +1,28 @@
 import Link from "next/link"
-import { IconArrowRight, IconKey, IconPlus, IconSettings } from "@tabler/icons-react"
+import { IconKey, IconPlus } from "@tabler/icons-react"
 
 import { PendingMembershipBanner } from "@/components/portal/pending-membership-banner"
+import { PortalSiteCard } from "@/components/portal/portal-site-card"
 import { buttonVariants } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
 import { getPortalContext } from "@/lib/portal/queries"
 import { cn } from "cn"
 
 export default async function PortalHomePage() {
   const context = await getPortalContext()
 
-  if (!context || !context.primaryMembership) {
-    return <OnboardingChoice />
-  }
+  if (!context) return <OnboardingChoice />
 
-  if (context.primaryMembership.status === "pending") {
+  const { listings, sharedListings } = context
+  const nothingYet = listings.length === 0 && sharedListings.length === 0
+
+  // Somebody can hold a site code without belonging to any organization, so
+  // having no membership is only the empty state when they have no sites
+  // either.
+  if (!context.primaryMembership && nothingYet) return <OnboardingChoice />
+
+  if (context.primaryMembership?.status === "pending" && nothingYet) {
     return (
-      <div className="max-w-2xl">
+      <div className="w-full">
         <PendingMembershipBanner
           orgName={context.organization?.name ?? "the organization"}
         />
@@ -30,172 +30,99 @@ export default async function PortalHomePage() {
     )
   }
 
-  const listings = context.listings
+  const heading = context.organization?.name ?? "Your sites"
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex w-full flex-col gap-8">
       <div>
-        <h1 className="font-heading text-2xl font-semibold">
-          {context.organization?.name ?? "Your organization"}
-        </h1>
+        <h1 className="font-heading text-2xl font-semibold">{heading}</h1>
         <p className="mt-1 text-muted-foreground">
-          Keep each site current. Seekers only see published rows.
+          This is how each site looks to someone searching for a place to
+          sleep. Only published sites are on that list.
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        {listings.map((listing) => (
-          <Card key={listing.id}>
-            <CardHeader>
-              <CardTitle>{listing.name}</CardTitle>
-              <CardDescription>
-                {listing.city}. {listing.published ? "Published" : "Draft"}.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Link
-                href={`/portal/sites/${listing.id}/settings`}
-                className={cn(buttonVariants({ variant: "outline" }))}
-              >
-                <IconSettings />
-                Edit site details
-              </Link>
-            </CardContent>
-          </Card>
-        ))}
+      {listings.length > 0 ? (
+        <div className="grid gap-4 sm:grid-cols-2">
+          {listings.map((listing) => (
+            <PortalSiteCard key={listing.id} listing={listing} />
+          ))}
+        </div>
+      ) : (
+        <p className="text-muted-foreground">
+          No sites of your own yet.
+        </p>
+      )}
 
-        {listings.length > 0 && context.canManage ? (
-          <Card className="border-dashed">
-            <CardHeader>
-              <CardTitle>Run another site?</CardTitle>
-              <CardDescription>
-                Add each physical address as its own site. It starts as a
-                draft, and you publish it when its details are in.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-wrap gap-2">
-              <Link
-                href="/portal/sites/new"
-                className={cn(buttonVariants({ variant: "outline" }))}
-              >
-                <IconPlus />
-                Add another site
-              </Link>
-              <Link
-                href="/portal/sites/claim"
-                className={cn(buttonVariants({ variant: "ghost" }))}
-              >
-                <IconKey />
-                Add one with a code
-              </Link>
-            </CardContent>
-          </Card>
-        ) : null}
-
-        {listings.length === 0 ? (
-          <Card>
-            <CardHeader>
-              <CardTitle>No sites yet</CardTitle>
-              <CardDescription>
-                Add the first physical address for this organization.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-wrap gap-2">
-              <Link href="/portal/sites/new" className={cn(buttonVariants())}>
-                <IconPlus />
-                Create a site
-              </Link>
-              <Link
-                href="/portal/sites/claim"
-                className={cn(buttonVariants({ variant: "outline" }))}
-              >
-                <IconKey />
-                Add one with a code
-              </Link>
-            </CardContent>
-          </Card>
-        ) : null}
-      </div>
-
-      {context.isDirector ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Access and approvals</CardTitle>
-            <CardDescription>
-              Share your access code and approve staff who ask to join.
-              {context.pendingForDirector.length > 0
-                ? ` ${context.pendingForDirector.length} request${context.pendingForDirector.length === 1 ? "" : "s"} waiting.`
-                : ""}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Link
-              href="/portal/access"
-              className={cn(buttonVariants({ variant: "outline" }))}
-            >
-              <IconKey />
-              Open access page
-            </Link>
-          </CardContent>
-        </Card>
+      {sharedListings.length > 0 ? (
+        <section className="flex flex-col gap-4">
+          <div>
+            <h2 className="font-heading text-lg font-semibold">
+              Shared with you
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Run by another organization. You can keep their details current.
+            </p>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {sharedListings.map((listing) => (
+              <PortalSiteCard key={listing.id} listing={listing} shared />
+            ))}
+          </div>
+        </section>
       ) : null}
+
+      {/* One row, at the end, rather than a card per option competing with
+          the sites themselves. */}
+      <div className="flex flex-wrap gap-2 border-t pt-6">
+        {context.canManage ? (
+          <Link
+            href="/portal/sites/new"
+            className={cn(buttonVariants({ variant: "outline", size: "touch" }))}
+          >
+            <IconPlus />
+            Add a site
+          </Link>
+        ) : null}
+        <Link
+          href="/portal/join"
+          className={cn(buttonVariants({ variant: "ghost", size: "touch" }))}
+        >
+          <IconKey />
+          Add a site with a code
+        </Link>
+      </div>
     </div>
   )
 }
 
 function OnboardingChoice() {
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex w-full max-w-2xl flex-col gap-6">
       <div>
         <h1 className="font-heading text-2xl font-semibold">
           Set up your site
         </h1>
         <p className="mt-1 text-muted-foreground">
-          Start a new organization, or join one that already has an access code.
+          Two ways in, depending on whether the site is already on True Roof.
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-              Create a site
-            </p>
-            <CardTitle>Run a new shelter or lot</CardTitle>
-            <CardDescription className="text-base">
-              Make an organization and its first site. You become the director,
-              so you can publish it and approve staff later.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Link href="/portal/create" className={cn(buttonVariants())}>
-              <IconPlus />
-              Create a site
-            </Link>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-              Join with a code
-            </p>
-            <CardTitle>Work at an existing site</CardTitle>
-            <CardDescription className="text-base">
-              Enter the access code from your site director. They accept your
-              request before you can edit the listing.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Link
-              href="/portal/join"
-              className={cn(buttonVariants({ variant: "outline" }))}
-            >
-              <IconArrowRight />
-              Enter access code
-            </Link>
-          </CardContent>
-        </Card>
+      <div className="flex flex-col gap-3">
+        <Link
+          href="/portal/create"
+          className={cn(buttonVariants({ size: "touch" }), "w-fit")}
+        >
+          <IconPlus />
+          Add a shelter or lot nobody has listed
+        </Link>
+        <Link
+          href="/portal/join"
+          className={cn(buttonVariants({ variant: "outline", size: "touch" }), "w-fit")}
+        >
+          <IconKey />
+          I was given a site code
+        </Link>
       </div>
     </div>
   )

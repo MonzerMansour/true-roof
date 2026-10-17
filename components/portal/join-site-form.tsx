@@ -4,7 +4,7 @@ import * as React from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
-import { requestJoinOrganization } from "@/lib/portal/actions"
+import { joinListingWithCode } from "@/lib/portal/actions"
 import { Button } from "@/components/ui/button"
 import {
   Field,
@@ -15,17 +15,26 @@ import {
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 
-export function JoinOrgForm() {
+/**
+ * Enter a site's code to help run it.
+ *
+ * No approval step, unlike the old organization code. The code is the
+ * permission: a director hands it to one person for one site, and that is a
+ * smaller thing to grant than the run of a whole organization, which is what
+ * the approval step existed to guard.
+ */
+export function JoinSiteForm() {
   const router = useRouter()
   const [state, formAction, pending] = React.useActionState(
-    requestJoinOrganization,
+    joinListingWithCode,
     null
   )
 
   React.useEffect(() => {
     if (state?.ok) {
-      toast.success("Request sent. A director has to accept it.")
-      router.push("/portal")
+      toast.success(`${state.listingName} is on your dashboard now.`)
+      router.push(`/portal/sites/${state.listingId}/settings`)
+      router.refresh()
     }
   }, [state, router])
 
@@ -33,24 +42,26 @@ export function JoinOrgForm() {
     <form action={formAction} className="max-w-md">
       <FieldGroup className="gap-5">
         <Field data-invalid={state && !state.ok ? true : undefined}>
-          <FieldLabel htmlFor="accessCode">Access code</FieldLabel>
+          <FieldLabel htmlFor="siteCode">Site code</FieldLabel>
           <Input
-            id="accessCode"
-            name="accessCode"
+            id="siteCode"
+            name="siteCode"
             required
             autoComplete="off"
             autoCapitalize="characters"
+            spellCheck={false}
             className="font-mono text-lg tracking-widest uppercase"
-            placeholder="AB12CD34"
+            placeholder="AB2CD3EF"
           />
           <FieldDescription>
-            Ask the site director for the code. It is eight characters.
+            Eight characters, from whoever runs the site. It is on their Site
+            details page.
           </FieldDescription>
           {state && !state.ok ? <FieldError>{state.error}</FieldError> : null}
         </Field>
 
-        <Button type="submit" disabled={pending} className="w-fit">
-          {pending ? "Sending…" : "Request access"}
+        <Button type="submit" size="touch" disabled={pending} className="w-fit">
+          {pending ? "Checking…" : "Add this site"}
         </Button>
       </FieldGroup>
     </form>

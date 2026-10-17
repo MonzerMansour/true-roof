@@ -1,7 +1,9 @@
 import { MarketingPhoto, StandInPhotoBadge } from "@/components/marketing/marketing-photo"
-import { uploadedPhotoFor } from "@/lib/listings/photos"
-import { standInPhotoFor } from "@/lib/listings/stand-in-photo"
-import type { Listing } from "@/lib/listings/types"
+import { uploadedPhotoFor, type PhotoSubject } from "@/lib/listings/photos"
+import {
+  standInPhotoFor,
+  type StandInSubject,
+} from "@/lib/listings/stand-in-photo"
 
 /**
  * The picture at the top of a listing, whichever kind it is.
@@ -21,7 +23,9 @@ export function ListingImage({
   priority,
   showBadge = true,
 }: {
-  listing: Listing
+  // Only what the picture is chosen from, so the portal can pass its own
+  // listing shape without a cast.
+  listing: StandInSubject & Partial<PhotoSubject>
   className?: string
   sizes?: string
   priority?: boolean

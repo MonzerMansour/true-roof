@@ -92,6 +92,9 @@ export type PortalContext = {
   primaryMembership: OrganizationMember | null
   organization: PortalOrganization | null
   listings: PortalListing[]
+  /** Sites another organization runs that were shared with this person by
+   * code. Editable, but not theirs, so the dashboard labels them. */
+  sharedListings: PortalListing[]
   isDirector: boolean
   canManage: boolean
   pendingForDirector: PendingMemberRequest[]

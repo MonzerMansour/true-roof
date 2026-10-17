@@ -204,27 +204,6 @@ export async function addSiteToOrganization(formData: FormData) {
   return { ok: true as const, listingId }
 }
 
-export async function requestJoinOrganization(
-  _prev: ActionResult | null,
-  formData: FormData
-): Promise<ActionResult> {
-  const code = String(formData.get("accessCode") ?? "")
-
-  const { supabase } = await requireProviderSession()
-
-  const { error } = await supabase.rpc("request_join_organization", {
-    p_code: code,
-  })
-
-  if (error) {
-    return { ok: false, error: error.message }
-  }
-
-  revalidatePath("/portal")
-  revalidatePath("/portal/join")
-  return { ok: true }
-}
-
 export async function updateListingSettings(
   listingId: string,
   formData: FormData
@@ -465,38 +444,6 @@ export async function rejectMemberRequest(
   return { ok: true }
 }
 
-export async function rotateAccessCode(
-  orgId: string
-): Promise<{ ok: true; code: string } | { ok: false; error: string }> {
-  const { supabase } = await requireProviderSession()
-
-  const { data, error } = await supabase.rpc(
-    "rotate_organization_access_code",
-    {
-      p_org_id: orgId,
-    }
-  )
-
-  if (error) {
-    return { ok: false, error: error.message }
-  }
-
-  revalidatePath("/portal/access")
-  return { ok: true, code: data as string }
-}
-
-export async function fetchAccessCode(orgId: string) {
-  const supabase = await createServerSupabaseClient()
-  if (!supabase) return null
-
-  const { data, error } = await supabase.rpc("get_organization_access_code", {
-    p_org_id: orgId,
-  })
-
-  if (error) return null
-  return data as string
-}
-
 export async function moderateListingReview(
   formData: FormData
 ): Promise<ActionResult> {
@@ -658,112 +605,57 @@ export async function updateExternalRating(
   return { ok: true }
 }
 
-// Site transfer by code.
+// Per-site access codes and shared editing.
 //
-// The organization access code means "let me work here". These mean "this one
-// site is yours now", which is a different and larger thing, so a director
-// issues them, they expire, and they work once.
+// The code is a property of one site. Anyone holding it can view and edit that
+// site and sees it on their own dashboard. It is sharing, not a handover: the
+// organization that created the site keeps it.
 
-export async function createSiteTransferCode(
-  listingId: string
-): Promise<
-  { ok: true; code: string; expiresAt: string } | { ok: false; error: string }
-> {
-  const { supabase } = await requireProviderSession()
+export async function fetchListingAccessCode(listingId: string) {
+  const supabase = await createServerSupabaseClient()
+  if (!supabase) return null
 
-  const { data, error } = await supabase
-    .rpc("create_site_transfer_code", { p_listing_id: listingId })
-    .single()
+  const { data, error } = await supabase.rpc("get_listing_access_code", {
+    p_listing_id: listingId,
+  })
 
-  if (error) return { ok: false, error: error.message }
-
-  const row = data as { code: string; expires_at: string }
-  revalidatePath(`/portal/sites/${listingId}/settings`)
-  return { ok: true, code: row.code, expiresAt: row.expires_at }
+  if (error || !data) return null
+  return data as string
 }
 
-export async function revokeSiteTransferCode(
+export async function rotateListingAccessCode(
   listingId: string
-): Promise<ActionResult> {
+): Promise<{ ok: true; code: string } | { ok: false; error: string }> {
   const { supabase } = await requireProviderSession()
 
-  const { error } = await supabase.rpc("revoke_site_transfer_code", {
+  const { data, error } = await supabase.rpc("rotate_listing_access_code", {
     p_listing_id: listingId,
   })
 
   if (error) return { ok: false, error: error.message }
 
   revalidatePath(`/portal/sites/${listingId}/settings`)
-  return { ok: true }
+  return { ok: true, code: data as string }
 }
 
-export async function fetchSiteTransferCode(listingId: string) {
-  const supabase = await createServerSupabaseClient()
-  if (!supabase) return null
-
-  const { data, error } = await supabase
-    .rpc("get_site_transfer_code", { p_listing_id: listingId })
-    .maybeSingle()
-
-  if (error || !data) return null
-  const row = data as { code: string; expires_at: string }
-  return { code: row.code, expiresAt: row.expires_at }
-}
-
-/** What a code is for, before anyone commits to using it. Lets the person see
- * which site and which organization they are about to take it from. */
-export async function previewSiteTransferCode(
+export async function joinListingWithCode(
   _prev: unknown,
   formData: FormData
 ): Promise<
-  | { ok: true; listingName: string; fromOrganization: string; expiresAt: string }
-  | { ok: false; error: string }
+  { ok: true; listingId: string; listingName: string } | { ok: false; error: string }
 > {
-  const code = String(formData.get("transferCode") ?? "").trim()
+  const code = String(formData.get("siteCode") ?? "").trim()
   if (!code) return { ok: false, error: "Enter the code you were given." }
 
   const { supabase } = await requireProviderSession()
 
   const { data, error } = await supabase
-    .rpc("preview_site_transfer_code", { p_code: code })
-    .maybeSingle()
-
-  if (error) return { ok: false, error: error.message }
-  if (!data) {
-    return {
-      ok: false,
-      error: "That code does not match a site. It may have been used already, cancelled, or expired.",
-    }
-  }
-
-  const row = data as {
-    listing_name: string
-    from_organization: string
-    expires_at: string
-  }
-  return {
-    ok: true,
-    listingName: row.listing_name,
-    fromOrganization: row.from_organization,
-    expiresAt: row.expires_at,
-  }
-}
-
-export async function redeemSiteTransferCode(
-  code: string
-): Promise<
-  { ok: true; listingId: string; listingName: string } | { ok: false; error: string }
-> {
-  const { supabase } = await requireProviderSession()
-
-  const { data, error } = await supabase
-    .rpc("redeem_site_transfer_code", { p_code: code })
+    .rpc("join_listing_with_code", { p_code: code })
     .single()
 
   if (error) return { ok: false, error: error.message }
 
   const row = data as { listing_id: string; listing_name: string }
   revalidatePath("/portal")
-  revalidatePath("/places")
   return { ok: true, listingId: row.listing_id, listingName: row.listing_name }
 }

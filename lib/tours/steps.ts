@@ -120,8 +120,8 @@ const providerSteps: TourStep[] = [
     id: "portal",
     path: "/portal",
     title: "Your sites",
-    body: "Every site your organization has, draft or published. A draft stays off the seeker list until you publish it, so a site can be filled in over several sittings.",
-    action: "Open a site to see what seekers are shown.",
+    body: "Each one is shown the way somebody looking for a place sees it. A draft stays off that list until you publish it, so a site can be filled in over several sittings.",
+    action: "Open a site to change what it says.",
   },
   {
     id: "new-site",
@@ -129,13 +129,6 @@ const providerSteps: TourStep[] = [
     title: "Adding a site",
     body: "One row per physical address, never one per program. A name, a city and a type are all that is needed to start.",
     action: "Add a site here when you run more than one address.",
-  },
-  {
-    id: "claim-site",
-    path: "/portal/sites/claim",
-    title: "A site that is changing hands",
-    body: "If another organization ran a site and you are taking it on, their director gives you a code and the listing moves to you, keeping its saved places, requests and reviews. Starting it again from scratch would lose all of that.",
-    action: "Use this only for a site already on True Roof.",
   },
   {
     id: "site-settings",
@@ -158,9 +151,9 @@ const providerSteps: TourStep[] = [
   {
     id: "access",
     path: "/portal/access",
-    title: "Who on your staff can edit",
-    body: "You approve the people who ask to join, and you decide who can change a listing. Somebody still pending cannot see or edit anything.",
-    action: "Approve the colleagues you recognize and leave the rest pending.",
+    title: "Letting someone help",
+    body: "Each site has its own code. Give one to a colleague or a partner organization and they can keep that site current, seeing only that site. It stays yours, and you can make a new code if the old one travels too far.",
+    action: "Share a code with one person rather than a group.",
     directorOnly: true,
   },
   {

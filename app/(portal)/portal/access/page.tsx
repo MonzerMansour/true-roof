@@ -1,45 +1,71 @@
 import type { Metadata } from "next"
+import Link from "next/link"
 import { redirect } from "next/navigation"
 
-import { AccessCodeCard } from "@/components/portal/access-code-card"
 import { PendingRequests } from "@/components/portal/pending-requests"
-import { fetchAccessCode } from "@/lib/portal/actions"
+import { ShareSiteCard } from "@/components/portal/share-site-card"
+import { fetchListingAccessCode } from "@/lib/portal/actions"
 import { getPortalContext } from "@/lib/portal/queries"
 
 export const metadata: Metadata = {
-  title: "Access and approvals",
+  title: "Share your sites",
 }
 
+// This page used to hand out one code for the whole organization, which let
+// whoever had it edit every site it ran. Codes belong to sites now, so this
+// lists them: one per site, each giving access to that site and nothing else.
 export default async function AccessPage() {
   const context = await getPortalContext()
 
-  if (!context?.isDirector || !context.organization) {
-    redirect("/portal")
-  }
+  if (!context?.isDirector) redirect("/portal")
 
-  const code = await fetchAccessCode(context.organization.id)
+  const sites = await Promise.all(
+    context.listings.map(async (listing) => ({
+      listing,
+      code: await fetchListingAccessCode(listing.id),
+    }))
+  )
 
   return (
     <div className="flex w-full flex-col gap-6">
       <div>
         <h1 className="font-heading text-2xl font-semibold">
-          Access and approvals
+          Share your sites
         </h1>
         <p className="mt-1 text-muted-foreground">
-          Share the code with your staff. Approve each person before they can
-          edit the site.
+          Each site has its own code. Give one to someone helping with that
+          site and they can keep its details current. They see only that site,
+          and it stays yours.
         </p>
       </div>
 
-      {code ? (
-        <AccessCodeCard orgId={context.organization.id} initialCode={code} />
-      ) : (
-        <p className="text-sm text-muted-foreground">
-          Could not load the access code. Refresh the page to try again.
+      {sites.length === 0 ? (
+        <p className="text-muted-foreground">
+          No sites yet.{" "}
+          <Link href="/portal/sites/new" className="font-medium underline">
+            Add one
+          </Link>
+          .
         </p>
+      ) : (
+        <div className="flex flex-col gap-4">
+          {sites.map(({ listing, code }) => (
+            <ShareSiteCard
+              key={listing.id}
+              listingId={listing.id}
+              listingName={listing.name}
+              initialCode={code}
+              canRotate
+            />
+          ))}
+        </div>
       )}
 
-      <PendingRequests requests={context.pendingForDirector} />
+      {/* Requests made under the old organization-wide code, which can still
+          be waiting. Nothing creates new ones. */}
+      {context.pendingForDirector.length > 0 ? (
+        <PendingRequests requests={context.pendingForDirector} />
+      ) : null}
     </div>
   )
 }

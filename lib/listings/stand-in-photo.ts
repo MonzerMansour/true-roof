@@ -28,9 +28,15 @@ import type { Listing } from "@/lib/listings/types"
  * without somebody noticing.
  */
 
-type Pick = { pools: SitePhotoCategory[]; description: string }
+type PoolChoice = { pools: SitePhotoCategory[]; description: string }
 
-function poolsFor(listing: Listing): Pick {
+/** Only the fields that decide which picture a site gets. */
+export type StandInSubject = Pick<
+  Listing,
+  "id" | "name" | "kind" | "vehicleAllowed" | "projectType"
+>
+
+function poolsFor(listing: StandInSubject): PoolChoice {
   if (listing.kind === "parking") {
     if (listing.vehicleAllowed === "car_van_rv") {
       return { pools: ["lot_rv"], description: "a lot with a motorhome in it" }
@@ -78,7 +84,7 @@ export type StandInPhoto = SitePhoto & {
   description: string
 }
 
-export function standInPhotoFor(listing: Listing): StandInPhoto {
+export function standInPhotoFor(listing: StandInSubject): StandInPhoto {
   const { pools, description } = poolsFor(listing)
   const all = pools.flatMap((pool) => sitePhotos[pool])
   const photo = all[hash(listing.id) % all.length]
@@ -88,7 +94,7 @@ export function standInPhotoFor(listing: Listing): StandInPhoto {
 
 /** How many pictures a site of this kind is drawn from. Used by the tests to
  * assert the pools are big enough to be worth having. */
-export function standInPoolSizeFor(listing: Listing) {
+export function standInPoolSizeFor(listing: StandInSubject) {
   return poolsFor(listing).pools.reduce(
     (sum, pool) => sum + sitePhotos[pool].length,
     0

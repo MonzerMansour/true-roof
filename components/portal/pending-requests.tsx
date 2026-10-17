@@ -138,8 +138,8 @@ export function PendingRequests({
       <CardContent>
         {requests.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            No one is waiting right now. Share your access code to bring staff
-            on.
+            No one is waiting. These are requests from the old organization
+            code. A site code needs no approval, so nothing new arrives here.
           </p>
         ) : (
           <div className="flex flex-col gap-3">
