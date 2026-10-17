@@ -141,6 +141,11 @@ export function findDuplicatePayment(
 }
 
 export function checkScan(reading: ScanReading, today: string): ScanResult {
+  const amount =
+    reading.amount != null && Number.isFinite(reading.amount) && reading.amount > 0
+      ? Math.round(reading.amount * 100) / 100
+      : null
+
   let deadline: DeadlineCheck | null = null
 
   if (NEEDS_ACTION.includes(reading.kind) && (reading.title.trim() || reading.firstDueDate)) {
@@ -151,6 +156,9 @@ export function checkScan(reading: ScanReading, today: string): ScanResult {
       firstDueDate: reading.firstDueDate,
       repeat: reading.repeat,
       whatToBring: reading.whatToBring,
+      // The money belongs on the deadline too, so the calendar can show what
+      // is owed on the day it is owed. It stays editable.
+      amount,
     }
     const notes: string[] = []
 
@@ -162,11 +170,6 @@ export function checkScan(reading: ScanReading, today: string): ScanResult {
     const checked = checkDeadline(draft, today)
     deadline = { ...checked, notes: [...notes, ...checked.notes] }
   }
-
-  const amount =
-    reading.amount != null && Number.isFinite(reading.amount) && reading.amount > 0
-      ? Math.round(reading.amount * 100) / 100
-      : null
 
   const payee = reading.payee.trim()
 

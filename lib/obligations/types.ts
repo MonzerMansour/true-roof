@@ -45,6 +45,10 @@ export type Deadline = {
   dueTime?: string | null
   repeat: Repeat | null
   whatToBring: string
+  /** What is owed, when the paper says. Shown under the title on the
+   * calendar rather than stitched into it, and editable like any other
+   * field. Missing on deadlines saved before it existed. */
+  amount?: number | null
   createdAt: string
   // Single dates deleted from a repeating deadline. The rest still repeat.
   skippedDates?: string[]

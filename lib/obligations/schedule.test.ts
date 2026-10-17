@@ -173,3 +173,40 @@ describe("buildSchedule: deleting one date", () => {
     expect(upcoming[0].repeats).toBe(false)
   })
 })
+
+describe("money is a field, not part of the title", () => {
+  it("leaves the sum out of the rent title and puts it on the occurrence", () => {
+    // It used to read "Pay rent, $1,450", which scanned as one long name and
+    // left the amount field on the occurrence unused.
+    const { upcoming } = buildSchedule(
+      profileWith({ rentAmount: 1450, rentDueDay: 1 }),
+      [],
+      new Date(2026, 0, 5)
+    )
+    const rent = upcoming.find((o) => o.kind === "rent")
+
+    expect(rent?.title).toBe("Pay rent")
+    expect(rent?.title).not.toMatch(/[$]|1,450/)
+    expect(rent?.amount).toBe(1450)
+  })
+
+  it("carries a deadline's own amount through to its dates", () => {
+    const { upcoming } = buildSchedule(
+      profileWith({
+        deadlines: [deadline({ amount: 148.52, repeat: null, firstDueDate: "2026-01-20" })],
+      }),
+      [],
+      new Date(2026, 0, 5)
+    )
+    expect(upcoming.find((o) => o.deadlineId === "d1")?.amount).toBe(148.52)
+  })
+
+  it("leaves the amount null on a deadline that has none", () => {
+    const { upcoming } = buildSchedule(
+      profileWith({ deadlines: [deadline({ repeat: null })] }),
+      [],
+      new Date(2026, 0, 5)
+    )
+    expect(upcoming.find((o) => o.deadlineId === "d1")?.amount).toBeNull()
+  })
+})

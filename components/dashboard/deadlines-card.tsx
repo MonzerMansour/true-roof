@@ -95,6 +95,7 @@ export const emptyDraft: DeadlineDraft = {
   firstDueDate: null,
   repeat: null,
   whatToBring: "",
+  amount: null,
 }
 
 function formatDay(iso: string) {
@@ -120,6 +121,7 @@ function draftFrom(deadline: Deadline): DeadlineDraft {
     dueTime: deadline.dueTime ?? null,
     repeat: deadline.repeat,
     whatToBring: deadline.whatToBring,
+    amount: deadline.amount ?? null,
   }
 }
 
@@ -428,6 +430,7 @@ export function AddDeadlineForm({
       dueTime: result.draft.dueTime ?? null,
       repeat: result.draft.repeat,
       whatToBring: result.draft.whatToBring,
+      amount: result.draft.amount ?? null,
       createdAt: editing?.createdAt ?? new Date().toISOString(),
       skippedDates: editing?.skippedDates,
     })
@@ -618,6 +621,37 @@ export function AddDeadlineForm({
             value={draft.whatToBring}
             onChange={(e) => update({ whatToBring: e.target.value })}
           />
+        </Field>
+
+        {/* Editable like everything else here. A scanned bill fills it in,
+            and a reader misreading 148.52 as 14852 is exactly the kind of
+            thing somebody has to be able to correct. */}
+        <Field>
+          <FieldLabel htmlFor={id("amount")}>
+            Amount owed (optional)
+          </FieldLabel>
+          <Input
+            id={id("amount")}
+            type="number"
+            inputMode="decimal"
+            min={0}
+            step="0.01"
+            placeholder="148.52"
+            value={draft.amount == null ? "" : String(draft.amount)}
+            onChange={(e) => {
+              const raw = e.target.value.trim()
+              const parsed = Number(raw)
+              update({
+                amount:
+                  raw === "" || !Number.isFinite(parsed) || parsed <= 0
+                    ? null
+                    : parsed,
+              })
+            }}
+          />
+          <FieldDescription>
+            Shown under the title on your calendar.
+          </FieldDescription>
         </Field>
 
         {notes.length > 0 || problems.length > 0 ? (

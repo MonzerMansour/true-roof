@@ -41,6 +41,23 @@ const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 // Month cells show this many items, then "+N more".
 const CHIPS_PER_DAY = 2
 
+/** Money as it is read aloud: no decimals when there are none to say. */
+function formatAmount(amount: number) {
+  return `$${amount.toLocaleString(undefined, {
+    minimumFractionDigits: amount % 1 === 0 ? 0 : 2,
+    maximumFractionDigits: 2,
+  })}`
+}
+
+/** The sum owed, as its own tag under the title. */
+function AmountTag({ amount }: { amount: number }) {
+  return (
+    <span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-sm font-semibold">
+      {formatAmount(amount)}
+    </span>
+  )
+}
+
 function formatTime(hhmm: string) {
   const [h, m] = hhmm.split(":").map(Number)
   return new Date(2000, 0, 1, h, m).toLocaleTimeString(undefined, {
@@ -439,12 +456,18 @@ function OccurrenceItem({
         <p className="text-base font-medium [overflow-wrap:anywhere]">
           {occurrence.title}
         </p>
-        {occurrence.time ? (
-          <p className="inline-flex items-center gap-1 text-sm font-medium text-foreground">
-            <IconClock className="size-3.5" />
-            {formatTime(occurrence.time)}
-          </p>
-        ) : null}
+        {/* Under the title, not inside it. "Pay rent, $1,450" read as one
+            long name; the sum is a separate fact and the thing somebody
+            scans the list for. */}
+        <div className="flex flex-wrap items-center gap-2">
+          {occurrence.amount != null ? <AmountTag amount={occurrence.amount} /> : null}
+          {occurrence.time ? (
+            <p className="inline-flex items-center gap-1 text-sm font-medium text-foreground">
+              <IconClock className="size-3.5" />
+              {formatTime(occurrence.time)}
+            </p>
+          ) : null}
+        </div>
       </div>
       <div className="flex shrink-0 items-center gap-1">
         {deadlineId ? (
@@ -522,6 +545,11 @@ function DoneRow({
         <p className="font-medium text-muted-foreground line-through [overflow-wrap:anywhere]">
           {occurrence.title}
         </p>
+        {occurrence.amount != null ? (
+          <p className="text-sm text-muted-foreground line-through">
+            {formatAmount(occurrence.amount)}
+          </p>
+        ) : null}
       </div>
       <Button
         type="button"
@@ -734,6 +762,12 @@ function MonthCalendar({
                               </span>
                             ) : null}
                             {item.title}
+                            {item.amount != null ? (
+                              <span className="font-semibold">
+                                {" "}
+                                {formatAmount(item.amount)}
+                              </span>
+                            ) : null}
                           </span>
                         )
                       })}

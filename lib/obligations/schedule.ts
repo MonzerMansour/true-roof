@@ -58,7 +58,7 @@ function buildSeries(profile: ObligationsProfile, today: string): Series[] {
       make: (date) => ({
         id: `rent-${date}`,
         date,
-        title: `Pay rent, $${profile.rentAmount.toLocaleString()}`,
+        title: "Pay rent",
         detail: profile.landlordName
           ? `To ${profile.landlordName}`
           : "Rent is due",
@@ -80,10 +80,7 @@ function buildSeries(profile: ObligationsProfile, today: string): Series[] {
       make: (date) => ({
         id: `utility-${utility.id}-${date}`,
         date,
-        title:
-          utility.amount != null
-            ? `${utility.name} bill due, $${utility.amount.toLocaleString()}`
-            : `${utility.name} bill due`,
+        title: `${utility.name} bill due`,
         detail: billFrequencyLabel[utility.frequency] ?? "Utility payment",
         kind: "utility",
         amount: utility.amount,
@@ -139,7 +136,7 @@ function buildSeries(profile: ObligationsProfile, today: string): Series[] {
           ? `Bring: ${deadline.whatToBring}`
           : repeatLabel(deadline.repeat),
         kind: "deadline",
-        amount: null,
+        amount: deadline.amount ?? null,
         time: deadline.dueTime ?? null,
         deadlineId: deadline.id,
         repeats: Boolean(deadline.repeat),

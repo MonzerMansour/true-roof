@@ -284,3 +284,21 @@ describe("findDuplicatePayment", () => {
     ).toBeNull()
   })
 })
+
+describe("the amount reaches the deadline, not just the payment form", () => {
+  it("puts a scanned bill's amount on the deadline it creates", () => {
+    // So the calendar can show what is owed on the day it is owed. It was
+    // only ever reaching the payment form before.
+    const result = checkScan(pgeBill, TODAY)
+    expect(result.deadline?.draft.amount).toBe(148.52)
+  })
+
+  it("leaves it off a deadline with no money on the paper", () => {
+    expect(checkScan(sar7, TODAY).deadline?.draft.amount ?? null).toBeNull()
+  })
+
+  it("drops a nonsense amount rather than putting it on the calendar", () => {
+    const bad = { ...pgeBill, amount: -5 }
+    expect(checkScan(bad, TODAY).deadline?.draft.amount ?? null).toBeNull()
+  })
+})

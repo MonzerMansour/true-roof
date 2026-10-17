@@ -21,6 +21,8 @@ export type DeadlineDraft = {
   dueTime?: string | null
   repeat: Repeat | null
   whatToBring: string
+  /** Optional, so the reader and the scanner need not pass it. */
+  amount?: number | null
 }
 
 export type DeadlineCheck = {
