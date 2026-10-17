@@ -68,8 +68,6 @@ export function ShareSiteCard({
     }
   }
 
-  if (!code) return null
-
   return (
     <Card>
       <CardHeader>
@@ -81,6 +79,33 @@ export function ShareSiteCard({
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
+        {code ? null : (
+          <div className="flex flex-col gap-3 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3">
+            <p className="text-sm">
+              This site has no code yet. If you chose one when you created the
+              site, it was not saved: the part of the database that stores
+              codes has not been set up on this project.
+            </p>
+            {canRotate ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="touch"
+                className="w-fit"
+                disabled={pending}
+                onClick={() => void rotate()}
+              >
+                {pending ? "Trying…" : "Make a code"}
+              </Button>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Ask the organization that runs this site to make one.
+              </p>
+            )}
+          </div>
+        )}
+
+        {code ? (
         <div className="flex flex-wrap items-center gap-3">
           <p className="font-mono text-2xl font-semibold tracking-widest">
             {code}
@@ -95,8 +120,9 @@ export function ShareSiteCard({
             {copied ? "Copied" : "Copy"}
           </Button>
         </div>
+        ) : null}
 
-        {canRotate ? (
+        {canRotate && code ? (
           <div className="flex flex-col gap-2">
             <Button
               type="button"
@@ -114,12 +140,12 @@ export function ShareSiteCard({
               working.
             </p>
           </div>
-        ) : (
+        ) : code ? (
           <p className="text-sm text-muted-foreground">
             You can pass this code on. Only the organization that runs the site
             can change it.
           </p>
-        )}
+        ) : null}
       </CardContent>
     </Card>
   )

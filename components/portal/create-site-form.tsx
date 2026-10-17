@@ -94,7 +94,16 @@ export function CreateSiteForm({
         }
       }
 
-      toast.success("Site saved as a draft.")
+      // The form showed them a code. If it did not stick, say so here rather
+      // than let them write it down and find out later that it opens nothing.
+      if (result.codeSaved === false) {
+        toast.warning("Site saved, but its code was not.", {
+          description:
+            "Codes are not set up on this project yet. Open the site's Access tab to make one once they are.",
+        })
+      } else {
+        toast.success("Site saved as a draft.")
+      }
       router.push(`/portal/sites/${result.listingId}/settings`)
     } finally {
       setPending(false)

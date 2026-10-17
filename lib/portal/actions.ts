@@ -102,25 +102,29 @@ const DESCRIPTION_NOT_READY =
 
 /** Applies a code the person chose when creating the site.
  *
- * Not fatal if it fails: a trigger has already given the site a generated
- * code, so the worst case is that the site has a code they did not pick,
- * which the settings page shows them and lets them change. Losing the whole
- * site over a code that was already taken would be worse.
+ * Never fatal: losing a whole site over a code that was already taken would
+ * be worse than the site having a different code. But it returns whether it
+ * stuck, because the form showed the person a code and telling them it is
+ * theirs when it was thrown away is worse than either.
  */
 async function applyChosenAccessCode(
   supabase: Awaited<ReturnType<typeof requireProviderSession>>["supabase"],
   listingId: string,
   formData: FormData
-) {
+): Promise<{ code: string | null; saved: boolean }> {
   const chosen = normalizeAccessCode(String(formData.get("accessCode") ?? ""))
-  if (!chosen || accessCodeProblem(chosen)) return
+  if (!chosen || accessCodeProblem(chosen)) return { code: null, saved: false }
 
   const { error } = await supabase.rpc("set_listing_access_code", {
     p_listing_id: listingId,
     p_code: chosen,
   })
 
-  if (error) console.warn("[portal] chosen site code not set:", error.message)
+  if (error) {
+    console.warn("[portal] chosen site code not set:", error.message)
+    return { code: chosen, saved: false }
+  }
+  return { code: chosen, saved: true }
 }
 
 export async function createOrganizationWithSite(formData: FormData) {
@@ -168,7 +172,9 @@ export async function createOrganizationWithSite(formData: FormData) {
     }
   }
 
-  if (listingId) await applyChosenAccessCode(supabase, listingId, formData)
+  const chosenCode = listingId
+    ? await applyChosenAccessCode(supabase, listingId, formData)
+    : { code: null, saved: false }
 
   // Embed the new site after the response, so it can rank on Places
   // as soon as it is published. Never blocks or fails the create.
@@ -177,7 +183,11 @@ export async function createOrganizationWithSite(formData: FormData) {
   revalidatePath("/portal")
 
   // The form uploads a photo, if one was picked, then opens the new site.
-  return { ok: true as const, listingId: listingId ?? null }
+  return {
+    ok: true as const,
+    listingId: listingId ?? null,
+    codeSaved: chosenCode.code ? chosenCode.saved : null,
+  }
 }
 
 /** Adds another physical site to the organization the person already
@@ -229,11 +239,15 @@ export async function addSiteToOrganization(formData: FormData) {
   }
 
   const listingId = data.id as string
-  await applyChosenAccessCode(supabase, listingId, formData)
+  const chosen = await applyChosenAccessCode(supabase, listingId, formData)
   after(() => syncListingEmbedding(listingId))
 
   revalidatePath("/portal")
-  return { ok: true as const, listingId }
+  return {
+    ok: true as const,
+    listingId,
+    codeSaved: chosen.code ? chosen.saved : null,
+  }
 }
 
 export async function updateListingSettings(

@@ -67,6 +67,7 @@ export default async function SiteSettingsPage({
             <TabsTrigger value="notes">
               Private notes{count(customerReviews.length)}
             </TabsTrigger>
+            <TabsTrigger value="access">Access</TabsTrigger>
           </TabsList>
         </div>
 
@@ -80,14 +81,6 @@ export default async function SiteSettingsPage({
             organization={organization}
             canManage={canManage}
           />
-          <div className="mt-8">
-            <ShareSiteCard
-              listingId={listing.id}
-              listingName={listing.name}
-              initialCode={accessCode}
-              canRotate={canManage}
-            />
-          </div>
         </TabsContent>
         <TabsContent value="requests" className="pt-4">
           <ListingInterestPanel rows={interest} />
@@ -98,6 +91,16 @@ export default async function SiteSettingsPage({
             reviews={reviews}
             reportCounts={reportCounts}
             canManage={canManage}
+          />
+        </TabsContent>
+        {/* Its own tab, so the code is somewhere staff can go and look
+            rather than something they have to scroll a long form to find. */}
+        <TabsContent value="access" className="pt-4">
+          <ShareSiteCard
+            listingId={listing.id}
+            listingName={listing.name}
+            initialCode={accessCode}
+            canRotate={canManage}
           />
         </TabsContent>
         <TabsContent value="notes" className="pt-4">

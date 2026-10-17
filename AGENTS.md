@@ -75,8 +75,8 @@ in `lib/portal/access-code.ts` for the form. A guessable code warns rather than
 being refused.
 
 There is no `/portal/access` page any more. A code belonged to an organization
-when there was one code; now it belongs to a site, so it is shown on that
-site's own page. Requests are not there either: open ones are summarised at the
+when there was one code; now it belongs to a site, so it is shown in the
+**Access tab** of that site's settings and on its preview page. Requests are not there either: open ones are summarised at the
 top of the portal dashboard across every site, and listed in full on each
 site's page.
 
