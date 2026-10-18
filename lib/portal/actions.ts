@@ -705,3 +705,39 @@ export async function joinListingWithCode(
   revalidatePath("/portal")
   return { ok: true, listingId: row.listing_id, listingName: row.listing_name }
 }
+
+/** Removes a site and everything that points at it.
+ *
+ * The database checks this is a director of the owning organization; so does
+ * the page that shows the control. Both, because the control being hidden is
+ * not a permission.
+ */
+export async function deleteListing(
+  listingId: string
+): Promise<
+  | { ok: true; name: string; requestsRemoved: number; reviewsRemoved: number }
+  | { ok: false; error: string }
+> {
+  const { supabase } = await requireProviderSession()
+
+  const { data, error } = await supabase
+    .rpc("delete_listing", { p_listing_id: listingId })
+    .single()
+
+  if (error) return { ok: false, error: error.message }
+
+  const row = data as {
+    listing_name: string
+    requests_removed: number
+    reviews_removed: number
+  }
+
+  revalidatePath("/portal")
+  revalidatePath("/places")
+  return {
+    ok: true,
+    name: row.listing_name,
+    requestsRemoved: row.requests_removed,
+    reviewsRemoved: row.reviews_removed,
+  }
+}

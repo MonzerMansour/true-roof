@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { ListingInterestPanel } from "@/components/portal/listing-interest-panel"
 import { CustomerReviewsPanel } from "@/components/portal/customer-reviews-panel"
 import { ListingReviewsPanel } from "@/components/portal/listing-reviews-panel"
+import { DeleteSiteCard } from "@/components/portal/delete-site-card"
 import { ListingSettingsForm } from "@/components/portal/listing-settings-form"
 import { ShareSiteCard } from "@/components/portal/share-site-card"
 import { getInterestForListing } from "@/lib/listings/interest"
@@ -13,7 +14,8 @@ import {
   getStaffReviewsForListing,
 } from "@/lib/listings/reviews"
 import { fetchListingAccessCode } from "@/lib/portal/actions"
-import { getListingForPortal } from "@/lib/portal/queries"
+import { canDeleteListing } from "@/lib/portal/can-delete"
+import { getListingForPortal, getPortalContext } from "@/lib/portal/queries"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 export const metadata: Metadata = {
@@ -36,6 +38,13 @@ export default async function SiteSettingsPage({
   const openTab = TABS.includes(tab as (typeof TABS)[number]) ? tab! : "details"
   const { listing, organization, canManage, isShared } =
     await getListingForPortal(id)
+  const context = await getPortalContext()
+  // Hidden for anyone who cannot do it. The database refuses them as well:
+  // a control being hidden is not a permission.
+  const mayDelete = canDeleteListing({
+    isDirector: Boolean(context?.isDirector),
+    isShared: Boolean(isShared),
+  })
   const accessCode = await fetchListingAccessCode(id)
   const interest = await getInterestForListing(id)
   const reviews = await getStaffReviewsForListing(id)
@@ -89,6 +98,19 @@ export default async function SiteSettingsPage({
             organization={organization}
             canManage={canManage}
           />
+          {/* Last on the page, after everything somebody actually came here
+              to change. */}
+          {mayDelete ? (
+            <div className="mt-10 max-w-2xl">
+              <DeleteSiteCard
+                listingId={listing.id}
+                listingName={listing.name}
+                requestCount={interest.length}
+                reviewCount={reviews.length}
+                published={listing.published}
+              />
+            </div>
+          ) : null}
         </TabsContent>
         <TabsContent value="requests" className="pt-4">
           <ListingInterestPanel rows={interest} />

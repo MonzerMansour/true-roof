@@ -92,6 +92,16 @@ through `security definer` RPCs instead. The organization access code, its
 card, and `requestJoinOrganization` are gone. `organization_members` stays: it
 is still how ownership and the director and manager roles work.
 
+A site can be deleted, by a director of the organization that owns it and
+nobody else. `supabase/migrations/20261018000000_delete_listing.sql` adds the
+`delete_listing` RPC: `public.listings` has policies for select, insert and
+update and never had one for delete, so until now a site added by mistake
+could only be unpublished. Everything referencing a listing cascades, so one
+delete also takes its requests, reviews, embedding, access code and anybody's
+shared access; the dialog counts those from the real rows and says so. A
+shared editor can never delete, whatever their role elsewhere:
+`lib/portal/can-delete.ts` owns that rule and is tested.
+
 Guest mode is gone. There is no `true-roof-guest` cookie and no "Continue as a guest": somebody signed out simply browses, and every page except the questionnaire works for them. Do not add a guest flag back to gate a page; gate on a real session or do not gate.
 
 Signing out asks whether to keep or remove what is on the phone. `lib/privacy/local-data.ts` owns the list of keys, split into the ones the account also holds and the ones only the phone holds. A feature that writes a new `true-roof:*` key belongs in that list.
