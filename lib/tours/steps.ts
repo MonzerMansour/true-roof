@@ -38,7 +38,15 @@ export type TourStep = {
   withSiteOnly?: boolean
   /** Path needs a real listing id substituted in. */
   needsListingId?: boolean
+  /** Appended after the path, for a step that is about one tab of a page. */
+  query?: string
 }
+
+/** Stands in for a site id that is only known at runtime. Written with a
+ * colon rather than as a real-looking path so nobody reads "/portal/sites" in
+ * this file and takes it for somewhere the app serves. stepsForTour replaces
+ * it, and a step carrying it is dropped when there is no site. */
+const SITE_SETTINGS_TEMPLATE = "/portal/sites/:id/settings"
 
 const seekerSteps: TourStep[] = [
   {
@@ -132,7 +140,7 @@ const providerSteps: TourStep[] = [
   },
   {
     id: "site-settings",
-    path: "/portal/sites",
+    path: SITE_SETTINGS_TEMPLATE,
     title: "What seekers actually read",
     body: "The rules here decide who is shown your site: pets, couples, ID, curfew, intake hours and vehicles. Leave a rule blank where your site has not published one, because blank is shown as not published rather than as no.",
     action: "Fill in the rules you are certain of and leave the rest blank.",
@@ -141,7 +149,7 @@ const providerSteps: TourStep[] = [
   },
   {
     id: "description",
-    path: "/portal/sites",
+    path: SITE_SETTINGS_TEMPLATE,
     title: "The part the set options cannot carry",
     body: "About this site is free text, and it is what gets compared against how somebody described their own situation. What it is like to stay, what is nearby, what happens at intake.",
     action: "Write a few plain sentences, not a category label.",
@@ -150,11 +158,18 @@ const providerSteps: TourStep[] = [
   },
   {
     id: "access",
-    path: "/portal/access",
+    // The code used to live on a page of its own, back when there was one
+    // code for the whole organization. It belongs to a site now, so this
+    // step goes to that site's Access tab. The old path outlived the page
+    // and sent anybody who took the tour to a 404.
+    path: SITE_SETTINGS_TEMPLATE,
+    query: "?tab=access",
     title: "Letting someone help",
     body: "Each site has its own code. Give one to a colleague or a partner organization and they can keep that site current, seeing only that site. It stays yours, and you can make a new code if the old one travels too far.",
     action: "Share a code with one person rather than a group.",
     directorOnly: true,
+    needsListingId: true,
+    withSiteOnly: true,
   },
   {
     id: "settings",
@@ -234,7 +249,12 @@ export function stepsForTour(
     })
     .map((step) =>
       step.needsListingId && audience.primaryListingId
-        ? { ...step, path: `/portal/sites/${audience.primaryListingId}/settings` }
+        ? {
+            ...step,
+            path:
+              step.path.replace(":id", audience.primaryListingId) +
+              (step.query ?? ""),
+          }
         : step
     )
 }

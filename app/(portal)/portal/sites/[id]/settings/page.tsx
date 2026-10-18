@@ -20,12 +20,20 @@ export const metadata: Metadata = {
   title: "Site settings",
 }
 
+const TABS = ["details", "requests", "reviews", "notes", "access"] as const
+
 export default async function SiteSettingsPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ tab?: string }>
 }) {
   const { id } = await params
+  // So a link can open one tab directly. The guided tour's access step needs
+  // this, and anything else that wants to point at a tab now can.
+  const { tab } = await searchParams
+  const openTab = TABS.includes(tab as (typeof TABS)[number]) ? tab! : "details"
   const { listing, organization, canManage, isShared } =
     await getListingForPortal(id)
   const accessCode = await fetchListingAccessCode(id)
@@ -54,7 +62,7 @@ export default async function SiteSettingsPage({
 
       {/* One aspect at a time. Site details stays mounted so unsaved edits
           survive a look at another tab. */}
-      <Tabs defaultValue="details">
+      <Tabs defaultValue={openTab}>
         <div className="max-w-full overflow-x-auto">
           <TabsList>
             <TabsTrigger value="details">Site details</TabsTrigger>

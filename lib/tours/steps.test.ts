@@ -1,7 +1,14 @@
+import { readdirSync, statSync } from "node:fs"
+import { join } from "node:path"
 import { describe, expect, it } from "vitest"
 
 import { features } from "@/lib/features"
-import { stepsForTour, tours, type TourId } from "@/lib/tours/steps"
+import {
+  stepsForTour,
+  tours,
+  type TourAudience,
+  type TourId,
+} from "@/lib/tours/steps"
 
 const roles: TourId[] = ["seeker", "provider", "features"]
 
@@ -206,5 +213,87 @@ describe("the features tour", () => {
     const out = stepsForTour("features", { signedIn: false }).map((s) => s.id)
     const inn = stepsForTour("features", { signedIn: true }).map((s) => s.id)
     expect(out).toEqual(inn)
+  })
+})
+
+/** Every path the app actually serves, read off the filesystem. */
+function servedRoutes(dir = "app", prefix = ""): string[] {
+  const out: string[] = []
+  for (const entry of readdirSync(dir)) {
+    const full = join(dir, entry)
+    if (statSync(full).isDirectory()) {
+      // (groups) do not appear in the URL.
+      const segment =
+        entry.startsWith("(") && entry.endsWith(")") ? prefix : `${prefix}/${entry}`
+      out.push(...servedRoutes(full, segment))
+    } else if (entry === "page.tsx") {
+      out.push(prefix === "" ? "/" : prefix)
+    }
+  }
+  return out
+}
+
+function isServed(path: string, routes: string[]) {
+  // A step may point at a tab, which is a query, not a route.
+  const clean = path.split("?")[0].replace(/\/$/, "") || "/"
+  if (routes.includes(clean)) return true
+  return routes.some((route) =>
+    route.includes("[")
+      ? new RegExp(`^${route.replace(/\[[^\]]+\]/g, "[^/]+")}$`).test(clean)
+      : false
+  )
+}
+
+describe("every step goes somewhere the app serves", () => {
+  // The regression this exists for: the access step kept pointing at
+  // /portal/access after that page was deleted, so taking the provider tour
+  // ended on a 404. A step path is data, so the dead-link sweep over href=
+  // and redirect( never saw it.
+  const routes = servedRoutes()
+
+  it("found the app's routes, so the rest of this test means something", () => {
+    expect(routes).toContain("/places")
+    expect(routes).toContain("/portal")
+    expect(routes.length).toBeGreaterThan(15)
+  })
+
+  it("serves every path in every tour, for every audience", () => {
+    const audiences: TourAudience[] = [
+      { signedIn: false },
+      { signedIn: true },
+      { signedIn: true, hasOrganization: false },
+      { signedIn: true, hasOrganization: true, primaryListingId: null },
+      {
+        signedIn: true,
+        hasOrganization: true,
+        primaryListingId: "11111111-1111-1111-1111-111111111111",
+        isDirector: true,
+      },
+    ]
+
+    for (const tour of roles) {
+      for (const audience of audiences) {
+        for (const step of stepsForTour(tour, audience)) {
+          expect(
+            isServed(step.path, routes),
+            `${tour}/${step.id} points at ${step.path}, which the app does not serve`
+          ).toBe(true)
+        }
+      }
+    }
+  })
+
+  it("leaves no placeholder in a path it hands to the router", () => {
+    for (const tour of roles) {
+      for (const step of stepsForTour(tour, {
+        signedIn: true,
+        hasOrganization: true,
+        primaryListingId: "abc",
+        isDirector: true,
+      })) {
+        expect(step.path, step.id).not.toContain("[")
+        expect(step.path, step.id).not.toContain(":id")
+      }
+    }
   })
 })
