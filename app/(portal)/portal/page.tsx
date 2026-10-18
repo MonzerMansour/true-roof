@@ -45,13 +45,37 @@ export default async function PortalHomePage() {
 
   return (
     <div className="flex w-full flex-col gap-8">
-      <div>
+      {/* Adding a site is the reason somebody opens this page without
+          already having one, so it sits with the title rather than below
+          however many sites they already run, and stays put while they
+          scroll. The sentence underneath is read once and is not worth the
+          screen: pinned with it, this block took 23% of a phone. */}
+      <div className="sticky top-14 z-20 -mx-4 flex flex-col gap-3 bg-background/95 px-4 py-3 backdrop-blur sm:flex-row sm:items-center sm:justify-between md:-mx-6 md:px-6">
         <h1 className="font-heading text-2xl font-semibold">{heading}</h1>
-        <p className="mt-1 text-muted-foreground">
-          This is how each site looks to someone searching for a place to
-          sleep. Only published sites are on that list.
-        </p>
+        <div className="flex shrink-0 flex-wrap gap-2">
+          {context.canManage ? (
+            <Link
+              href="/portal/sites/new"
+              className={cn(buttonVariants({ size: "touch" }))}
+            >
+              <IconPlus />
+              Add a site
+            </Link>
+          ) : null}
+          <Link
+            href="/portal/join"
+            className={cn(buttonVariants({ variant: "outline", size: "touch" }))}
+          >
+            <IconKey />
+            Use a code
+          </Link>
+        </div>
       </div>
+
+      <p className="-mt-4 text-muted-foreground">
+        This is how each site looks to someone searching for a place to sleep.
+        Only published sites are on that list.
+      </p>
 
       {needsYou.length > 0 ? (
         <section
@@ -107,27 +131,6 @@ export default async function PortalHomePage() {
           </div>
         </section>
       ) : null}
-
-      {/* One row, at the end, rather than a card per option competing with
-          the sites themselves. */}
-      <div className="flex flex-wrap gap-2 border-t pt-6">
-        {context.canManage ? (
-          <Link
-            href="/portal/sites/new"
-            className={cn(buttonVariants({ variant: "outline", size: "touch" }))}
-          >
-            <IconPlus />
-            Add a site
-          </Link>
-        ) : null}
-        <Link
-          href="/portal/join"
-          className={cn(buttonVariants({ variant: "ghost", size: "touch" }))}
-        >
-          <IconKey />
-          Add a site with a code
-        </Link>
-      </div>
     </div>
   )
 }
