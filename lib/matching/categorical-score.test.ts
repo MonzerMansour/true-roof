@@ -215,3 +215,60 @@ describe("details are written for the person reading them", () => {
     )
   })
 })
+
+describe("Additional info against the survey", () => {
+  it("flags a site that requires ID when they have none", () => {
+    const result = categoricalAgreement(needs({ idStatus: "no_id" }), shelter({ idRequired: "required" }))
+    const id = result.factors.find((f) => f.label === "Photo ID")
+    expect(id?.conflict).toBe(true)
+    expect(id?.detail).toBe("You do not have photo ID yet, but this site requires it.")
+    expect(result.conflicts).toBeGreaterThanOrEqual(1)
+  })
+
+  it("flags check-in hours they cannot make", () => {
+    const result = categoricalAgreement(
+      needs({ arrivalFrom: "17:00", arrivalTo: "19:00" }),
+      shelter({ intakeFrom: "21:00", intakeTo: "23:00" })
+    )
+    expect(result.factors.find((f) => f.label === "Check-in")?.conflict).toBe(true)
+  })
+
+  it("handles a check-in window that runs past midnight", () => {
+    const result = categoricalAgreement(
+      needs({ arrivalFrom: "23:30", arrivalTo: "00:30" }),
+      shelter({ intakeFrom: "22:00", intakeTo: "01:00" })
+    )
+    expect(result.factors.find((f) => f.label === "Check-in")?.conflict).toBeUndefined()
+  })
+
+  it("flags a curfew earlier than when they can get in", () => {
+    const result = categoricalAgreement(
+      needs({ latestEntry: "22:00" }),
+      shelter({ curfewPolicy: "fixed_time", curfewTime: "21:00" })
+    )
+    expect(result.factors.find((f) => f.label === "Late entry")?.detail).toBe(
+      "You need to get in by 10:00 PM, but doors lock at 9:00 PM."
+    )
+  })
+
+  it("treats midnight as later than 11 PM", () => {
+    const result = categoricalAgreement(
+      needs({ latestEntry: "00:00" }),
+      shelter({ curfewPolicy: "fixed_time", curfewTime: "23:00" })
+    )
+    expect(result.factors.find((f) => f.label === "Late entry")?.conflict).toBe(true)
+  })
+
+  it("flags a stay that is too short", () => {
+    const result = categoricalAgreement(needs({ daysNeeded: 30 }), shelter({ maxStay: "up_to_7_nights" }))
+    expect(result.factors.find((f) => f.label === "Length of stay")?.conflict).toBe(true)
+  })
+
+  it("never counts a rule the site has not published", () => {
+    const result = categoricalAgreement(
+      needs({ idStatus: "no_id", latestEntry: "23:00", daysNeeded: 180 }),
+      shelter({ idRequired: null, curfewPolicy: null, maxStay: null, intakeFrom: null, intakeTo: null })
+    )
+    expect(result.factors.some((f) => ["Photo ID", "Late entry", "Length of stay", "Check-in"].includes(f.label))).toBe(false)
+  })
+})

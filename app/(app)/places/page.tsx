@@ -1,8 +1,10 @@
 import type { Metadata } from "next"
+import { after } from "next/server"
 
 import { Container } from "@/components/marketing/container"
 import { PlacesHero } from "@/components/marketing/places-hero"
 import { PlacesFeed } from "@/components/places/places-feed"
+import { refreshStaleListingEmbeddings } from "@/lib/embeddings/listings"
 import { getPublishedListings } from "@/lib/listings/queries"
 import { withReviewStats } from "@/lib/listings/reviews"
 import { categoricalAgreement } from "@/lib/matching/categorical-score"
@@ -25,6 +27,9 @@ export const metadata: Metadata = {
 
 export default async function PlacesPage() {
   const { listings, source } = await getPublishedListings()
+  // Bring stored embeddings up to date with the current listing text, after
+  // the page has been sent. Uses the server's own OpenAI key.
+  if (source === "supabase") after(() => refreshStaleListingEmbeddings(listings))
   const ranked = await rankPublishedListings(listings)
   const withStats = await withReviewStats(ranked.listings)
 
@@ -37,7 +42,7 @@ export default async function PlacesPage() {
       const cosine = ranked.similarity.get(listing.id)
       if (!ranked.needs || cosine === undefined) return []
 
-      const { score: categorical, factors } = categoricalAgreement(
+      const { score: categorical, factors, conflicts } = categoricalAgreement(
         ranked.needs,
         listing
       )
@@ -49,7 +54,7 @@ export default async function PlacesPage() {
             cosine,
             categorical,
             factors,
-            score: hybridScore(cosine, categorical),
+            score: hybridScore(cosine, categorical, conflicts),
           },
         ],
       ]

@@ -51,6 +51,18 @@ export function lenientTextScore(cosine: number): number {
 export const TEXT_WEIGHT = 0.65
 export const FIELDS_WEIGHT = 0.35
 
-export function hybridScore(cosine: number, categorical: number): number {
-  return lenientTextScore(cosine) * TEXT_WEIGHT + categorical * FIELDS_WEIGHT
+// Each outright contradiction (a site that says no to something the person
+// needs, or the reverse) halves the match. Two contradictions leave a quarter.
+// A good text match should never hide "this site does not take your dog".
+export const CONFLICT_PENALTY = 0.5
+
+export function conflictPenalty(conflicts: number): number {
+  return Math.pow(CONFLICT_PENALTY, Math.max(0, conflicts))
+}
+
+export function hybridScore(cosine: number, categorical: number, conflicts = 0): number {
+  return (
+    (lenientTextScore(cosine) * TEXT_WEIGHT + categorical * FIELDS_WEIGHT) *
+    conflictPenalty(conflicts)
+  )
 }
