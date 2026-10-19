@@ -37,7 +37,7 @@ export default async function PlacesPage() {
       const cosine = ranked.similarity.get(listing.id)
       if (!ranked.needs || cosine === undefined) return []
 
-      const { score: categorical, factors } = categoricalAgreement(
+      const { score: categorical, factors, conflicts } = categoricalAgreement(
         ranked.needs,
         listing
       )
@@ -49,7 +49,7 @@ export default async function PlacesPage() {
             cosine,
             categorical,
             factors,
-            score: hybridScore(cosine, categorical),
+            score: hybridScore(cosine, categorical, conflicts),
           },
         ],
       ]

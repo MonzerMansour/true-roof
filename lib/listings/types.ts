@@ -248,7 +248,7 @@ export const interestLabel: Record<InterestKind, string> = {
 // silently removes a choice. lib/listings/types.test.ts guards that.
 
 export const petsOption: Record<PetsPolicy, string> = {
-  not_allowed: "Not allowed",
+  not_allowed: "No pets allowed",
   service_only: "Service animals only",
   small_pets: "Small pets",
   any: "Any pet",

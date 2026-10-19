@@ -34,42 +34,17 @@ if (!NEXT_PUBLIC_SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !OPENAI_API_KEY) 
 
 const supabase = createClient(NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
-const baseColumns =
-  "id, name, kind, freshness, last_confirmed_at, pets, couples, parking_status, vehicle_note, city, intake_method, organizations(name, description)"
-
-// Site descriptions arrive with 20261003000100_listing_details.sql. Until
-// that is applied, embed without them rather than failing.
-let { data, error } = await supabase.from("listings").select(`${baseColumns}, description`)
-if (error) ({ data, error } = await supabase.from("listings").select(baseColumns))
+// Every column, so the text includes whatever staff filled in under
+// Additional info. "*" also means a database missing a migration still works:
+// it just returns fewer columns, and mapListingRow() reads those as null.
+const { data, error } = await supabase.from("listings").select("*, organizations(name, description)")
 
 if (error) {
   console.error(error.message)
   process.exit(1)
 }
 
-const rows = data.map((row) => {
-  const org = Array.isArray(row.organizations) ? row.organizations[0] : row.organizations
-  return {
-    id: row.id,
-    name: row.name,
-    kind: row.kind,
-    freshness: row.freshness,
-    lastConfirmedAt: row.last_confirmed_at,
-    pets: row.pets,
-    couples: row.couples,
-    parkingStatus: row.parking_status,
-    vehicleNote: row.vehicle_note,
-    city: row.city,
-    orgName: org?.name ?? row.name,
-    orgDescription: org?.description ?? null,
-    description: row.description ?? null,
-    lat: null,
-    lng: null,
-    phone: null,
-    intakeMethod: row.intake_method,
-  }
-})
-
+const rows = data
 // Run listingToText() through tsx so it gets the real TypeScript builder,
 // types stripped the same way the app does, instead of a hand-copied
 // duplicate that silently drifts out of sync with lib/embeddings/text.ts.
@@ -77,8 +52,9 @@ const loaderPath = resolve(".tmp-embed-listings-loader.mjs")
 writeFileSync(
   loaderPath,
   `import { listingToText } from ${JSON.stringify(resolve("lib/embeddings/text.ts"))};\n` +
+    `import { mapListingRow } from ${JSON.stringify(resolve("lib/listings/queries.ts"))};\n` +
     `const rows = ${JSON.stringify(rows)};\n` +
-    `process.stdout.write(JSON.stringify(rows.map((r) => listingToText(r))));\n`
+    `process.stdout.write(JSON.stringify(rows.map((r) => listingToText(mapListingRow(r)))));\n`
 )
 let texts
 try {

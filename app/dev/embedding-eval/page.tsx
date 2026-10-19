@@ -111,7 +111,7 @@ function EvalResults({
   const realRanked = realListings
     .map(({ listing, embedding }) => {
       const cosine = cosineSimilarity(testCase.embedding, embedding)
-      const { score: categorical, factors } = categoricalAgreement(needs, listing)
+      const { score: categorical, factors, conflicts } = categoricalAgreement(needs, listing)
       return {
         id: listing.id,
         name: listing.name,
@@ -119,7 +119,7 @@ function EvalResults({
         cosine,
         categorical,
         factors,
-        score: hybridScore(cosine, categorical),
+        score: hybridScore(cosine, categorical, conflicts),
       }
     })
     .sort((a, b) => b.score - a.score)

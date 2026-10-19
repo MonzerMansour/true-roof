@@ -104,3 +104,15 @@ describe("hybridScore", () => {
     expect(strong).toBeGreaterThan(weak)
   })
 })
+
+describe("conflict penalty", () => {
+  it("halves the match for each contradiction", () => {
+    const clean = hybridScore(0.4, 0.8)
+    expect(hybridScore(0.4, 0.8, 1)).toBeCloseTo(clean / 2, 6)
+    expect(hybridScore(0.4, 0.8, 2)).toBeCloseTo(clean / 4, 6)
+  })
+
+  it("changes nothing without a contradiction", () => {
+    expect(hybridScore(0.4, 0.8, 0)).toBe(hybridScore(0.4, 0.8))
+  })
+})

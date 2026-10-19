@@ -70,6 +70,61 @@ describe("listingToText", () => {
   })
 })
 
+describe("listingToText: Additional info from the portal", () => {
+  it("includes every rule staff can publish for a shelter", () => {
+    const text = listingToText(shelter())
+    expect(text).toContain("Pets up to about 25 pounds.")
+    expect(text).toContain("Photo ID: case by case")
+    expect(text).toContain("Check in between 5:00 PM and 8:00 PM.")
+    expect(text).toContain("Late entry: doors lock at 9:00 PM.")
+    expect(text).toContain("Longest stay: Up to 30 nights.")
+    expect(text).toContain("Beds: 40.")
+    expect(text).toContain("How to get in:")
+    expect(text).toContain("Address: 1 Test St.")
+  })
+
+  it("says plainly when there is no curfew", () => {
+    expect(listingToText(shelter({ curfewPolicy: "no_curfew", curfewTime: null }))).toContain(
+      "Late entry: no curfew, you can come in late."
+    )
+  })
+
+  it("includes vehicle rules for safe parking", () => {
+    const text = listingToText(
+      shelter({
+        kind: "parking",
+        pets: null,
+        couples: null,
+        vehicleAllowed: "car_van_rv",
+        vehicleMaxLengthFt: 30,
+        registrationRequired: "required",
+      })
+    )
+    expect(text).toContain("Vehicles allowed: Cars, vans, and RVs.")
+    expect(text).toContain("Vehicles up to 30 feet long.")
+    expect(text).toContain("Vehicle registration: required.")
+  })
+
+  it("leaves out anything a site has not published", () => {
+    const text = listingToText(
+      shelter({
+        idRequired: null,
+        intakeFrom: null,
+        intakeTo: null,
+        curfewPolicy: null,
+        curfewTime: null,
+        maxStay: null,
+        totalBeds: null,
+        petWeightLimitLbs: null,
+        address: null,
+      })
+    )
+    for (const missing of ["Photo ID", "Check in", "Late entry", "Longest stay", "Beds", "Address"]) {
+      expect(text).not.toContain(missing)
+    }
+  })
+})
+
 describe("needsToText", () => {
   it("describes a person's answers", () => {
     const needs: SeekerNeeds = {
@@ -92,6 +147,27 @@ describe("needsToText", () => {
     expect(text).toContain("Pet: A small pet, about 12 pounds.")
     expect(text).toContain("Photo ID: No, I do not have ID.")
     expect(text).toContain("Can check in between 5:00 PM and 9:00 PM.")
+  })
+
+  it("includes every survey answer, and their own words about the area", () => {
+    const text = needsToText({
+      household: "with_partner",
+      partnerRooms: "same_room",
+      pet: "larger_pet",
+      petWeightLbs: 60,
+      idStatus: "have_id",
+      vehicle: "car",
+      vehicleSize: "standard",
+      vehicleRegistered: "yes",
+      arrivalFrom: "18:00",
+      arrivalTo: "22:00",
+      latestEntry: "22:00",
+      daysNeeded: 30,
+      placeNote: "Near the light rail",
+    })
+    for (const part of ["Household", "Partner rooms", "Pet", "Photo ID", "Vehicle:", "Vehicle size", "Vehicle registered", "Can check in", "Needs late entry", "Bed needed", "Near the light rail"]) {
+      expect(text).toContain(part)
+    }
   })
 })
 

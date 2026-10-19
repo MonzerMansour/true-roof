@@ -37,6 +37,7 @@ The matcher, as it actually is:
 - `score-blend.ts` blends that with cosine similarity into the percentage people see. Text carries 65%, fields 35%.
 - `rank.ts` calls the `match_listings` RPC for the embedding order, which is what actually sorts the feed.
 - `phrase-similarity.ts` and `embed-limit.ts` support the text side.
+- `contradictions.ts` finds where the two sides say opposite things in their own words ("No pets" in a site description, "no curfew please" in a person's note). Together with the Additional info comparisons in `categorical-score.ts`, each contradiction halves the match percent (`conflictPenalty` in `score-blend.ts`). It never hides a listing.
 - `household-split.ts` reuses `listingFitsNeeds` when a couple has no whole-household fit.
 
 Do not build a second matcher. An earlier distance-plus-freshness ranker (`score.ts`, `vocabulary.ts`, `time.ts`) was dropped in favour of the embeddings one and no longer exists; this file described it for a while after it was deleted.
