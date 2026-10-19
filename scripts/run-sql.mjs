@@ -56,6 +56,8 @@ const sqlPaths = [
   "supabase/migrations/20261004000000_listing_reviews.sql",
   "supabase/migrations/20261004010000_customer_reviews.sql",
   "supabase/migrations/20261006000000_parking_operations.sql",
+  "supabase/migrations/20261017000100_listing_access_codes.sql",
+  "supabase/migrations/20261018000000_delete_listing.sql",
 ]
 const query = sqlPaths
   .map((path) => readFileSync(resolve(path), "utf8"))

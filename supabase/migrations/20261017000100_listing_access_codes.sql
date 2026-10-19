@@ -209,9 +209,15 @@ begin
     raise exception 'Your organization already runs this site';
   end if;
 
+  -- By constraint name, not by column list. This function RETURNS TABLE
+  -- (listing_id ...), and plpgsql makes every output column a variable, so a
+  -- bare "on conflict (listing_id, user_id)" is parsed as an expression that
+  -- matches both that variable and the column, and the join failed with
+  -- "column reference listing_id is ambiguous". Naming the constraint takes
+  -- the inference out of plpgsql's hands.
   insert into public.listing_members (listing_id, user_id)
   values (v_listing, v_user)
-  on conflict (listing_id, user_id) do nothing;
+  on conflict on constraint listing_members_pkey do nothing;
 
   return query select v_listing, v_name;
 end;
