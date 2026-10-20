@@ -188,9 +188,9 @@ export function PlaceCard({
             {fit && !fit.fits ? (
               <Badge variant="destructive">May not fit</Badge>
             ) : null}
-            {fit?.fits ? (
-              <Badge variant="secondary">Fits what you told us</Badge>
-            ) : null}
+            {/* No "fits" badge: nearly every site has unpublished rules, which
+                never rule it out, so it showed on almost every card and said
+                nothing. Only a real mismatch earns a badge. */}
             {matchPercent != null && matchDetail ? (
               <button
                 type="button"
