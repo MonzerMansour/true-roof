@@ -1,114 +1,59 @@
-// How full a site is. Staff publish two numbers, the most people the site can
-// hold (total_beds) and how many are there now (current_people). Spots left is
-// the difference, never a third number staff have to keep in step.
-//
-// Null on either side means the site has not published it, which is not the
-// same as zero. A site with no numbers shows no count and no "Almost full".
+import type { ParkingStatus, SiteKind } from "@/lib/listings/types"
 
-/** At this many spots left or fewer, a site reads as almost full. */
-export const ALMOST_FULL_AT = 5
+// Two things about how many people a site can take.
+//
+// The most people it can hold is the existing total_beds column. Staff give it
+// when they make a site and have to give it to publish one.
+//
+// "Always full" is a switch staff can turn on for a shelter that has no room
+// and wants people to know before they come. It is stored in the existing
+// parking_status column, as "full". That column is named for lots, but its
+// values (open, full, waitlist) just say whether there is room, so a shelter
+// can use the same one without a migration. Lots do not need the switch: their
+// Availability field already says full.
+
+/** What the "always full" switch writes to parking_status. */
+export const ALWAYS_FULL_STATUS: ParkingStatus = "full"
 
 export const MAX_PEOPLE_LIMIT = 10000
 
-export type FillLevel = "full" | "almost_full"
-
-export type CapacityInput = {
-  totalBeds?: number | null
-  currentPeople?: number | null
+/** True for a shelter staff have marked always full. A lot that is full says so
+ * through its own status badge, so this is shelters only. */
+export function isAlwaysFull(site: {
+  kind: SiteKind
+  parkingStatus?: ParkingStatus | null
+}): boolean {
+  return site.kind === "shelter" && site.parkingStatus === ALWAYS_FULL_STATUS
 }
 
-/** Spots left, or null when either number is missing. Never negative: a count
- * that has drifted past the maximum reads as full, not as minus three. */
-export function spotsLeft(site: CapacityInput): number | null {
-  const max = site.totalBeds
-  const now = site.currentPeople
-  if (typeof max !== "number" || typeof now !== "number") return null
-  return Math.max(0, max - now)
-}
-
-/** "full" at none left, "almost_full" at ALMOST_FULL_AT or fewer, otherwise
- * null. Null also covers "not published", so callers show nothing rather than
- * guessing. */
-export function fillLevel(site: CapacityInput): FillLevel | null {
-  const left = spotsLeft(site)
-  if (left === null) return null
-  if (left === 0) return "full"
-  return left <= ALMOST_FULL_AT ? "almost_full" : null
-}
-
-export const fillLevelLabel: Record<FillLevel, string> = {
-  full: "Full",
-  almost_full: "Almost full",
-}
-
-/** "1 spot left", "12 spots left", or null when it is not published. */
-export function spotsLeftText(site: CapacityInput): string | null {
-  const left = spotsLeft(site)
-  if (left === null) return null
-  return `${left} ${left === 1 ? "spot" : "spots"} left`
-}
-
-export type CapacityCheck =
-  | { ok: true; max: number | null; current: number | null }
+export type MaxPeopleCheck =
+  | { ok: true; max: number | null }
   | { ok: false; error: string }
 
-function whole(raw: string): number | null {
-  const text = raw.trim()
-  if (!text) return null
-  const value = Number(text)
-  return Number.isInteger(value) ? value : Number.NaN
-}
-
 /**
- * Both numbers from a form, checked together.
+ * The most-people number from a form.
  *
- * `required` is true when a site is being created or published: every new site
- * has to say how many people it can hold and how many are there. Otherwise
- * blank stays blank, so an imported site that has not published them can still
- * be edited without being forced to invent a count.
+ * `required` is true when a site is created or published: every new site has to
+ * say how many people it can hold. Otherwise blank stays blank, so an imported
+ * site that has not published one can still be edited without being forced to
+ * invent a number.
  */
-export function checkCapacity(
-  raw: { max: string; current: string },
-  required: boolean
-): CapacityCheck {
-  const max = whole(raw.max)
-  const current = whole(raw.current)
+export function checkMaxPeople(raw: string, required: boolean): MaxPeopleCheck {
+  const text = raw.trim()
 
-  if (Number.isNaN(max) || (max !== null && (max < 1 || max > MAX_PEOPLE_LIMIT))) {
+  if (!text) {
+    return required
+      ? { ok: false, error: "Add the most people the site can hold." }
+      : { ok: true, max: null }
+  }
+
+  const value = Number(text)
+  if (!Number.isInteger(value) || value < 1 || value > MAX_PEOPLE_LIMIT) {
     return {
       ok: false,
       error: `The most people the site can hold must be a whole number from 1 to ${MAX_PEOPLE_LIMIT.toLocaleString("en-US")}.`,
     }
   }
-  if (
-    Number.isNaN(current) ||
-    (current !== null && (current < 0 || current > MAX_PEOPLE_LIMIT))
-  ) {
-    return {
-      ok: false,
-      error: `People there now must be a whole number from 0 to ${MAX_PEOPLE_LIMIT.toLocaleString("en-US")}.`,
-    }
-  }
 
-  if (required && max === null) {
-    return { ok: false, error: "Add the most people the site can hold." }
-  }
-  if (required && current === null) {
-    return { ok: false, error: "Add how many people are there now." }
-  }
-  if (max !== null && current !== null && current > max) {
-    return {
-      ok: false,
-      error: "People there now cannot be more than the most the site can hold.",
-    }
-  }
-  // A count with no maximum has nothing to be measured against.
-  if (max === null && current !== null) {
-    return {
-      ok: false,
-      error: "Add the most people the site can hold, so the count means something.",
-    }
-  }
-
-  return { ok: true, max, current }
+  return { ok: true, max: value }
 }

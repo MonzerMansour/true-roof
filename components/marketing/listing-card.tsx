@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { cn } from "cn"
-import { fillLevel, fillLevelLabel } from "@/lib/listings/availability"
+import { isAlwaysFull } from "@/lib/listings/availability"
 import {
   couplesLabel,
   formatConfirmedAt,
@@ -29,7 +29,7 @@ export function ListingCard({
   variant?: "default" | "onDark"
 }) {
   const onDark = variant === "onDark"
-  const fill = fillLevel(listing)
+  const alwaysFull = isAlwaysFull(listing)
   const isParking = listing.kind === "parking"
   const badgeText = isParking
     ? listing.parkingStatus
@@ -85,11 +85,7 @@ export function ListingCard({
             >
               {badgeText}
             </Badge>
-            {fill ? (
-              <Badge variant={fill === "full" ? "secondary" : "warning"}>
-                {fillLevelLabel[fill]}
-              </Badge>
-            ) : null}
+            {alwaysFull ? <Badge variant="secondary">Full</Badge> : null}
             <CardTitle className={cn(onDark && "text-white")}>
               {listing.name}
             </CardTitle>

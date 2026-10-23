@@ -66,7 +66,6 @@ type ListingRow = {
   registration_required?: RegistrationRequired | null
   project_type?: ProjectType | null
   total_beds?: number | null
-  current_people?: number | null
   data_source?: DataSource | null
   source_url?: string | null
   source_as_of?: string | null
@@ -136,8 +135,6 @@ function mapListing(row: ListingRow): PortalListing {
     registrationRequired: row.registration_required ?? null,
     projectType: row.project_type ?? null,
     totalBeds: row.total_beds ?? null,
-    currentPeople:
-      typeof row.current_people === "number" ? row.current_people : null,
     dataSource: row.data_source ?? null,
     sourceUrl: row.source_url ?? null,
     sourceAsOf: row.source_as_of ?? null,

@@ -103,17 +103,22 @@ shared access; the dialog counts those from the real rows and says so. A
 shared editor can never delete, whatever their role elsewhere:
 `lib/portal/can-delete.ts` owns that rule and is tested.
 
-How full a site is: staff publish the most people it can hold (`total_beds`) and
-how many are there now (`current_people`, added by
-`20261022000000_listing_current_people.sql`). Spots left is the difference,
-worked out in `lib/listings/availability.ts`, never a third stored number. At 5
-spots left or fewer a seeker sees "Almost full", at none "Full", and a site
-that has not published both shows nothing, because null is not zero. Both are
-required to create a site and to publish a draft, and may stay blank on a site
-that is already published (an imported site is never forced to invent a count).
-A lot's `parking_status` is kept in step by the quick update on the site page,
-and the settings save refuses an "open" lot with no spots left. The count is
-not in the embedding text, so changing it never re-embeds.
+How many people a site can take: staff give the most people it can hold, which
+is the existing `total_beds` column (`lib/listings/availability.ts` checks it).
+It is required to create a site and to publish a draft, and may stay blank on a
+site that is already published, so an imported site is never forced to invent a
+number. There is no count of who is there now: that needs a column this
+database does not have, and no existing column can honestly hold a second
+changing number.
+
+A shelter has an **Always full** switch under Additional info. It is stored in
+the existing `parking_status` column as `full`, which is named for lots but only
+says whether there is room, so a shelter can use it with no migration. Seekers
+see a plain "Full" badge. It is display only: it does not hide the shelter, add
+a reason to `hard-filters.ts`, or change the match percent. A lot does not get
+the switch, its Availability field already says full. `listingToText` only
+writes "Parking status" for a lot, so the switch never enters a shelter's
+embedding.
 
 Only one site can be a draft at a time. The Site settings tab in the portal
 sidebar exists only while there is a draft, and opens it directly; once it is

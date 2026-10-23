@@ -88,7 +88,11 @@ export function listingToText(listing: Listing) {
     listing.maxStay ? `Longest stay: ${maxStayOption[listing.maxStay]}.` : null,
     listing.totalBeds ? `Beds: ${listing.totalBeds}.` : null,
     listing.intakeMethod ? `How to get in: ${intakeLabel[listing.intakeMethod]}.` : null,
-    listing.parkingStatus ? `Parking status: ${listing.parkingStatus}.` : null,
+    // Lots only. A shelter's "always full" switch is stored in this same column,
+    // and "Parking status: full" is not a thing to say about a shelter.
+    listing.kind === "parking" && listing.parkingStatus
+      ? `Parking status: ${listing.parkingStatus}.`
+      : null,
     listing.vehicleAllowed
       ? `Vehicles allowed: ${vehicleAllowedOption[listing.vehicleAllowed]}.`
       : null,

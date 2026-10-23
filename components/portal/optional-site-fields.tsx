@@ -48,7 +48,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
+import { isAlwaysFull } from "@/lib/listings/availability"
 
 /** Renders the options for an enum from its option map, so a value can never
  * exist in the database with no way for staff to pick it. */
@@ -84,6 +86,11 @@ export function OptionalSiteFields({
   )
   const [curfewPolicy, setCurfewPolicy] = React.useState<CurfewPolicy | "">(
     listing?.curfewPolicy ?? ""
+  )
+  // A shelter's "always full" switch. Saved in the existing parking_status
+  // column, so it needs no migration (see lib/listings/availability.ts).
+  const [alwaysFull, setAlwaysFull] = React.useState(
+    listing ? isAlwaysFull(listing) : false
   )
 
   // Starts collapsed. keepMounted keeps these fields in the form while
@@ -359,7 +366,7 @@ export function OptionalSiteFields({
               <span className="grid gap-0.5">
                 <span>Shelter details</span>
                 <span className="text-sm font-normal text-muted-foreground">
-                  Pets and couples
+                  Pets, couples, and whether it is full
                 </span>
               </span>
             </AccordionTrigger>
@@ -406,6 +413,26 @@ export function OptionalSiteFields({
                       {optionsFrom<CouplesPolicy>(couplesOption)}
                     </SelectContent>
                   </Select>
+                </Field>
+                <Field className="flex flex-row items-center justify-between gap-4 rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <FieldLabel htmlFor="alwaysFull">Always full</FieldLabel>
+                    <FieldDescription>
+                      Turn this on if the site has no beds open and people
+                      should know before they come. It shows as Full.
+                    </FieldDescription>
+                  </div>
+                  <Switch
+                    id="alwaysFull"
+                    checked={alwaysFull}
+                    onCheckedChange={setAlwaysFull}
+                  />
+                  {/* The single authoritative entry, as with the selects above. */}
+                  <input
+                    type="hidden"
+                    name="alwaysFull"
+                    value={alwaysFull ? "on" : ""}
+                  />
                 </Field>
               </FieldGroup>
             </AccordionContent>

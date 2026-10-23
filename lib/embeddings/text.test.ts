@@ -183,3 +183,15 @@ describe("scripts/embed-listings.mjs", () => {
     expect(script).toContain("npx tsx")
   })
 })
+
+describe("listingToText and a shelter marked always full", () => {
+  it("does not describe a shelter's full switch as a parking status", () => {
+    const text = listingToText(shelter({ parkingStatus: "full" }))
+    expect(text).not.toContain("Parking status")
+  })
+
+  it("still says a lot's status", () => {
+    const text = listingToText(shelter({ kind: "parking", parkingStatus: "full" }))
+    expect(text).toContain("Parking status: full.")
+  })
+})

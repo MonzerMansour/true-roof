@@ -31,11 +31,7 @@ import {
   subscribeActivity,
   toggleFavorite,
 } from "@/lib/listings/activity"
-import {
-  fillLevel,
-  fillLevelLabel,
-  spotsLeftText,
-} from "@/lib/listings/availability"
+import { isAlwaysFull } from "@/lib/listings/availability"
 import { contactForListing } from "@/lib/listings/contacts"
 import { formatMiles } from "@/lib/listings/geo"
 import { ListingImage } from "@/components/places/listing-image"
@@ -107,10 +103,9 @@ export function PlaceCard({
     return subscribeActivity(sync)
   }, [listing.id])
 
-  const fill = fillLevel(listing)
+  const alwaysFull = isAlwaysFull(listing)
   const facts = [
     listing.city,
-    spotsLeftText(listing),
     listing.pets ? petsLabel[listing.pets] : null,
     listing.couples ? couplesLabel[listing.couples] : null,
     listing.vehicleNote,
@@ -192,14 +187,9 @@ export function PlaceCard({
             <Badge variant="outline">
               {listing.kind === "parking" ? "Safe parking" : "Shelter"}
             </Badge>
-            {/* Worded, not just colored: "Almost full" at 5 spots left or
-                fewer, "Full" at none. Nothing at all when the site has not
-                published its numbers. */}
-            {fill ? (
-              <Badge variant={fill === "full" ? "secondary" : "warning"}>
-                {fillLevelLabel[fill]}
-              </Badge>
-            ) : null}
+            {/* A shelter staff marked always full. A lot says it through its own
+                status badge above, so this is shelters only. */}
+            {alwaysFull ? <Badge variant="secondary">Full</Badge> : null}
             {fit && !fit.fits ? (
               <Badge variant="destructive">May not fit</Badge>
             ) : null}

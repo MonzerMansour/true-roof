@@ -141,10 +141,6 @@ export type Listing = {
   projectType: ProjectType | null
   /** The most people the site can hold. Beds for a shelter, spaces for a lot. */
   totalBeds: number | null
-  /** How many are there now. Staff keep it current. With totalBeds it gives
-   * the spots left (lib/listings/availability.ts). Optional, like the other
-   * columns that arrived in a later migration; absent reads as not published. */
-  currentPeople?: number | null
   dataSource: DataSource | null
   sourceUrl: string | null
   /** ISO date. When the source last published or a human last checked it. */

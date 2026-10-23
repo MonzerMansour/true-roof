@@ -2,7 +2,6 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { IconPencil } from "@tabler/icons-react"
 
-import { CurrentPeopleCard } from "@/components/portal/current-people-card"
 import { ListingInterestPanel } from "@/components/portal/listing-interest-panel"
 import { ShareSiteCard } from "@/components/portal/share-site-card"
 import { PlaceDetail } from "@/components/places/place-detail"
@@ -78,14 +77,6 @@ export default async function SitePreviewPage({
       {/* Requests first: the one thing on this page that somebody is waiting
           on, and the reason to open the site at all on a given day. */}
       <ListingInterestPanel rows={interest} />
-
-      {/* The number staff change through the day, so it is here rather than
-          only inside the settings form. */}
-      <CurrentPeopleCard
-        listingId={listing.id}
-        totalBeds={listing.totalBeds}
-        currentPeople={listing.currentPeople}
-      />
 
       {asSeekerSeesIt ? (
         <div className="rounded-2xl border bg-card/40 p-4 sm:p-6">
