@@ -40,6 +40,8 @@ The matcher, as it actually is:
 - `contradictions.ts` finds where the two sides say opposite things in their own words ("No pets" in a site description, "no curfew please" in a person's note). Together with the Additional info comparisons in `categorical-score.ts`, each contradiction halves the match percent (`conflictPenalty` in `score-blend.ts`). It never hides a listing.
 - `household-split.ts` reuses `listingFitsNeeds` when a couple has no whole-household fit.
 
+A site is put into matching when it is created and every time it is saved: `syncListingEmbedding` (`lib/embeddings/listings.ts`) rebuilds its text, embeds it, and upserts on `listing_id`, so the new embedding replaces the old one. It is awaited inside the portal action, not run in `after()`, so two saves close together cannot finish out of order and leave the older text stored. It retries once, and a save that could not be added to matching returns a `warning` the form shows. A bad or missing `OPENAI_API_KEY` or `SUPABASE_SERVICE_ROLE_KEY` on the host is the usual cause, and `npm run embeddings:listings` backfills what was missed.
+
 Do not build a second matcher. An earlier distance-plus-freshness ranker (`score.ts`, `vocabulary.ts`, `time.ts`) was dropped in favour of the embeddings one and no longer exists; this file described it for a while after it was deleted.
 
 ## Auth

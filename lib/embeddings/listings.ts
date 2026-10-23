@@ -9,8 +9,21 @@ import { listingToText } from "@/lib/embeddings/text"
 import { listingSelectTiers } from "@/lib/listings/columns"
 import { mapListingRow, type ListingRow } from "@/lib/listings/queries"
 import { createAdminSupabaseClient } from "@/lib/supabase/admin"
+import type { EmbedOutcome } from "@/lib/embeddings/outcome"
 
-export type EmbedOutcome = "embedded" | "unchanged" | "skipped" | "failed"
+export type { EmbedOutcome }
+
+// One retry, because the usual failure is a rate limit or a blip rather than
+// a bad key, and a site that misses matching stays out until someone saves it
+// again. A bad key fails both tries and still reports "failed".
+async function embedWithRetry(content: string) {
+  try {
+    return await embedText(content)
+  } catch {
+    await new Promise((resolve) => setTimeout(resolve, 600))
+    return await embedText(content)
+  }
+}
 
 // Re-embeds one listing if its text or the model changed. Never throws: a
 // failed embedding must not fail the portal save that triggered it.
@@ -39,7 +52,8 @@ export async function syncListingEmbedding(listingId: string): Promise<EmbedOutc
       .maybeSingle()
     if (existing?.content === content && existing?.model === model) return "unchanged"
 
-    const embedding = await embedText(content)
+    const embedding = await embedWithRetry(content)
+    // Keyed on listing_id, so this replaces any embedding already stored.
     const { error } = await admin.from("listing_embeddings").upsert({
       listing_id: listingId,
       content,

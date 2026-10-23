@@ -72,6 +72,8 @@ export function CreateSiteForm({
       const details = await updateListingSettings(result.listingId, formData)
       if (!details.ok) {
         toast.error(`Site saved, but some details were not. ${details.error}`)
+      } else if (details.warning) {
+        toast.warning(details.warning)
       }
 
       // The site is saved either way. A failed photo is said plainly and can

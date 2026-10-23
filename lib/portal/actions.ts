@@ -12,6 +12,7 @@ import {
   syncListingEmbedding,
   syncOrganizationEmbeddings,
 } from "@/lib/embeddings/listings"
+import { matchingWarning } from "@/lib/embeddings/outcome"
 
 import {
   ALWAYS_FULL_STATUS,
@@ -42,6 +43,13 @@ import { getPortalContext, requireProviderSession } from "@/lib/portal/queries"
 import { createServerSupabaseClient } from "@/lib/supabase/server"
 
 export type ActionResult = { ok: true } | { ok: false; error: string }
+
+/** A save that worked but wants one thing said, such as a site that could not
+ * be added to matching. Separate from ActionResult so only the save that can
+ * carry it has to be read for it. */
+export type SaveResult =
+  | { ok: true; warning: string | null }
+  | { ok: false; error: string }
 
 /** Read a FormData field and keep it only if it is a real member of the enum.
  *
@@ -215,9 +223,12 @@ export async function createOrganizationWithSite(formData: FormData) {
     ? await applyChosenAccessCode(supabase, listingId, formData)
     : { code: null, saved: false }
 
-  // Embed the new site after the response, so it can rank on Places
-  // as soon as it is published. Never blocks or fails the create.
-  if (listingId) after(() => syncListingEmbedding(listingId))
+  // Embed the new site before returning, not after. The form saves the rest of
+  // the details straight afterwards and that save embeds again; if this ran in
+  // the background it could finish last and leave the thin first version
+  // stored. Never fails the create: a failure is reported by the save that
+  // follows.
+  if (listingId) await syncListingEmbedding(listingId)
 
   // The layout, not just the page: the Site settings tab in the sidebar is
   // drawn there, and a new draft is what makes it appear.
@@ -287,7 +298,7 @@ export async function addSiteToOrganization(formData: FormData) {
   const listingId = data.id as string
   await saveMaxPeople(supabase, listingId, maxPeople.max)
   const chosen = await applyChosenAccessCode(supabase, listingId, formData)
-  after(() => syncListingEmbedding(listingId))
+  await syncListingEmbedding(listingId)
 
   revalidatePath("/portal", "layout")
   return {
@@ -300,7 +311,7 @@ export async function addSiteToOrganization(formData: FormData) {
 export async function updateListingSettings(
   listingId: string,
   formData: FormData
-): Promise<ActionResult> {
+): Promise<SaveResult> {
   const { supabase, user } = await requireProviderSession()
 
   // kind and freshness come back too: they are the fallback when a Select
@@ -509,8 +520,11 @@ export async function updateListingSettings(
     siteDescription ? ["description"] : []
   )
 
-  // Re-embed after the response. Every site in the org, because the org name
-  // and description are part of each site's text. Unchanged text is skipped.
+  // Replace this site's embedding now, so matching reflects what was just
+  // saved and a failure can be shown. Then the rest of the org after the
+  // response, because the org name and description are part of each site's
+  // text. Unchanged text is skipped.
+  const matching = await syncListingEmbedding(listingId)
   after(() => syncOrganizationEmbeddings(listing.organization_id))
 
   revalidatePath(`/portal/sites/${listingId}/settings`)
@@ -518,7 +532,8 @@ export async function updateListingSettings(
   revalidatePath("/portal", "layout")
   revalidatePath("/")
   if (notReady) return { ok: false, error: notReady }
-  return { ok: true }
+  // The save worked either way; this only says whether matching caught up.
+  return { ok: true, warning: matchingWarning(matching) }
 }
 
 export async function approveMemberRequest(

@@ -104,7 +104,11 @@ export function ListingSettingsForm({
         return
       }
 
-      toast.success("Site details saved.")
+      if (result.warning) {
+        toast.warning(result.warning)
+      } else {
+        toast.success("Site details saved.")
+      }
       router.refresh()
     } finally {
       setPending(false)
