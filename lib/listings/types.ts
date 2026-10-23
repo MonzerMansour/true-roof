@@ -227,7 +227,7 @@ export const freshnessLabel: Record<Freshness, string> = {
 
 export const parkingStatusLabel: Record<ParkingStatus, string> = {
   open: "Open",
-  full: "Full",
+  full: "Almost Full",
   waitlist: "Waitlist",
 }
 

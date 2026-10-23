@@ -19,7 +19,7 @@ describe("isAlwaysFull", () => {
   })
 
   // A full lot already says so through its own Availability badge, so showing a
-  // second "Full" next to it would say the same thing twice.
+  // second "Almost Full" next to it would say the same thing twice.
   it("is false for a lot, which has its own status badge", () => {
     expect(isAlwaysFull({ kind: "parking", parkingStatus: "full" })).toBe(false)
   })
