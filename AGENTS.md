@@ -114,7 +114,7 @@ changing number.
 A shelter has an **Always full** switch under Additional info. It is stored in
 the existing `parking_status` column as `full`, which is named for lots but only
 says whether there is room, so a shelter can use it with no migration. Seekers
-see a plain "Full" badge. It is display only: it does not hide the shelter, add
+see a plain "Almost Full" badge. It is display only: it does not hide the shelter, add
 a reason to `hard-filters.ts`, or change the match percent. A lot does not get
 the switch, its Availability field already says full. `listingToText` only
 writes "Parking status" for a lot, so the switch never enters a shelter's

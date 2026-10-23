@@ -259,7 +259,7 @@ export function PlaceDetail({
               {listing.kind === "parking" ? "Safe parking" : "Shelter"}
             </Badge>
             <Badge variant="outline">{intakeLabel[listing.intakeMethod]}</Badge>
-            {alwaysFull ? <Badge variant="secondary">Full</Badge> : null}
+            {alwaysFull ? <Badge variant="secondary">Almost Full</Badge> : null}
           </div>
 
           <h1 className="mt-4 font-heading text-3xl font-semibold tracking-tight sm:text-4xl">

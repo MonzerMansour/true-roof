@@ -85,7 +85,7 @@ export function ListingCard({
             >
               {badgeText}
             </Badge>
-            {alwaysFull ? <Badge variant="secondary">Full</Badge> : null}
+            {alwaysFull ? <Badge variant="secondary">Almost Full</Badge> : null}
             <CardTitle className={cn(onDark && "text-white")}>
               {listing.name}
             </CardTitle>

@@ -189,7 +189,7 @@ export function PlaceCard({
             </Badge>
             {/* A shelter staff marked always full. A lot says it through its own
                 status badge above, so this is shelters only. */}
-            {alwaysFull ? <Badge variant="secondary">Full</Badge> : null}
+            {alwaysFull ? <Badge variant="secondary">Almost Full</Badge> : null}
             {fit && !fit.fits ? (
               <Badge variant="destructive">May not fit</Badge>
             ) : null}
