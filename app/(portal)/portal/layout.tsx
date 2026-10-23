@@ -16,12 +16,14 @@ export default async function PortalLayout({
     redirect("/for-providers?signin=1")
   }
 
+  // The guided tour still walks the organization's first site, whether or not
+  // it is a draft. The tab is different: it exists only to finish a draft.
   const primaryListingId = context.listings[0]?.id ?? null
+  const draftListingId =
+    context.listings.find((listing) => !listing.published)?.id ?? null
 
   return (
-    <PortalShell
-      primaryListingId={primaryListingId}
-    >
+    <PortalShell draftListingId={draftListingId}>
       {children}
       {/* The layout already has everything the provider steps depend on, so
           the tour is told rather than querying for it again. */}

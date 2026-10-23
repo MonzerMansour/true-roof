@@ -12,6 +12,7 @@ import {
   createOrganizationWithSite,
   updateListingSettings,
 } from "@/lib/portal/actions"
+import { CapacityFields } from "@/components/portal/capacity-fields"
 import { OptionalSiteFields } from "@/components/portal/optional-site-fields"
 import type { SiteKind } from "@/lib/listings/types"
 import { Button } from "@/components/ui/button"
@@ -155,6 +156,8 @@ export function CreateSiteForm({
           />
           <FieldDescription>Up to 1,000 characters.</FieldDescription>
         </Field>
+
+        <CapacityFields kind={kind} required />
 
         <AccessCodeField />
 

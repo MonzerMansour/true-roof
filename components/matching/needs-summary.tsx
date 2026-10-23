@@ -84,8 +84,8 @@ export function NeedsSummary({
     <div>
       <p className="text-muted-foreground">
         {synced
-          ? "Saved on this phone and to your account. Nothing is sent to a shelter."
-          : "Saved on this phone. Nothing is sent to a shelter."}
+          ? "Saved on this device and to your account. Nothing is sent to a shelter."
+          : "Saved on this device. Nothing is sent to a shelter."}
       </p>
 
       <dl className="mt-6 divide-y rounded-lg border">

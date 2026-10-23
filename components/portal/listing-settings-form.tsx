@@ -31,6 +31,7 @@ import type {
   VehicleAllowed,
 } from "@/lib/listings/types"
 import type { PortalListing, PortalOrganization } from "@/lib/portal/types"
+import { CapacityFields } from "@/components/portal/capacity-fields"
 import { OptionalSiteFields } from "@/components/portal/optional-site-fields"
 import { SitePhotoField } from "@/components/portal/site-photo-field"
 import { Textarea } from "@/components/ui/textarea"
@@ -198,6 +199,16 @@ export function ListingSettingsForm({
           />
           <FieldDescription>Up to 1,000 characters.</FieldDescription>
         </Field>
+
+        {/* Required while the site is a draft, because publishing needs both.
+            Once it is on the list they stay editable but a blank is allowed,
+            so an imported site is not forced to invent a count. */}
+        <CapacityFields
+          kind={kind}
+          totalBeds={listing.totalBeds}
+          currentPeople={listing.currentPeople}
+          required={!listing.published}
+        />
 
         <SitePhotoField listingId={listing.id} photoUrl={listing.photoUrl} />
 

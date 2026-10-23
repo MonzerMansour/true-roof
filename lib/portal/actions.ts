@@ -13,6 +13,7 @@ import {
   syncOrganizationEmbeddings,
 } from "@/lib/embeddings/listings"
 
+import { checkCapacity, spotsLeft } from "@/lib/listings/availability"
 import { defaultCity } from "@/lib/listings/geo"
 import {
   couplesPolicyValues,
@@ -99,6 +100,56 @@ function isMissingColumn(error: { message?: string; code?: string } | null, colu
 const DESCRIPTION_NOT_READY =
   "Saved, except the site description. The database needs the listing_details migration first. Ask the project owner to apply it."
 
+const CAPACITY_NOT_READY =
+  "Saved, except how many people are there now. The database needs the listing_current_people migration first. Ask the project owner to apply it."
+
+const DRAFT_IN_PROGRESS =
+  "You already have a draft site in progress. Finish it and publish it before starting another."
+
+/** The two capacity numbers from a form. A new site, or a draft being
+ * published, has to answer both; anything already on the list may stay blank. */
+function readCapacity(formData: FormData, required: boolean) {
+  return checkCapacity(
+    {
+      max: String(formData.get("totalBeds") ?? ""),
+      current: String(formData.get("currentPeople") ?? ""),
+    },
+    required
+  )
+}
+
+/** The draft this person's organization has not published yet, if there is
+ * one. Only one site may be in progress at a time: the Site settings tab opens
+ * it directly, and a second draft would have nowhere to go. */
+async function findDraftInProgress() {
+  const context = await getPortalContext()
+  return context?.listings.find((listing) => !listing.published) ?? null
+}
+
+/** Writes the capacity numbers onto a site that was just created. Never fatal,
+ * the site already exists; the settings save that follows reports it plainly
+ * if the column is missing. */
+async function saveCapacity(
+  supabase: Awaited<ReturnType<typeof requireProviderSession>>["supabase"],
+  listingId: string,
+  max: number | null,
+  current: number | null
+) {
+  const { error } = await supabase
+    .from("listings")
+    .update({ total_beds: max, current_people: current })
+    .eq("id", listingId)
+
+  if (error) {
+    console.warn(
+      "[portal] capacity not saved:",
+      isMissingColumn(error, "current_people")
+        ? "listing_current_people migration not applied"
+        : error.message
+    )
+  }
+}
+
 
 /** Applies a code the person chose when creating the site.
  *
@@ -139,6 +190,14 @@ export async function createOrganizationWithSite(formData: FormData) {
 
   const { supabase } = await requireProviderSession()
 
+  // Checked before anything is created: a site that cannot say how many people
+  // it holds should not exist half-made.
+  if (await findDraftInProgress()) {
+    return { ok: false as const, error: DRAFT_IN_PROGRESS }
+  }
+  const capacity = readCapacity(formData, true)
+  if (!capacity.ok) return { ok: false as const, error: capacity.error }
+
   const { data, error } = await supabase.rpc("create_organization_with_site", {
     p_org_name: orgName,
     p_description: description,
@@ -172,6 +231,10 @@ export async function createOrganizationWithSite(formData: FormData) {
     }
   }
 
+  if (listingId) {
+    await saveCapacity(supabase, listingId, capacity.max, capacity.current)
+  }
+
   const chosenCode = listingId
     ? await applyChosenAccessCode(supabase, listingId, formData)
     : { code: null, saved: false }
@@ -180,7 +243,9 @@ export async function createOrganizationWithSite(formData: FormData) {
   // as soon as it is published. Never blocks or fails the create.
   if (listingId) after(() => syncListingEmbedding(listingId))
 
-  revalidatePath("/portal")
+  // The layout, not just the page: the Site settings tab in the sidebar is
+  // drawn there, and a new draft is what makes it appear.
+  revalidatePath("/portal", "layout")
 
   // The form uploads a photo, if one was picked, then opens the new site.
   return {
@@ -209,6 +274,11 @@ export async function addSiteToOrganization(formData: FormData) {
   if (!siteName) {
     return { ok: false as const, error: "Add the site name." }
   }
+  if (context.listings.some((listing) => !listing.published)) {
+    return { ok: false as const, error: DRAFT_IN_PROGRESS }
+  }
+  const capacity = readCapacity(formData, true)
+  if (!capacity.ok) return { ok: false as const, error: capacity.error }
 
   // listings.id has no database default; the create RPC makes its own too.
   const row = {
@@ -239,10 +309,11 @@ export async function addSiteToOrganization(formData: FormData) {
   }
 
   const listingId = data.id as string
+  await saveCapacity(supabase, listingId, capacity.max, capacity.current)
   const chosen = await applyChosenAccessCode(supabase, listingId, formData)
   after(() => syncListingEmbedding(listingId))
 
-  revalidatePath("/portal")
+  revalidatePath("/portal", "layout")
   return {
     ok: true as const,
     listingId,
@@ -330,11 +401,39 @@ export async function updateListingSettings(
 
   const petWeightLimitLbs = readInt(formData, "petWeightLimitLbs", 1, 200)
   const vehicleMaxLengthFt = readInt(formData, "vehicleMaxLengthFt", 8, 60)
-  const totalBeds = readInt(formData, "totalBeds", 0, 10000)
 
   const latRaw = String(formData.get("lat") ?? "")
   const lngRaw = String(formData.get("lng") ?? "")
   const publishRequested = formData.get("published") === "on"
+
+  // Both numbers are needed to put a draft on the list. A site that is already
+  // there may leave them blank, so an imported site is never forced to invent a
+  // count, but anything typed still has to make sense.
+  const capacity = readCapacity(formData, publishRequested && !listing.published)
+  if (!capacity.ok) {
+    return { ok: false, error: capacity.error }
+  }
+  const totalBeds = capacity.max
+  const currentPeople = capacity.current
+  const left = spotsLeft({ totalBeds, currentPeople })
+  // "Open" with nobody's bed free, or "full" with beds free, sends people the
+  // wrong way. Say so rather than quietly picking one.
+  if (kind === "parking" && left !== null) {
+    if (parkingStatus === "open" && left === 0) {
+      return {
+        ok: false,
+        error:
+          "This lot is marked open but has no spots left. Mark it full or change the count.",
+      }
+    }
+    if (parkingStatus === "full" && left > 0) {
+      return {
+        ok: false,
+        error:
+          "This lot is marked full but has spots left. Mark it open or change the count.",
+      }
+    }
+  }
 
   // A curfew that is not a fixed time cannot also carry one, and an open lot
   // should not claim a waitlist intake. Tell staff rather than silently
@@ -425,31 +524,132 @@ export async function updateListingSettings(
       last_confirmed_at: new Date().toISOString(),
   }
 
-  let { error } = await supabase
-    .from("listings")
-    .update({ ...update, description: siteDescription })
-    .eq("id", listingId)
+  // Columns that arrived in later migrations. If the database has not run one
+  // yet, save everything else and say plainly which part did not go through.
+  const optionalColumns: Record<string, unknown> = {
+    description: siteDescription,
+    current_people: currentPeople,
+  }
+  const skipped: string[] = []
+  let error: { message?: string; code?: string } | null = null
 
-  // Before the listing_details migration, save everything else and say
-  // plainly that the description did not go through.
-  let descriptionSkipped = false
-  if (isMissingColumn(error, "description")) {
-    ;({ error } = await supabase.from("listings").update(update).eq("id", listingId))
-    descriptionSkipped = Boolean(siteDescription)
+  for (let attempt = 0; attempt <= Object.keys(optionalColumns).length; attempt += 1) {
+    ;({ error } = await supabase
+      .from("listings")
+      .update({ ...update, ...optionalColumns })
+      .eq("id", listingId))
+
+    const missing = Object.keys(optionalColumns).find((column) =>
+      isMissingColumn(error, column)
+    )
+    if (!missing) break
+    skipped.push(missing)
+    delete optionalColumns[missing]
   }
 
   if (error) {
-    return { ok: false, error: error.message }
+    return { ok: false, error: error.message ?? "Could not save the site." }
   }
+
+  const descriptionSkipped =
+    skipped.includes("description") && Boolean(siteDescription)
+  const capacitySkipped =
+    skipped.includes("current_people") && currentPeople !== null
 
   // Re-embed after the response. Every site in the org, because the org name
   // and description are part of each site's text. Unchanged text is skipped.
   after(() => syncOrganizationEmbeddings(listing.organization_id))
 
   revalidatePath(`/portal/sites/${listingId}/settings`)
-  revalidatePath("/portal")
+  // Publishing the draft is what makes the Site settings tab go away.
+  revalidatePath("/portal", "layout")
   revalidatePath("/")
   if (descriptionSkipped) return { ok: false, error: DESCRIPTION_NOT_READY }
+  if (capacitySkipped) return { ok: false, error: CAPACITY_NOT_READY }
+  return { ok: true }
+}
+
+/**
+ * The quick update: how many people are there now, and nothing else.
+ *
+ * This is the number staff change most, usually at the door, so it should not
+ * take a trip through the whole settings form. It counts as confirming the
+ * site, which is what keeps the "Confirmed ... ago" line honest.
+ *
+ * Access is left to the database: a person who may not edit this site changes
+ * no rows, and that is reported as no access.
+ */
+export async function updateCurrentPeople(
+  listingId: string,
+  formData: FormData
+): Promise<ActionResult> {
+  const { supabase } = await requireProviderSession()
+
+  const { data: listing } = await supabase
+    .from("listings")
+    .select("kind, parking_status, total_beds, organization_id")
+    .eq("id", listingId)
+    .maybeSingle()
+
+  if (!listing) return { ok: false, error: "Listing not found." }
+  if (typeof listing.total_beds !== "number") {
+    return {
+      ok: false,
+      error:
+        "Set the most people this site can hold in Edit details first, so the count means something.",
+    }
+  }
+
+  const capacity = checkCapacity(
+    {
+      max: String(listing.total_beds),
+      current: String(formData.get("currentPeople") ?? ""),
+    },
+    true
+  )
+  if (!capacity.ok) return { ok: false, error: capacity.error }
+
+  const left = spotsLeft({
+    totalBeds: capacity.max,
+    currentPeople: capacity.current,
+  })
+
+  // For a lot, "open" and "full" just mean there is room or there is not, so
+  // keep them in step with the count instead of leaving the listing saying two
+  // different things. A waitlist is a choice staff made, and is left alone.
+  let parkingStatus = listing.parking_status as string | null
+  if (listing.kind === "parking" && left !== null) {
+    if (left === 0 && parkingStatus === "open") parkingStatus = "full"
+    if (left > 0 && parkingStatus === "full") parkingStatus = "open"
+  }
+
+  const { data: updated, error } = await supabase
+    .from("listings")
+    .update({
+      current_people: capacity.current,
+      parking_status: parkingStatus,
+      last_confirmed_at: new Date().toISOString(),
+    })
+    .eq("id", listingId)
+    .select("id")
+
+  if (error) {
+    return {
+      ok: false,
+      error: isMissingColumn(error, "current_people")
+        ? CAPACITY_NOT_READY
+        : error.message,
+    }
+  }
+  if (!updated || updated.length === 0) {
+    return { ok: false, error: "You do not have access to this site." }
+  }
+
+  revalidatePath(`/portal/sites/${listingId}`)
+  revalidatePath("/portal")
+  revalidatePath("/places")
+  revalidatePath(`/places/${listingId}`)
+  revalidatePath("/")
   return { ok: true }
 }
 
@@ -732,7 +932,8 @@ export async function deleteListing(
     reviews_removed: number
   }
 
-  revalidatePath("/portal")
+  // The layout too: deleting the draft is what takes the Site settings tab away.
+  revalidatePath("/portal", "layout")
   revalidatePath("/places")
   return {
     ok: true,

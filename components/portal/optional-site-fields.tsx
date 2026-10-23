@@ -359,7 +359,7 @@ export function OptionalSiteFields({
               <span className="grid gap-0.5">
                 <span>Shelter details</span>
                 <span className="text-sm font-normal text-muted-foreground">
-                  Pets, couples, and beds
+                  Pets and couples
                 </span>
               </span>
             </AccordionTrigger>
@@ -406,18 +406,6 @@ export function OptionalSiteFields({
                       {optionsFrom<CouplesPolicy>(couplesOption)}
                     </SelectContent>
                   </Select>
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="totalBeds">
-                    Total beds (optional)
-                  </FieldLabel>
-                  <Input
-                    id="totalBeds"
-                    name="totalBeds"
-                    type="number"
-                    min={0}
-                    defaultValue={listing?.totalBeds ?? ""}
-                  />
                 </Field>
               </FieldGroup>
             </AccordionContent>

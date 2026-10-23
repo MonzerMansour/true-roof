@@ -1,5 +1,10 @@
 import Link from "next/link"
-import { IconArrowRight, IconKey, IconPlus } from "@tabler/icons-react"
+import {
+  IconArrowRight,
+  IconKey,
+  IconPencil,
+  IconPlus,
+} from "@tabler/icons-react"
 
 import { PendingMembershipBanner } from "@/components/portal/pending-membership-banner"
 import { PortalSiteCard } from "@/components/portal/portal-site-card"
@@ -42,6 +47,9 @@ export default async function PortalHomePage() {
     .filter((row) => row.count > 0)
 
   const heading = context.organization?.name ?? "Your sites"
+  // Only one site can be in progress, so while there is a draft the button
+  // finishes it instead of starting another.
+  const draft = listings.find((listing) => !listing.published) ?? null
 
   return (
     <div className="flex w-full flex-col gap-8">
@@ -53,7 +61,15 @@ export default async function PortalHomePage() {
       <div className="sticky top-14 z-20 -mx-4 flex flex-col gap-3 bg-background/95 px-4 py-3 backdrop-blur sm:flex-row sm:items-center sm:justify-between md:-mx-6 md:px-6">
         <h1 className="font-heading text-2xl font-semibold">{heading}</h1>
         <div className="flex shrink-0 flex-wrap gap-2">
-          {context.canManage ? (
+          {draft ? (
+            <Link
+              href={`/portal/sites/${draft.id}/settings`}
+              className={cn(buttonVariants({ size: "touch" }))}
+            >
+              <IconPencil />
+              Finish your draft
+            </Link>
+          ) : context.canManage ? (
             <Link
               href="/portal/sites/new"
               className={cn(buttonVariants({ size: "touch" }))}

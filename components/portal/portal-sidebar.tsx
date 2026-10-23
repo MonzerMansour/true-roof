@@ -25,17 +25,13 @@ import {
 import { site } from "@/lib/site"
 
 type PortalSidebarProps = {
-  primaryListingId: string | null
+  /** The site this organization has started and not published yet, if any.
+   * Only one can be in progress, so there is at most one. */
+  draftListingId: string | null
 }
 
-export function PortalSidebar({
-  primaryListingId,
-}: PortalSidebarProps) {
+export function PortalSidebar({ draftListingId }: PortalSidebarProps) {
   const pathname = usePathname()
-
-  const settingsHref = primaryListingId
-    ? `/portal/sites/${primaryListingId}/settings`
-    : "/portal/create"
 
   const items = [
     {
@@ -44,12 +40,20 @@ export function PortalSidebar({
       icon: IconHome,
       active: pathname === "/portal",
     },
-    {
-      href: settingsHref,
-      label: "Site settings",
-      icon: IconSettings,
-      active: pathname.startsWith("/portal/sites/"),
-    },
+    // Site settings is only here while there is a draft to finish, and it
+    // opens that draft directly. Once the site is published, its settings are
+    // reached from the site itself (Edit details), so they are not a tab that
+    // points at nothing.
+    ...(draftListingId
+      ? [
+          {
+            href: `/portal/sites/${draftListingId}/settings`,
+            label: "Site settings",
+            icon: IconSettings,
+            active: pathname.startsWith(`/portal/sites/${draftListingId}`),
+          },
+        ]
+      : []),
     {
       href: "/portal/settings",
       label: "Settings",

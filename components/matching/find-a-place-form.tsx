@@ -390,7 +390,10 @@ export function FindAPlaceForm() {
     setResumed(false)
     setSaved(needs)
     setEditing(null)
-    toast.success("Saved on this phone.")
+    // closeButton puts an X on this one toast so it can be dismissed at once.
+    // Not set on the Toaster itself, which would add it to every toast,
+    // including the staff portal's.
+    toast.success("Saved on this device.", { closeButton: true })
 
     // Wait for the account copy before opening Places, so the list is ranked
     // by these answers and not the previous ones. The phone copy is enough

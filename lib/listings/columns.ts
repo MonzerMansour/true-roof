@@ -61,6 +61,9 @@ export const listingColumns = {
     "external_rating_count",
     "external_rating_source",
   ],
+  // 20261022000000_listing_current_people.sql. Who is there now. The maximum is
+  // total_beds, already in the policies tier.
+  capacity: ["current_people"],
 } as const
 
 export type ColumnTier = keyof typeof listingColumns
@@ -74,6 +77,18 @@ function join(tiers: ColumnTier[], extra: string[] = []) {
 // Widest first. queries.ts walks this in order and stops at the first select
 // the database accepts, so a partially migrated project still serves rows.
 export const listingSelectTiers = [
+  join(
+    [
+      "core",
+      "intake",
+      "policies",
+      "details",
+      "reviews",
+      "operations",
+      "capacity",
+    ],
+    [orgJoin]
+  ),
   join(
     ["core", "intake", "policies", "details", "reviews", "operations"],
     [orgJoin]
@@ -91,6 +106,18 @@ export const listingSelectTiers = [
 const portalExtra = ["organization_id", "published", "sort_order"]
 
 export const portalListingSelectTiers = [
+  join(
+    [
+      "core",
+      "intake",
+      "policies",
+      "details",
+      "reviews",
+      "operations",
+      "capacity",
+    ],
+    portalExtra
+  ),
   join(
     ["core", "intake", "policies", "details", "reviews", "operations"],
     portalExtra

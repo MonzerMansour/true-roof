@@ -40,8 +40,8 @@ export default async function FindAPlacePage() {
         A few questions, so we only show places that fit
       </h1>
       <p className="mt-3 max-w-xl text-muted-foreground">
-        About a minute. Your answers are saved on this phone and to your
-        account, so they follow you to another phone.
+        About a minute. Your answers are saved on this device and to your
+        account, so they follow you to another device.
       </p>
 
       <p className="mt-4 max-w-xl rounded-lg border p-3 text-sm">

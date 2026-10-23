@@ -63,6 +63,8 @@ export type ListingRow = {
   max_stay_note?: string | null
   waitlist_note?: string | null
   pets_note?: string | null
+  // Present only once 20261022000000_listing_current_people.sql has run.
+  current_people?: number | null
   // Present only once 20261003000100_listing_details.sql has run.
   description?: string | null
   photo_url?: string | null
@@ -117,6 +119,8 @@ export function mapListingRow(row: ListingRow): Listing {
     registrationRequired: row.registration_required ?? null,
     projectType: row.project_type ?? null,
     totalBeds: row.total_beds ?? null,
+    currentPeople:
+      typeof row.current_people === "number" ? row.current_people : null,
     dataSource: row.data_source ?? null,
     sourceUrl: row.source_url ?? null,
     sourceAsOf: row.source_as_of ?? null,

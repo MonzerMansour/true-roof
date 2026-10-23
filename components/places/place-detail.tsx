@@ -27,6 +27,11 @@ import {
   recordPlaceView,
   toggleFavorite,
 } from "@/lib/listings/activity"
+import {
+  fillLevel,
+  fillLevelLabel,
+  spotsLeftText,
+} from "@/lib/listings/availability"
 import { uploadedPhotoFor } from "@/lib/listings/photos"
 import { standInPhotoFor } from "@/lib/listings/stand-in-photo"
 import { contactForListing } from "@/lib/listings/contacts"
@@ -81,6 +86,8 @@ export function PlaceDetail({
   // Only for the credit line under the picture. ListingImage draws it.
   const standIn = standInPhotoFor(listing)
   const contact = contactForListing(listing)
+  const fill = fillLevel(listing)
+  const leftText = spotsLeftText(listing)
   const isLot = listing.kind === "parking" && listing.parkingStatus
   const status = isLot
     ? parkingStatusLabel[listing.parkingStatus!]
@@ -257,6 +264,11 @@ export function PlaceDetail({
               {listing.kind === "parking" ? "Safe parking" : "Shelter"}
             </Badge>
             <Badge variant="outline">{intakeLabel[listing.intakeMethod]}</Badge>
+            {fill ? (
+              <Badge variant={fill === "full" ? "secondary" : "warning"}>
+                {fillLevelLabel[fill]}
+              </Badge>
+            ) : null}
           </div>
 
           <h1 className="mt-4 font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
@@ -269,6 +281,7 @@ export function PlaceDetail({
           </p>
           <p className="mt-1 text-sm text-muted-foreground">
             {formatConfirmedAt(listing.lastConfirmedAt)}
+            {leftText ? ` · ${leftText}` : ""}
           </p>
           {listing.description ? (
             <p className="mt-4 max-w-2xl whitespace-pre-line">

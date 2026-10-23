@@ -14,19 +14,18 @@ import {
 type PortalShellProps = {
   children: ReactNode
   title?: string
-  primaryListingId: string | null
+  /** The unpublished site in progress, shown as the Site settings tab. */
+  draftListingId: string | null
 }
 
 export function PortalShell({
   children,
   title,
-  primaryListingId,
+  draftListingId,
 }: PortalShellProps) {
   return (
     <SidebarProvider>
-      <PortalSidebar
-        primaryListingId={primaryListingId}
-      />
+      <PortalSidebar draftListingId={draftListingId} />
       {/* This had no id at all, so the root skip link pointed at nothing on
           every portal page. */}
       <SidebarInset id="main" tabIndex={-1} className="outline-none">

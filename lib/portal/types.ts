@@ -68,7 +68,10 @@ export type PortalListing = {
   vehicleMaxLengthFt: number | null
   registrationRequired: RegistrationRequired | null
   projectType: ProjectType | null
+  /** The most people the site can hold. */
   totalBeds: number | null
+  /** How many are there now. Null until staff say. */
+  currentPeople: number | null
   dataSource: DataSource | null
   sourceUrl: string | null
   sourceAsOf: string | null

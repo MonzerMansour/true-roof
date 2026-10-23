@@ -103,6 +103,26 @@ shared access; the dialog counts those from the real rows and says so. A
 shared editor can never delete, whatever their role elsewhere:
 `lib/portal/can-delete.ts` owns that rule and is tested.
 
+How full a site is: staff publish the most people it can hold (`total_beds`) and
+how many are there now (`current_people`, added by
+`20261022000000_listing_current_people.sql`). Spots left is the difference,
+worked out in `lib/listings/availability.ts`, never a third stored number. At 5
+spots left or fewer a seeker sees "Almost full", at none "Full", and a site
+that has not published both shows nothing, because null is not zero. Both are
+required to create a site and to publish a draft, and may stay blank on a site
+that is already published (an imported site is never forced to invent a count).
+A lot's `parking_status` is kept in step by the quick update on the site page,
+and the settings save refuses an "open" lot with no spots left. The count is
+not in the embedding text, so changing it never re-embeds.
+
+Only one site can be a draft at a time. The Site settings tab in the portal
+sidebar exists only while there is a draft, and opens it directly; once it is
+published the tab goes, and a site's settings are reached from the site itself
+(Edit details). `addSiteToOrganization` and `createOrganizationWithSite` refuse
+a second draft. Unpublishing a site is never blocked, since taking a closed site
+off the list is the safer direction, so an organization can still end up with
+two; the tab then opens the oldest.
+
 Guest mode is gone. There is no `true-roof-guest` cookie and no "Continue as a guest": somebody signed out simply browses, and every page except the questionnaire works for them. Do not add a guest flag back to gate a page; gate on a real session or do not gate.
 
 Signing out asks whether to keep or remove what is on the phone. `lib/privacy/local-data.ts` owns the list of keys, split into the ones the account also holds and the ones only the phone holds. A feature that writes a new `true-roof:*` key belongs in that list.

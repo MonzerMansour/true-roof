@@ -135,7 +135,7 @@ const providerSteps: TourStep[] = [
     id: "new-site",
     path: "/portal/sites/new",
     title: "Adding a site",
-    body: "One row per physical address, never one per program. A name, a city and a type are all that is needed to start.",
+    body: "One row per physical address, never one per program. To start you need a name, a city, a type, the most people it can hold and how many are there now. Only one site can be a draft at a time, so publish it before adding the next.",
     action: "Add a site here when you run more than one address.",
   },
   {
